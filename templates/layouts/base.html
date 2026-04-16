@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Proyecto</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+
+    {% include "components/navbar.html" %}
+
+    <div class="flex">
+        {% include "components/sidebar.html" %}
+
+        <main class="p-6 w-full">
+            {% block content %}
+            {% endblock %}
+        </main>
+    </div>
+
+</body>
+</html>
