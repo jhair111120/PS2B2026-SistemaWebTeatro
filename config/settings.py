@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     'apps.payments',
     'apps.tickets',
     'apps.support',
-    'apps.catalog',
+    # 'apps.catalog',
 ]
 
 MIDDLEWARE = [
