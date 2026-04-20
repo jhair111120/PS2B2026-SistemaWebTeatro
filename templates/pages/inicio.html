@@ -1,0 +1,164 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Inicio | Teatro Al Aire Libre{% endblock %}
+
+{% block content %}
+<style>
+    .hero-section {
+        background: linear-gradient(rgba(10, 14, 20, 0.7), rgba(10, 14, 20, 0.95)),
+        url('{% static "img/hero-bg.jpg" %}') center/cover no-repeat;
+        padding: 80px 0;
+        text-align: center;
+    }
+
+    .hero-title {
+        font-size: 4.5rem;
+        font-weight: bold;
+    }
+
+    .event-card {
+        background-color: var(--bg-card);
+        border: none;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .event-card img {
+        height: 250px;
+        object-fit: cover;
+    }
+
+    .event-date-badge {
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: var(--bg-darkest);
+        color: white;
+        padding: 8px 15px;
+        text-align: center;
+        font-weight: bold;
+        border-bottom-left-radius: 8px;
+    }
+
+    .btn-outline-custom {
+        border: 1px solid #333;
+        color: white;
+    }
+
+    .btn-outline-custom:hover {
+        background-color: var(--bg-card);
+        color: white;
+        border-color: #555;
+    }
+</style>
+
+<section class="hero-section">
+    <div class="container">
+        <h1 class="hero-title">Vive la Magia del Teatro</h1>
+        <h1 class="hero-title text-green mb-4">Bajo las Estrellas</h1>
+        <p class="lead mb-5 text-light">Disfruta de los mejores espectáculos culturales, conciertos y obras de<br>teatro
+            en el corazón de La Paz, Bolivia.</p>
+        <div>
+            <a href="#" class="btn btn-blue btn-lg px-4 py-2 me-3 btn-animated">Ver Eventos</a>
+            <a href="#" class="btn btn-outline-custom btn-lg px-4 py-2 btn-animated">Conocer Más</a>
+        </div>
+    </div>
+</section>
+
+<section class="container py-5 mt-4">
+    <div class="text-center mb-5">
+        <h2 class="fw-bold">No Te Pierdas Estos Espectáculos</h2>
+        <p class="text-light-gray">Los eventos más esperados de la temporada. Reserva tus entradas ahora!!</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card event-card text-white h-100 position-relative">
+                <img src="{% static 'img/rata-blanca.jpg' %}"
+                    onerror="this.src='https://via.placeholder.com/400x250/151920/fff?text=Rata+Blanca'"
+                    class="card-img-top" alt="Rata Blanca">
+                <div class="event-date-badge">Viernes<br><span
+                        style="font-size: 1.8rem;">27</span><br><small>Marzo</small></div>
+                <div class="card-body p-4">
+                    <h5 class="card-title fw-bold mb-3">Concierto Rata Blanca</h5>
+                    <p class="card-text mb-1 text-light-gray-bold"><i class="far fa-calendar-alt me-2"
+                            style="color: var(--color-blue)"></i>Viernes, 27 de Marzo, 2026</p>
+                    <p class="card-text mb-4 text-light-gray-bold"><i class="far fa-clock me-2"
+                            style="color: var(--color-blue)"></i>19:00 Hrs.</p>
+                    <div class="d-flex justify-content-between align-items-end mb-4">
+                        <div><small class="text-light-gray-bold">Desde</small><br><strong class="fs-5 text-white">Bs.
+                                150</strong></div>
+                        <div class="text-end"><small class="text-light-gray-bold">Disponibles</small><br><strong
+                                class="fs-5 text-white">270</strong></div>
+                    </div>
+                    <button class="btn btn-blue w-100 py-2 btn-animated fw-bold">Comprar Entradas!</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card event-card text-white h-100 position-relative">
+                <img src="{% static 'img/wisin-yandel.jpg' %}"
+                    onerror="this.src='https://via.placeholder.com/400x250/151920/fff?text=Wisin+y+Yandel'"
+                    class="card-img-top" alt="Wisin Y Yandel">
+                <div class="event-date-badge">Sábado<br><span
+                        style="font-size: 1.8rem;">28</span><br><small>Marzo</small></div>
+                <div class="card-body p-4">
+                    <h5 class="card-title fw-bold mb-3">Concierto Wisin Y Yandel</h5>
+                    <p class="card-text mb-1 text-light-gray-bold"><i class="far fa-calendar-alt me-2"
+                            style="color: var(--color-blue)"></i>Sábado, 28 de Marzo, 2026</p>
+                    <p class="card-text mb-4 text-light-gray-bold"><i class="far fa-clock me-2"
+                            style="color: var(--color-blue)"></i>20:00 Hrs.</p>
+                    <div class="d-flex justify-content-between align-items-end mb-4">
+                        <div><small class="text-light-gray-bold">Desde</small><br><strong class="fs-5 text-white">Bs.
+                                230</strong></div>
+                        <div class="text-end"><small class="text-light-gray-bold">Disponibles</small><br><strong
+                                class="fs-5 text-white">15</strong></div>
+                    </div>
+                    <button class="btn btn-blue w-100 py-2 btn-animated fw-bold">Comprar Entradas!</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card event-card text-white h-100 position-relative">
+                <img src="{% static 'img/slipknot.jpg' %}"
+                    onerror="this.src='https://via.placeholder.com/400x250/151920/fff?text=Slipknot'"
+                    class="card-img-top" alt="Slipknot">
+                <div class="event-date-badge">Viernes<br><span
+                        style="font-size: 1.8rem;">10</span><br><small>Abril</small></div>
+                <div class="card-body p-4">
+                    <h5 class="card-title fw-bold mb-3">Concierto Slipknot</h5>
+                    <p class="card-text mb-1 text-light-gray-bold"><i class="far fa-calendar-alt me-2"
+                            style="color: var(--color-blue)"></i>Viernes, 10 de Abril, 2026</p>
+                    <p class="card-text mb-4 text-light-gray-bold"><i class="far fa-clock me-2"
+                            style="color: var(--color-blue)"></i>19:00 Hrs.</p>
+                    <div class="d-flex justify-content-between align-items-end mb-4">
+                        <div><small class="text-light-gray-bold">Desde</small><br><strong class="fs-5 text-white">Bs.
+                                500</strong></div>
+                        <div class="text-end"><small class="text-light-gray-bold">Disponibles</small><br><strong
+                                class="fs-5 text-white">2</strong></div>
+                    </div>
+                    <button class="btn btn-blue w-100 py-2 btn-animated fw-bold">Comprar Entradas!</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-5">
+        <button class="btn btn-outline-custom px-5 py-2 btn-animated">Ver más</button>
+    </div>
+</section>
+
+<section class="container py-5 mb-5 text-center">
+    <h2 class="fw-bold mb-3">Ubicación</h2>
+    <p class="text-light-gray mb-4">Avenida del Poeta, La Paz</p>
+    <div class="mx-auto shadow-lg"
+        style="max-width: 900px; border-radius: 12px; overflow: hidden; border: 1px solid var(--bg-card);">
+        <img src="{% static 'img/mapa.jpg' %}"
+            onerror="this.src='https://via.placeholder.com/900x450/1E293B/fff?text=Mapa+Avenida+del+Poeta'"
+            style="width: 100%; height: auto; display: block;" alt="Mapa de Ubicación">
+    </div>
+</section>
+{% endblock %}

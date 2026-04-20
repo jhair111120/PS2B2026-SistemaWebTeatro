@@ -1,21 +1,439 @@
+{% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="es">
+
 <head>
-    <title>Proyecto</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Teatro Al Aire Libre - Jaime Laredo{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* Paleta de colores exacta */
+        :root {
+            --color-green: #10B981;
+            --color-blue: #0EA5E9;
+            --bg-darkest: #0A0E14;
+            --bg-navbar: #151920;
+            --bg-card: #1E293B;
+        }
+
+        body {
+            background-color: var(--bg-darkest);
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Colores de texto personalizados para contraste */
+        .text-light-gray {
+            color: #E2E8F0 !important;
+        }
+
+        .text-light-gray-bold {
+            color: #E2E8F0 !important;
+            font-weight: bold;
+        }
+
+        /* Navbar */
+        .navbar {
+            background-color: var(--bg-navbar);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .navbar-brand {
+            font-family: serif;
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+        }
+
+        .nav-link.active {
+            background-color: var(--color-blue);
+            color: white !important;
+            border-radius: 5px;
+        }
+
+        .nav-link {
+            color: #ccc !important;
+            transition: 0.3s;
+        }
+
+        .nav-link:hover {
+            color: white !important;
+        }
+
+        .cart-icon {
+            position: relative;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -5px;
+            right: -10px;
+            background: red;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 0.7rem;
+        }
+
+        /* Botones y Animaciones */
+        .btn-blue {
+            background-color: var(--color-blue);
+            color: white;
+            border: none;
+        }
+
+        .btn-blue:hover {
+            background-color: #0c8bc5;
+            color: white;
+        }
+
+        .text-green {
+            color: var(--color-green) !important;
+        }
+
+        .btn-animated {
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .btn-animated:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 14px rgba(14, 165, 233, 0.3);
+        }
+
+        .btn-login {
+            border: 1px solid var(--color-blue);
+            color: var(--color-blue);
+        }
+
+        .btn-login:hover {
+            background-color: rgba(14, 165, 233, 0.1);
+            color: var(--color-blue);
+        }
+
+        /* --- ESTILOS DEL MODAL DE AUTENTICACIÓN --- */
+        .modal-content {
+            border-radius: 20px;
+            color: black;
+            /* El texto en el modal es oscuro */
+            padding: 20px;
+        }
+
+        .btn-close-custom {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: 2px solid black;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .modal-brand {
+            font-family: serif;
+            font-size: 1.2rem;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        /* Switch de Log in / Sign up */
+        .auth-toggle-box {
+            background-color: #E2E8F0;
+            border-radius: 50px;
+            padding: 5px;
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        .auth-toggle-btn {
+            flex: 1;
+            border: none;
+            background: transparent;
+            border-radius: 50px;
+            padding: 10px;
+            font-weight: bold;
+            color: #333;
+            transition: all 0.3s;
+        }
+
+        .auth-toggle-btn.active {
+            background-color: white;
+            border: 1px solid black;
+            color: black;
+        }
+
+        /* Inputs del formulario */
+        .custom-input {
+            border: 2px solid black;
+            border-radius: 10px;
+            padding: 12px 15px;
+            font-size: 0.9rem;
+            box-shadow: none !important;
+        }
+
+        .custom-input::placeholder {
+            color: #6c757d;
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        .password-toggle {
+            position: absolute;
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: black;
+        }
+
+        /* Botón de acción principal oscuro */
+        .btn-dark-action {
+            background-color: var(--bg-card);
+            color: white;
+            border-radius: 10px;
+            padding: 12px;
+            font-weight: bold;
+            width: 100%;
+            border: none;
+            transition: 0.3s;
+        }
+
+        .btn-dark-action:hover {
+            background-color: #0f172a;
+            color: white;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: var(--bg-card);
+            border-top: 1px solid #333;
+            padding: 40px 0 20px;
+            font-size: 0.9rem;
+        }
+
+        .social-icons a {
+            color: white;
+            font-size: 1.5rem;
+            margin-right: 15px;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        .social-icons a:hover {
+            color: var(--color-blue);
+        }
+    </style>
 </head>
+
 <body>
 
-    {% include "components/navbar.html" %}
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top py-3">
+        <div class="container">
+            <a class="navbar-brand text-white" href="/">
+                TEATRO AL AIRE LIBRE<br><small style="font-size: 0.9rem;">"JAIME LAREDO"</small>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item px-2"><a class="nav-link active px-3" href="/">Inicio</a></li>
+                    <li class="nav-item px-2"><a class="nav-link" href="#">Eventos</a></li>
+                    <li class="nav-item px-2"><a class="nav-link" href="#">Mis entradas</a></li>
+                </ul>
+            </div>
+            <div class="d-flex align-items-center">
+                <a href="#" class="text-white me-4 cart-icon"><i class="fas fa-shopping-cart fa-lg"></i><span
+                        class="cart-badge">2</span></a>
 
-    <div class="flex">
-        {% include "components/sidebar.html" %}
+                <a href="#" class="btn btn-login rounded-pill px-4 me-2 btn-animated" data-bs-toggle="modal"
+                    data-bs-target="#authModal" onclick="switchAuthTab('login')">Login</a>
+                <a href="#" class="btn btn-blue rounded-pill px-4 btn-animated" data-bs-toggle="modal"
+                    data-bs-target="#authModal" onclick="switchAuthTab('signup')">Sign Up</a>
+            </div>
+        </div>
+    </nav>
 
-        <main class="p-6 w-full">
-            {% block content %}
-            {% endblock %}
-        </main>
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer class="footer mt-5">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <h4 class="font-serif text-white mb-3">TEATRO AL AIRE LIBRE<br>"JAIME LAREDO"</h4>
+                    <p class="text-light-gray small">El mejor espacio cultural de Bolivia para disfrutar de espectáculos
+                        únicos bajo las estrellas.</p>
+                </div>
+                <div class="col-md-3">
+                    <h5 class="text-white mb-3">Enlaces Rápidos</h5>
+                    <ul class="list-unstyled small">
+                        <li class="mb-2"><a href="#" class="text-light-gray text-decoration-none hover-blue">Ver
+                                Eventos</a></li>
+                        <li class="mb-2"><a href="#" class="text-light-gray text-decoration-none hover-blue">Mis
+                                entradas</a></li>
+                        <li class="mb-2"><a href="#" class="text-light-gray text-decoration-none hover-blue">Sobre
+                                Nosotros</a></li>
+                        <li class="mb-2"><a href="#"
+                                class="text-light-gray text-decoration-none hover-blue">Contacto</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5 class="text-white mb-3">Contacto</h5>
+                    <p class="text-light-gray small mb-1"><i class="fas fa-phone me-2"
+                            style="color: var(--color-blue)"></i>+591 2 1234567</p>
+                    <p class="text-light-gray small"><i class="fas fa-envelope me-2"
+                            style="color: var(--color-blue)"></i>info@teatrolapaz.bo</p>
+                </div>
+                <div class="col-md-2">
+                    <h5 class="text-white mb-3">Síguenos</h5>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-tiktok"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-4 pt-3 border-top border-secondary text-light-gray small">
+                <div class="col-md-6">&copy; 2026 Teatro al Aire Libre La Paz. Todos los derechos reservados.</div>
+                <div class="col-md-6 text-end">
+                    <a href="#" class="text-light-gray text-decoration-none me-3">Términos y Condiciones</a>
+                    <a href="#" class="text-light-gray text-decoration-none">Política de Privacidad</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div class="modal fade" id="authModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 450px;">
+            <div class="modal-content position-relative">
+
+                <button type="button" class="btn-close-custom" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i>
+                </button>
+
+                <div class="modal-body p-4">
+                    <div class="modal-brand mt-2">
+                        TEATRO AL AIRE LIBRE<br>"JAIME LAREDO"
+                    </div>
+                    <h3 class="text-center fw-bold mb-4">Sign up o Log in</h3>
+
+                    <div class="auth-toggle-box">
+                        <button class="auth-toggle-btn active" id="tab-login" onclick="switchAuthTab('login')">Log
+                            in</button>
+                        <button class="auth-toggle-btn" id="tab-signup" onclick="switchAuthTab('signup')">Sign
+                            up</button>
+                    </div>
+
+                    <div id="form-login">
+                        <form action="#" method="POST">
+                            <div class="mb-3">
+                                <input type="email" class="form-control custom-input" placeholder="Email" required>
+                            </div>
+                            <div class="mb-4 password-wrapper">
+                                <input type="password" class="form-control custom-input pwd-input"
+                                    placeholder="Contraseña" required>
+                                <i class="fas fa-eye-slash password-toggle" onclick="togglePassword(this)"></i>
+                            </div>
+                            <button type="submit" class="btn btn-dark-action mb-3">Acceder</button>
+                            <div class="text-start">
+                                <a href="#" class="text-muted text-decoration-none small">Olvide mi Contraseña</a>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div id="form-signup" class="d-none">
+                        <form action="#" method="POST">
+                            <div class="mb-3">
+                                <input type="email" class="form-control custom-input" placeholder="Email" required>
+                            </div>
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <input type="text" class="form-control custom-input" placeholder="Nombre" required>
+                                </div>
+                                <div class="col-6">
+                                    <input type="text" class="form-control custom-input" placeholder="Apellido"
+                                        required>
+                                </div>
+                            </div>
+                            <div class="mb-3 password-wrapper">
+                                <input type="password" class="form-control custom-input pwd-input"
+                                    placeholder="Contraseña" required>
+                                <i class="fas fa-eye-slash password-toggle" onclick="togglePassword(this)"></i>
+                            </div>
+
+                            <div class="input-group mb-4"
+                                style="border: 2px solid black; border-radius: 10px; overflow: hidden;">
+                                <button class="btn btn-light dropdown-toggle bg-white border-0" type="button"
+                                    style="border-right: 1px solid #ddd !important;" disabled>
+                                    🇧🇴
+                                </button>
+                                <input type="tel" class="form-control border-0 shadow-none"
+                                    placeholder="Numero de Telefono (Opcional)">
+                            </div>
+
+                            <button type="submit" class="btn btn-dark-action mb-3">Registrarse</button>
+                            <div class="text-start">
+                                <a href="#" class="text-muted text-decoration-none small">Olvide mi Contraseña</a>
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Función para cambiar entre Login y Sign Up
+        function switchAuthTab(tab) {
+            const btnLogin = document.getElementById('tab-login');
+            const btnSignup = document.getElementById('tab-signup');
+            const formLogin = document.getElementById('form-login');
+            const formSignup = document.getElementById('form-signup');
+
+            if (tab === 'login') {
+                btnLogin.classList.add('active');
+                btnSignup.classList.remove('active');
+                formLogin.classList.remove('d-none');
+                formSignup.classList.add('d-none');
+            } else {
+                btnSignup.classList.add('active');
+                btnLogin.classList.remove('active');
+                formSignup.classList.remove('d-none');
+                formLogin.classList.add('d-none');
+            }
+        }
+
+        // Función para mostrar/ocultar contraseña (el ícono del ojito)
+        function togglePassword(iconElement) {
+            // Busca el input de contraseña que está justo antes del ícono
+            const input = iconElement.previousElementSibling;
+            if (input.type === 'password') {
+                input.type = 'text';
+                iconElement.classList.remove('fa-eye-slash');
+                iconElement.classList.add('fa-eye');
+            } else {
+                input.type = 'password';
+                iconElement.classList.remove('fa-eye');
+                iconElement.classList.add('fa-eye-slash');
+            }
+        }
+    </script>
 </body>
+
 </html>
