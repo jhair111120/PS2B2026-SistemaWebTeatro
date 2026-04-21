@@ -1,21 +1,605 @@
+{% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="es">
+
 <head>
-    <title>Proyecto</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Teatro Al Aire Libre - Jaime Laredo{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --color-green: #10B981;
+            --color-blue: #0EA5E9;
+            --bg-darkest: #0A0E14;
+            --bg-navbar: #151920;
+            --bg-card: #1E293B;
+        }
+
+        body {
+            background-color: var(--bg-darkest);
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .text-light-gray {
+            color: #E2E8F0 !important;
+        }
+
+        .text-light-gray-bold {
+            color: #E2E8F0 !important;
+            font-weight: bold;
+        }
+
+        /* Navbar */
+        .navbar {
+            background-color: var(--bg-navbar);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .navbar-brand {
+            font-family: serif;
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+        }
+
+        .nav-link.active {
+            background-color: var(--color-blue);
+            color: white !important;
+            border-radius: 5px;
+        }
+
+        .nav-link {
+            color: #ccc !important;
+            transition: 0.3s;
+        }
+
+        .nav-link:hover {
+            color: white !important;
+        }
+
+        .cart-icon {
+            position: relative;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -5px;
+            right: -10px;
+            background: red;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 0.7rem;
+        }
+
+        /* Botones Base */
+        .btn-blue {
+            background-color: var(--color-blue);
+            color: white;
+            border: none;
+        }
+
+        .btn-blue:hover {
+            background-color: #0c8bc5;
+            color: white;
+        }
+
+        .btn-animated {
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .btn-animated:hover {
+            transform: translateY(-3px);
+        }
+
+        .btn-login {
+            border: 1px solid var(--color-blue);
+            color: var(--color-blue);
+        }
+
+        .btn-login:hover {
+            background-color: rgba(14, 165, 233, 0.1);
+            color: var(--color-blue);
+        }
+
+        /* --- MENÚ DESPLEGABLE DE USUARIO --- */
+        .btn-account {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            text-decoration: none;
+            background: transparent;
+            border: none;
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 8px;
+            transition: 0.2s;
+        }
+
+        .btn-account:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .gradient-profile-icon {
+            background: linear-gradient(135deg, var(--color-blue), var(--color-green));
+            color: white;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .user-dropdown-menu {
+            background-color: var(--bg-navbar);
+            border: 1px solid #333;
+            border-radius: 12px;
+            width: 260px;
+            padding: 0;
+            margin-top: 15px !important;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+            overflow: hidden;
+        }
+
+        .user-dropdown-header {
+            padding: 18px 20px;
+            border-bottom: 1px solid #333;
+        }
+
+        .user-dropdown-item {
+            color: #E2E8F0;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            text-decoration: none;
+            transition: 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .user-dropdown-item i {
+            font-size: 1.1rem;
+            width: 20px;
+            text-align: center;
+            color: #94a3b8;
+        }
+
+        .user-dropdown-item:hover {
+            background-color: var(--bg-card);
+            color: white;
+        }
+
+        .user-dropdown-item:hover i {
+            color: white;
+        }
+
+        .user-dropdown-item.logout {
+            color: #dc3545;
+            border-top: 1px solid #333;
+        }
+
+        .user-dropdown-item.logout i {
+            color: #dc3545;
+        }
+
+        .user-dropdown-item.logout:hover {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+        }
+
+        /* Notificaciones TOAST */
+        .toast-container-custom {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1060;
+        }
+
+        /* Modal y Formularios */
+        .modal-content {
+            border-radius: 20px;
+            color: black;
+            padding: 20px;
+        }
+
+        .btn-close-custom {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: 2px solid black;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .modal-brand {
+            font-family: serif;
+            font-size: 1.2rem;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .auth-toggle-box {
+            background-color: #E2E8F0;
+            border-radius: 50px;
+            padding: 5px;
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        .auth-toggle-btn {
+            flex: 1;
+            border: none;
+            background: transparent;
+            border-radius: 50px;
+            padding: 10px;
+            font-weight: bold;
+            color: #333;
+            transition: all 0.3s;
+        }
+
+        .auth-toggle-btn.active {
+            background-color: white;
+            border: 1px solid black;
+            color: black;
+        }
+
+        /* Validaciones Visuales */
+        .custom-input {
+            border: 2px solid black;
+            border-radius: 10px;
+            padding: 12px 15px;
+            font-size: 0.9rem;
+            box-shadow: none !important;
+            transition: 0.3s;
+        }
+
+        .is-invalid-custom {
+            border-color: #dc3545 !important;
+            background-color: #f8d7da;
+        }
+
+        .is-valid-custom {
+            border-color: #198754 !important;
+            background-color: #d1e7dd;
+        }
+
+        .feedback-msg {
+            font-size: 0.75rem;
+            margin-top: 5px;
+            color: #dc3545;
+            display: none;
+        }
+
+        .feedback-msg.show {
+            display: block;
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        .password-toggle {
+            position: absolute;
+            top: 22px;
+            right: 15px;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: black;
+        }
+
+        .btn-dark-action {
+            background-color: var(--bg-card);
+            color: white;
+            border-radius: 10px;
+            padding: 12px;
+            font-weight: bold;
+            width: 100%;
+            border: none;
+            transition: 0.3s;
+        }
+
+        .btn-dark-action:hover {
+            background-color: #0f172a;
+            color: white;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: var(--bg-card);
+            border-top: 1px solid #333;
+            padding: 40px 0 20px;
+            font-size: 0.9rem;
+        }
+
+        .social-icons a {
+            color: white;
+            font-size: 1.5rem;
+            margin-right: 15px;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+    </style>
 </head>
+
 <body>
 
-    {% include "components/navbar.html" %}
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top py-3">
+        <div class="container">
+            <a class="navbar-brand text-white" href="/">
+                TEATRO AL AIRE LIBRE<br><small style="font-size: 0.9rem;">"JAIME LAREDO"</small>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item px-2"><a class="nav-link active px-3" href="/">Inicio</a></li>
+                    <li class="nav-item px-2"><a class="nav-link" href="#">Eventos</a></li>
+                    <li class="nav-item px-2"><a class="nav-link" href="#">Mis entradas</a></li>
+                </ul>
+            </div>
 
-    <div class="flex">
-        {% include "components/sidebar.html" %}
+            <div class="d-flex align-items-center">
+                <a href="#" class="text-white me-4 cart-icon"><i class="fas fa-shopping-cart fa-lg"></i><span
+                        class="cart-badge">2</span></a>
 
-        <main class="p-6 w-full">
-            {% block content %}
-            {% endblock %}
-        </main>
+                {% if request.session.usuario_id %}
+                <div class="dropdown">
+                    <button class="btn-account dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        <div class="gradient-profile-icon"><i class="far fa-user"></i></div>
+                        Mi Cuenta
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end user-dropdown-menu">
+                        <li class="user-dropdown-header">
+                            <div class="fw-bold text-white fs-6">{{ request.session.usuario_nombre_completo }}</div>
+                            <div class="small" style="color: #94a3b8;">{{ request.session.usuario_correo }}</div>
+                        </li>
+                        <li><a class="user-dropdown-item" href="#"><i class="fas fa-ticket-alt"></i> Mis Entradas</a>
+                        </li>
+                        <li><a class="user-dropdown-item" href="{% url 'perfil' %}"><i class="far fa-user"></i> Mi
+                                Perfil</a></li>
+                        <li><a class="user-dropdown-item logout" href="{% url 'logout' %}"><i
+                                    class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
+                    </ul>
+                </div>
+                {% else %}
+                <a href="#" class="btn btn-login rounded-pill px-4 me-2 btn-animated" data-bs-toggle="modal"
+                    data-bs-target="#authModal" onclick="switchAuthTab('login')">Login</a>
+                <a href="#" class="btn btn-blue rounded-pill px-4 btn-animated" data-bs-toggle="modal"
+                    data-bs-target="#authModal" onclick="switchAuthTab('signup')">Sign Up</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="toast-container-custom">
+        {% if messages %}
+        {% for message in messages %}
+        <div class="toast align-items-center text-bg-{% if message.tags == 'error' %}danger{% else %}success{% endif %} border-0 show shadow-lg mb-2"
+            role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4000">
+            <div class="d-flex">
+                <div class="toast-body fw-bold" style="font-size: 0.95rem;">
+                    {% if message.tags == 'error' %}<i class="fas fa-exclamation-circle me-2"></i>{% else %}<i
+                        class="fas fa-check-circle me-2"></i>{% endif %}
+                    {{ message }}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
+            </div>
+        </div>
+        {% endfor %}
+        {% endif %}
     </div>
 
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer class="footer mt-5">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <h4 class="font-serif text-white mb-3">TEATRO AL AIRE LIBRE<br>"JAIME LAREDO"</h4>
+                    <p class="text-light-gray small">El mejor espacio cultural de Bolivia para disfrutar de espectáculos
+                        únicos bajo las estrellas.</p>
+                </div>
+                <div class="col-md-3">
+                    <h5 class="text-white mb-3">Enlaces Rápidos</h5>
+                    <ul class="list-unstyled small">
+                        <li class="mb-2"><a href="#" class="text-light-gray text-decoration-none hover-blue">Ver
+                                Eventos</a></li>
+                        <li class="mb-2"><a href="#" class="text-light-gray text-decoration-none hover-blue">Mis
+                                entradas</a></li>
+                        <li class="mb-2"><a href="#" class="text-light-gray text-decoration-none hover-blue">Sobre
+                                Nosotros</a></li>
+                        <li class="mb-2"><a href="#"
+                                class="text-light-gray text-decoration-none hover-blue">Contacto</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5 class="text-white mb-3">Contacto</h5>
+                    <p class="text-light-gray small mb-1"><i class="fas fa-phone me-2"
+                            style="color: var(--color-blue)"></i>+591 2 1234567</p>
+                    <p class="text-light-gray small"><i class="fas fa-envelope me-2"
+                            style="color: var(--color-blue)"></i>info@teatrolapaz.bo</p>
+                </div>
+                <div class="col-md-2">
+                    <h5 class="text-white mb-3">Síguenos</h5>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-tiktok"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-4 pt-3 border-top border-secondary text-light-gray small">
+                <div class="col-md-6">&copy; 2026 Teatro al Aire Libre La Paz. Todos los derechos reservados.</div>
+                <div class="col-md-6 text-end">
+                    <a href="#" class="text-light-gray text-decoration-none me-3">Términos y Condiciones</a>
+                    <a href="#" class="text-light-gray text-decoration-none">Política de Privacidad</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div class="modal fade" id="authModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 450px;">
+            <div class="modal-content position-relative">
+                <button type="button" class="btn-close-custom" data-bs-dismiss="modal"><i
+                        class="fas fa-times"></i></button>
+
+                <div class="modal-body p-4">
+                    <div class="modal-brand mt-2">TEATRO AL AIRE LIBRE<br>"JAIME LAREDO"</div>
+                    <h3 class="text-center fw-bold mb-4">Sign up o Log in</h3>
+
+                    <div class="auth-toggle-box">
+                        <button class="auth-toggle-btn active" id="tab-login" onclick="switchAuthTab('login')">Log
+                            in</button>
+                        <button class="auth-toggle-btn" id="tab-signup" onclick="switchAuthTab('signup')">Sign
+                            up</button>
+                    </div>
+
+                    <div id="form-login">
+                        <form action="{% url 'login' %}" method="POST">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <input type="email" name="correo" class="form-control custom-input" placeholder="Email"
+                                    required>
+                            </div>
+                            <div class="mb-4 password-wrapper">
+                                <input type="password" name="password" class="form-control custom-input pwd-input"
+                                    placeholder="Contraseña" required>
+                                <i class="fas fa-eye-slash password-toggle" onclick="togglePassword(this)"></i>
+                            </div>
+                            <button type="submit" class="btn btn-dark-action mb-3">Acceder</button>
+                            <div class="text-start"><a href="#" class="text-muted text-decoration-none small">Olvide mi
+                                    Contraseña</a></div>
+                        </form>
+                    </div>
+
+                    <div id="form-signup" class="d-none">
+                        <form action="{% url 'signup' %}" method="POST" id="signupForm">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <input type="email" name="correo" id="reg-correo" class="form-control custom-input"
+                                    placeholder="Ej. usuario123@dominio.bo" required onkeyup="valEmail()">
+                                <div id="email-feed" class="feedback-msg">Debe ser un correo válido con su dominio.
+                                </div>
+                            </div>
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <input type="text" name="nombre" id="reg-nombre" class="form-control custom-input"
+                                        placeholder="Nombre" required onkeyup="valNombre('reg-nombre')">
+                                    <div id="reg-nombre-feed" class="feedback-msg">Inicie con mayúscula. Solo letras.
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <input type="text" name="apellido" id="reg-apellido"
+                                        class="form-control custom-input" placeholder="Apellido" required
+                                        onkeyup="valNombre('reg-apellido')">
+                                    <div id="reg-apellido-feed" class="feedback-msg">Inicie con mayúscula. Solo letras.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3 password-wrapper">
+                                <input type="password" name="password" id="reg-pwd"
+                                    class="form-control custom-input pwd-input" placeholder="Contraseña" required
+                                    onkeyup="valPwd()">
+                                <i class="fas fa-eye-slash password-toggle" onclick="togglePassword(this)"></i>
+                                <div id="pwd-feed" class="feedback-msg">Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1
+                                    número y 1 especial (@$!%*?&.-).</div>
+                            </div>
+                            <div class="input-group mb-1"
+                                style="border: 2px solid black; border-radius: 10px; overflow: hidden;"
+                                id="phone-container">
+                                <button class="btn btn-light dropdown-toggle bg-white border-0" type="button"
+                                    style="border-right: 1px solid #ddd !important;" disabled>🇧🇴</button>
+                                <input type="tel" name="telefono" id="reg-tel" class="form-control border-0 shadow-none"
+                                    placeholder="8 dígitos (Solo números)" onkeyup="valTel()">
+                            </div>
+                            <div id="tel-feed" class="feedback-msg mb-3">Solo se aceptan 8 números exactos. Sin letras
+                                ni símbolos.</div>
+
+                            <button type="submit" class="btn btn-dark-action mb-3 mt-3">Registrarse</button>
+                            <div class="text-start"><a href="#" class="text-muted text-decoration-none small">Olvide mi
+                                    Contraseña</a></div>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Validaciones Visuales Estrictas
+        function valNombre(id) { toggleVal(document.getElementById(id), /^[A-ZÁÉÍÓÚÑ][a-zA-ZáéíóúñÁÉÍÓÚÑ\s]*$/, id + '-feed'); }
+        function valEmail() { toggleVal(document.getElementById('reg-correo'), /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}$/, 'email-feed'); }
+        function valPwd() { toggleVal(document.getElementById('reg-pwd'), /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.-])[A-Za-z\d@$!%*?&.-]{8,}$/, 'pwd-feed'); }
+        function valTel() {
+            const input = document.getElementById('reg-tel'), container = document.getElementById('phone-container');
+            if (input.value === "") { container.style.borderColor = "black"; document.getElementById('tel-feed').classList.remove('show'); return; }
+            if (/^[0-9]{8}$/.test(input.value)) {
+                container.style.borderColor = "#198754"; document.getElementById('tel-feed').classList.remove('show');
+            } else { container.style.borderColor = "#dc3545"; document.getElementById('tel-feed').classList.add('show'); }
+        }
+        function toggleVal(input, regex, feedId) {
+            const feed = document.getElementById(feedId);
+            if (regex.test(input.value)) {
+                input.classList.add('is-valid-custom'); input.classList.remove('is-invalid-custom'); feed.classList.remove('show');
+            } else { input.classList.add('is-invalid-custom'); input.classList.remove('is-valid-custom'); feed.classList.add('show'); }
+        }
+
+        // Interfaz del Modal
+        function switchAuthTab(tab) {
+            const btnLogin = document.getElementById('tab-login'), btnSignup = document.getElementById('tab-signup');
+            const formLogin = document.getElementById('form-login'), formSignup = document.getElementById('form-signup');
+            if (tab === 'login') {
+                btnLogin.classList.add('active'); btnSignup.classList.remove('active');
+                formLogin.classList.remove('d-none'); formSignup.classList.add('d-none');
+            } else {
+                btnSignup.classList.add('active'); btnLogin.classList.remove('active');
+                formSignup.classList.remove('d-none'); formLogin.classList.add('d-none');
+            }
+        }
+        function togglePassword(icon) {
+            const input = icon.previousElementSibling;
+            if (input.type === 'password') {
+                input.type = 'text'; icon.classList.replace('fa-eye-slash', 'fa-eye');
+            } else { input.type = 'password'; icon.classList.replace('fa-eye', 'fa-eye-slash'); }
+        }
+
+        // Auto-abrir modal y Notificaciones
+        document.addEventListener("DOMContentLoaded", function () {
+            var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+            toastElList.map(function (toastEl) { return new bootstrap.Toast(toastEl).show(); });
+
+            const action = new URLSearchParams(window.location.search).get('action');
+            if (action === 'login' || action === 'signup') {
+                var authModal = new bootstrap.Modal(document.getElementById('authModal'));
+                switchAuthTab(action); authModal.show();
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        });
+    </script>
 </body>
+
 </html>

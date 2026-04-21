@@ -1,4 +1,5 @@
 from django.db import models
+import uuid
 
 
 class EstadoEntrada(models.Model):
@@ -9,28 +10,38 @@ class EstadoEntrada(models.Model):
         managed = False
         db_table = 'estado_entrada'
         db_table_comment = 'emitida | usada | cancelada'
+        verbose_name = 'Estado de Entrada'
+        verbose_name_plural = 'Estados de Entrada'
+
+    def __str__(self):
+        return self.nombre
 
 
 class Entrada(models.Model):
     id = models.BigAutoField(primary_key=True)
 
     venta = models.ForeignKey(
-        'payments.Venta',
-        models.DO_NOTHING
+        'payments.venta',
+        on_delete=models.CASCADE,
+        related_name='entradas'
     )
 
     detalle_reserva = models.ForeignKey(
         'reservations.DetalleReserva',
-        models.DO_NOTHING,
+        on_delete=models.DO_NOTHING,
         db_comment='No UNIQUE: zonas General/Fosa generan multiples entradas por detalle'
     )
 
     estado_entrada = models.ForeignKey(
-        'tickets.EstadoEntrada',
-        models.DO_NOTHING
+        EstadoEntrada,
+        on_delete=models.PROTECT
     )
 
-    codigo_ticket = models.UUIDField(unique=True)
+    codigo_ticket = models.UUIDField(
+        unique=True,
+        default=uuid.uuid4,
+        editable=False
+    )
 
     codigo_qr = models.CharField(
         unique=True,
@@ -41,13 +52,14 @@ class Entrada(models.Model):
     descripcion_ubicacion = models.CharField(max_length=150)
     precio_pagado = models.DecimalField(max_digits=10, decimal_places=2)
 
-    usada = models.BooleanField()
-    fecha_emision = models.DateTimeField()
+    usada = models.BooleanField(default=False)
+
+    fecha_emision = models.DateTimeField(auto_now_add=True)
     fecha_validacion = models.DateTimeField(blank=True, null=True)
 
     validado_por_usuario = models.ForeignKey(
         'users.Usuario',
-        models.DO_NOTHING,
+        on_delete=models.SET_NULL,
         blank=True,
         null=True
     )
@@ -55,3 +67,8 @@ class Entrada(models.Model):
     class Meta:
         managed = False
         db_table = 'entrada'
+        verbose_name = 'Entrada'
+        verbose_name_plural = 'Entradas'
+
+    def __str__(self):
+        return f"Ticket {self.codigo_ticket} - {self.descripcion_ubicacion}"
