@@ -16,12 +16,23 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from apps.users.views import home
 from django.views.generic import TemplateView
+
+# Importamos las vistas
+from apps.users.views import signup_view, login_view, logout_view, perfil_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', home),
+    
+    # Rutas de las interfaces visuales
     path('', TemplateView.as_view(template_name='pages/inicio.html'), name='inicio'),
     path('soporte/', TemplateView.as_view(template_name='pages/soporte.html'), name='soporte'),
+    
+    # NUEVA RUTA: Mi Perfil
+    path('perfil/', perfil_view, name='perfil'),
+    
+    # Rutas de Autenticación
+    path('signup/', signup_view, name='signup'),
+    path('login/', login_view, name='login'),
+    path('logout/', logout_view, name='logout'),
 ]
