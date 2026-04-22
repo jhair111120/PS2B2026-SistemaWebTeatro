@@ -165,4 +165,4 @@ def perfil_view(request):
     contexto = {
         'usuario': usuario_actual
     }
-    return render(request, 'pages/perfil.html', contexto)
+    return render(request, 'pages/usuarios/perfil.html', contexto)

@@ -25,8 +25,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     
     # Rutas de las interfaces visuales
-    path('', TemplateView.as_view(template_name='pages/inicio.html'), name='inicio'),
-    path('soporte/', TemplateView.as_view(template_name='pages/soporte.html'), name='soporte'),
+    path('', TemplateView.as_view(template_name='pages/usuarios/inicio.html'), name='inicio'),
+    path('soporte/', TemplateView.as_view(template_name='pages/soporte/soporte.html'), name='soporte'),
     
     # NUEVA RUTA: Mi Perfil
     path('perfil/', perfil_view, name='perfil'),
@@ -36,6 +36,4 @@ urlpatterns = [
     path('login/', login_view, name='login'),
     path('logout/', logout_view, name='logout'),
     
-    # Momentaneo
-    #path('eventos', TemplateView.as_view(template_name='pages/inicio.html')),
 ]
