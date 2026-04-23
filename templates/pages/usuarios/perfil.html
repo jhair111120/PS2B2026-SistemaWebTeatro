@@ -5,7 +5,6 @@
 
 {% block content %}
 <style>
-    /* Estilos específicos para la página de Perfil */
     .profile-header {
         margin-top: 40px;
         margin-bottom: 30px;
@@ -150,45 +149,30 @@
                         <div class="col-md-6">
                             <label class="form-label">Nombre</label>
                             <input type="text" name="nombre" class="form-control input-dark"
-                                value="{{ usuario.nombre }}" required>
+                                value="{{ usuario.nombre }}" required
+                                oninput="this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Apellido</label>
                             <input type="text" name="apellido" class="form-control input-dark"
-                                value="{{ usuario.apellido }}" required>
+                                value="{{ usuario.apellido }}" required
+                                oninput="this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Correo Electronico</label>
+                            <label class="form-label">Correo Electrónico</label>
                             <input type="email" name="correo" class="form-control input-dark"
                                 value="{{ usuario.correo }}" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Numero Telefono</label>
-                            <input type="text" name="telefono" class="form-control input-dark"
-                                value="{{ usuario.telefono|default:'' }}">
+                            <label class="form-label">Número de Teléfono</label>
+                            <input type="tel" name="telefono" class="form-control input-dark"
+                                value="{{ usuario.telefono|default:'' }}" placeholder="Solo números"
+                                oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Fecha de Nacimiento</label>
-                            <input type="text" name="fecha_nac" class="form-control input-dark"
-                                placeholder="DD/MM/YYYY">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Carnet de Identidad</label>
+                            <label class="form-label">Carnet de Identidad (DNI)</label>
                             <input type="text" name="dni" class="form-control input-dark"
                                 value="{{ usuario.dni|default:'' }}" placeholder="Ej. 9123661 LP">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Direccion</label>
-                            <input type="text" name="direccion" class="form-control input-dark"
-                                placeholder="Av. 16 de Julio #54">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Ciudad</label>
-                            <input type="text" name="ciudad" class="form-control input-dark" placeholder="La Paz">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Pais</label>
-                            <input type="text" name="pais" class="form-control input-dark" value="Bolivia">
                         </div>
                     </div>
                     <div class="text-end mt-4">

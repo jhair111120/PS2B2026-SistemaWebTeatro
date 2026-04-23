@@ -379,9 +379,9 @@
                 </div>
                 {% else %}
                 <a href="#" class="btn btn-login rounded-pill px-4 me-2 btn-animated" data-bs-toggle="modal"
-                    data-bs-target="#authModal" onclick="switchAuthTab('login')">Login</a>
+                    data-bs-target="#authModal" onclick="switchAuthTab('login')">Iniciar Sesión</a>
                 <a href="#" class="btn btn-blue rounded-pill px-4 btn-animated" data-bs-toggle="modal"
-                    data-bs-target="#authModal" onclick="switchAuthTab('signup')">Sign Up</a>
+                    data-bs-target="#authModal" onclick="switchAuthTab('signup')">Registrarse</a>
                 {% endif %}
             </div>
         </div>
@@ -466,21 +466,21 @@
 
                 <div class="modal-body p-4">
                     <div class="modal-brand mt-2">TEATRO AL AIRE LIBRE<br>"JAIME LAREDO"</div>
-                    <h3 class="text-center fw-bold mb-4">Sign up o Log in</h3>
+                    <h3 class="text-center fw-bold mb-4">Iniciar Sesión o Registrarse</h3>
 
                     <div class="auth-toggle-box">
-                        <button class="auth-toggle-btn active" id="tab-login" onclick="switchAuthTab('login')">Log
-                            in</button>
-                        <button class="auth-toggle-btn" id="tab-signup" onclick="switchAuthTab('signup')">Sign
-                            up</button>
+                        <button class="auth-toggle-btn active" id="tab-login" onclick="switchAuthTab('login')">Iniciar
+                            Sesión</button>
+                        <button class="auth-toggle-btn" id="tab-signup"
+                            onclick="switchAuthTab('signup')">Registrarse</button>
                     </div>
 
                     <div id="form-login">
                         <form action="{% url 'login' %}" method="POST">
                             {% csrf_token %}
                             <div class="mb-3">
-                                <input type="email" name="correo" class="form-control custom-input" placeholder="Email"
-                                    required>
+                                <input type="email" name="correo" class="form-control custom-input"
+                                    placeholder="Correo Electrónico" required>
                             </div>
                             <div class="mb-4 password-wrapper">
                                 <input type="password" name="password" class="form-control custom-input pwd-input"
@@ -488,7 +488,7 @@
                                 <i class="fas fa-eye-slash password-toggle" onclick="togglePassword(this)"></i>
                             </div>
                             <button type="submit" class="btn btn-dark-action mb-3">Acceder</button>
-                            <div class="text-start"><a href="#" class="text-muted text-decoration-none small">Olvide mi
+                            <div class="text-start"><a href="#" class="text-muted text-decoration-none small">Olvidé mi
                                     Contraseña</a></div>
                         </form>
                     </div>
@@ -502,17 +502,20 @@
                                 <div id="email-feed" class="feedback-msg">Debe ser un correo válido con su dominio.
                                 </div>
                             </div>
+
                             <div class="row g-2 mb-3">
                                 <div class="col-6">
                                     <input type="text" name="nombre" id="reg-nombre" class="form-control custom-input"
-                                        placeholder="Nombre" required onkeyup="valNombre('reg-nombre')">
+                                        placeholder="Nombre" required onkeyup="valNombre('reg-nombre')"
+                                        oninput="this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')">
                                     <div id="reg-nombre-feed" class="feedback-msg">Inicie con mayúscula. Solo letras.
                                     </div>
                                 </div>
                                 <div class="col-6">
                                     <input type="text" name="apellido" id="reg-apellido"
                                         class="form-control custom-input" placeholder="Apellido" required
-                                        onkeyup="valNombre('reg-apellido')">
+                                        onkeyup="valNombre('reg-apellido')"
+                                        oninput="this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')">
                                     <div id="reg-apellido-feed" class="feedback-msg">Inicie con mayúscula. Solo letras.
                                     </div>
                                 </div>
@@ -525,19 +528,21 @@
                                 <div id="pwd-feed" class="feedback-msg">Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1
                                     número y 1 especial (@$!%*?&.-).</div>
                             </div>
+
                             <div class="input-group mb-1"
                                 style="border: 2px solid black; border-radius: 10px; overflow: hidden;"
                                 id="phone-container">
                                 <button class="btn btn-light dropdown-toggle bg-white border-0" type="button"
                                     style="border-right: 1px solid #ddd !important;" disabled>🇧🇴</button>
                                 <input type="tel" name="telefono" id="reg-tel" class="form-control border-0 shadow-none"
-                                    placeholder="8 dígitos (Solo números)" onkeyup="valTel()">
+                                    placeholder="8 dígitos (Solo números)" onkeyup="valTel()"
+                                    oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                             </div>
                             <div id="tel-feed" class="feedback-msg mb-3">Solo se aceptan 8 números exactos. Sin letras
                                 ni símbolos.</div>
 
                             <button type="submit" class="btn btn-dark-action mb-3 mt-3">Registrarse</button>
-                            <div class="text-start"><a href="#" class="text-muted text-decoration-none small">Olvide mi
+                            <div class="text-start"><a href="#" class="text-muted text-decoration-none small">Olvidé mi
                                     Contraseña</a></div>
                         </form>
                     </div>

@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        /* Paleta de colores */
+        /* Paleta de colores exacta */
         :root {
             --color-green: #10B981;
             --color-blue: #0EA5E9;
@@ -19,10 +19,10 @@
             --bg-sidebar: #0f141d;
             /* Fondo panel izquierdo */
             --bg-card: #151a23;
-            /* Fondo tarjetas */
+            /* Fondo tarjetas / burbujas */
             --bg-card-hover: #1E293B;
             --text-gray: #94a3b8;
-            --border-color: rgba(255, 255, 255, 0.1);
+            --border-color: rgba(255, 255, 255, 0.05);
         }
 
         body {
@@ -31,7 +31,6 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             height: 100vh;
             overflow: hidden;
-            /* Evita el scroll en toda la página */
             display: flex;
         }
 
@@ -69,7 +68,7 @@
 
         .nav-item-admin:hover {
             color: white;
-            background-color: rgba(255, 255, 255, 0.05);
+            background-color: rgba(255, 255, 255, 0.03);
         }
 
         .nav-item-admin.active {
@@ -102,146 +101,189 @@
             padding: 0 30px;
             background-color: var(--bg-sidebar);
             flex-shrink: 0;
+            z-index: 10;
         }
 
-        .search-bar {
-            background-color: var(--bg-darkest);
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            padding: 8px 15px;
-            color: white;
-            width: 350px;
+        .topbar-right {
             display: flex;
             align-items: center;
+            gap: 20px;
+            color: var(--text-gray);
         }
 
-        .search-bar input {
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--color-blue), var(--color-green));
+            color: white;
+        }
+
+        /* Area de Soporte (Layout de Bandeja de Entrada) */
+        .support-layout {
+            display: flex;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        /* --- COLUMNA IZQUIERDA: Inbox --- */
+        .inbox-sidebar {
+            width: 380px;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+            flex-shrink: 0;
+        }
+
+        .inbox-header {
+            padding: 0 20px;
+            margin-bottom: 20px;
+        }
+
+        .search-bar-inbox {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin: 0 20px 15px;
+            display: flex;
+            align-items: center;
+            color: var(--text-gray);
+        }
+
+        .search-bar-inbox input {
             background: transparent;
             border: none;
             color: white;
             outline: none;
             width: 100%;
             margin-left: 10px;
+            font-size: 0.9rem;
         }
 
-        .search-bar input::placeholder {
-            color: var(--text-gray);
-        }
-
-        /* Area de Soporte (Tarjetas y Chat) */
-        .support-area {
-            padding: 25px 30px;
-            overflow-y: auto;
-            flex-grow: 1;
-        }
-
-        /* Tarjetas de Estadísticas */
-        .stat-card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .stat-icon {
-            font-size: 2rem;
-        }
-
-        /* ----- SECCIÓN DE CHAT ----- */
-        .chat-container {
-            display: flex;
-            gap: 20px;
-            height: 550px;
-            /* Altura fija para el área de chat */
-            margin-top: 20px;
-        }
-
-        /* Lista de conversaciones */
         .conversation-list {
-            width: 350px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            flex-shrink: 0;
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 0 10px;
         }
 
-        .chat-card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
+        .ticket-chat-card {
+            background-color: transparent;
+            border: none;
             border-radius: 12px;
             padding: 15px;
             cursor: pointer;
-            transition: 0.3s;
+            transition: 0.2s;
+            color: white;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 5px;
         }
 
-        .chat-card:hover {
-            background-color: var(--bg-card-hover);
+        .ticket-chat-card:hover {
+            background-color: rgba(255, 255, 255, 0.02);
         }
 
-        .chat-card.active {
-            background-color: var(--color-blue);
-            border-color: var(--color-blue);
+        .ticket-chat-card.active {
+            background-color: rgba(14, 165, 233, 0.08);
+            border: 1px solid rgba(14, 165, 233, 0.2);
         }
 
-        .user-avatar {
+        .user-initials {
             width: 40px;
             height: 40px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             flex-shrink: 0;
         }
 
-        /* Ventana de Chat Activo */
+        /* --- COLUMNA DERECHA: Ventana de Chat --- */
         .chat-window {
             flex-grow: 1;
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            background-color: var(--bg-darkest);
+        }
+
+        .no-ticket-selected {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-gray);
+            gap: 20px;
         }
 
         .chat-header {
-            padding: 15px 20px;
+            padding: 15px 25px;
             border-bottom: 1px solid var(--border-color);
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 15px;
+            background-color: var(--bg-darkest);
+            flex-shrink: 0;
+            display: none;
+        }
+
+        .ticket-status-badge {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--color-green);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-left: 10px;
         }
 
         .chat-messages {
             flex-grow: 1;
-            padding: 20px;
+            padding: 25px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
             gap: 15px;
+            background-color: var(--bg-darkest);
+            display: none;
         }
 
-        /* Burbujas de mensaje */
-        .message {
-            max-width: 70%;
+        .message-row {
+            display: flex;
+            width: 100%;
+            gap: 10px;
+        }
+
+        .message-bubble {
+            max-width: 65%;
             padding: 12px 18px;
             border-radius: 12px;
             font-size: 0.95rem;
         }
 
-        .message-incoming {
-            background-color: #212C3D;
-            align-self: flex-start;
+        .msg-in {
+            justify-content: flex-start;
+        }
+
+        .msg-in .message-bubble {
+            background-color: var(--bg-card);
             border-bottom-left-radius: 0;
         }
 
-        .message-outgoing {
+        .msg-out {
+            justify-content: flex-end;
+        }
+
+        .msg-out .message-bubble {
             background-color: var(--color-blue);
-            align-self: flex-end;
+            color: white;
             border-bottom-right-radius: 0;
         }
 
@@ -249,48 +291,122 @@
             font-size: 0.75rem;
             color: var(--text-gray);
             margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
         }
 
-        .message-outgoing .msg-info {
+        .msg-out .msg-info {
             color: rgba(255, 255, 255, 0.7);
         }
 
-        /* Input de escritura */
         .chat-input-area {
-            padding: 15px;
+            padding: 20px 25px;
             border-top: 1px solid var(--border-color);
             display: flex;
             gap: 15px;
+            background-color: var(--bg-darkest);
+            flex-shrink: 0;
+            display: none;
         }
 
-        .chat-input-area input {
+        .chat-input-wrapper {
             flex-grow: 1;
-            background-color: var(--bg-darkest);
+            background-color: var(--bg-card);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 10px 15px;
+            border-radius: 10px;
+            padding: 5px 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .chat-input-wrapper input {
+            background: transparent;
+            border: none;
             color: white;
             outline: none;
+            width: 100%;
+            font-size: 0.95rem;
+            padding: 8px 0;
         }
 
-        .chat-input-area input::placeholder {
+        .chat-input-wrapper input::placeholder {
             color: var(--text-gray);
+        }
+
+        .btn-action-support {
+            border-radius: 8px;
+            font-weight: bold;
+            border: none;
+            transition: 0.2s;
+        }
+
+        .btn-close-ticket {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+            padding: 10px 20px;
+            font-size: 0.9rem;
+        }
+
+        .btn-close-ticket:hover {
+            background-color: rgba(220, 53, 69, 0.2);
         }
 
         .btn-send {
             background-color: var(--color-blue);
             color: white;
-            border: none;
-            border-radius: 8px;
             width: 45px;
+            height: 45px;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: 0.3s;
+            flex-shrink: 0;
         }
 
         .btn-send:hover {
             background-color: #0c8bc5;
+        }
+
+        .conversation-list::-webkit-scrollbar,
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .conversation-list::-webkit-scrollbar-track,
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .conversation-list::-webkit-scrollbar-thumb,
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .conversation-list::-webkit-scrollbar-thumb:hover,
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .loading-spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid var(--color-blue);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            display: none;
+            margin: auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
@@ -298,144 +414,301 @@
 <body>
 
     <aside class="sidebar">
-        <div class="sidebar-brand">
-            TEATRO AL AIRE LIBRE<br>
-            <span
-                style="font-size: 0.8rem; font-family: sans-serif; color: var(--text-gray); font-weight: normal;">Panel
-                de administración</span>
-        </div>
-
+        <div class="sidebar-brand text-white fw-bold">TEATRO AL AIRE LIBRE</div>
         <nav class="mt-2">
-            <a href="#" class="nav-item-admin">
-                <i class="fas fa-border-all"></i> Dashboard
-            </a>
-            <a href="#" class="nav-item-admin active">
-                <i class="fas fa-comment-dots"></i> Soporte
-            </a>
-            <a href="#" class="nav-item-admin">
-                <i class="fas fa-cog"></i> Configuracion
-            </a>
+            <a href="#" class="nav-item-admin"><i class="fas fa-border-all"></i> Dashboard</a>
+            <a href="#" class="nav-item-admin active"><i class="fas fa-comment-dots"></i> Soporte</a>
+            <a href="#" class="nav-item-admin"><i class="fas fa-cog"></i> Configuración</a>
         </nav>
     </aside>
 
     <div class="main-content">
         <header class="topbar">
-            <div class="search-bar">
-                <i class="fas fa-search text-muted"></i>
-                <input type="text" placeholder="Buscar eventos, reservas, ventas....">
-            </div>
-
-            <div class="d-flex align-items-center gap-4">
-                <div class="position-relative" style="cursor: pointer;">
-                    <i class="far fa-bell fs-5"></i>
-                    <span
-                        class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
-                        <span class="visually-hidden">Nuevas alertas</span>
-                    </span>
+            <div class="fw-bold fs-5 text-white">Bandeja de Entrada Soporte</div>
+            <div class="topbar-right">
+                <i class="fas fa-search fs-5" style="cursor: pointer;"></i>
+                <div class="position-relative" style="cursor: pointer;"><i class="far fa-bell fs-5"></i><span
+                        class="position-absolute top-0 start-100 translate-middle p-1 bg-danger rounded-circle"></span>
                 </div>
-
                 <div class="d-flex align-items-center gap-2" style="cursor: pointer;">
-                    <div class="user-avatar bg-success text-white" style="width: 35px; height: 35px; font-size: 1rem;">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <span class="fw-bold">Soporte</span>
+                    <div class="user-avatar FW-BOLD">S</div>
+                    <span class="fw-bold text-white">Soporte Admin</span>
                 </div>
             </div>
         </header>
 
-        <main class="support-area">
-            <h3 class="fw-bold mb-1">Soporte</h3>
-            <p class="text-light-gray mb-4">Atiende consultas de usuario en tiempo real</p>
+        <main class="support-layout">
 
-            <div class="row g-3 mb-4">
-                <div class="col-md-4">
-                    <div class="stat-card">
-                        <div>
-                            <div class="text-light-gray small mb-1">Conversaciones totales</div>
-                            <div class="fs-2 fw-bold">2</div>
-                        </div>
-                        <i class="fas fa-comment-alt stat-icon" style="color: var(--color-blue);"></i>
-                    </div>
+            <div class="inbox-sidebar">
+                <div class="inbox-header">
+                    <h4 class="fw-bold text-white mb-0">Inbox ({{ tickets.count }})</h4>
                 </div>
-                <div class="col-md-4">
-                    <div class="stat-card">
-                        <div>
-                            <div class="text-light-gray small mb-1">Conversaciones No Leídas</div>
-                            <div class="fs-2 fw-bold">2</div>
-                        </div>
-                        <i class="far fa-clock stat-icon" style="color: #F59E0B;"></i>
-                    </div>
+
+                <div class="search-bar-inbox">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Buscar por ID, Usuario...">
                 </div>
-                <div class="col-md-4">
-                    <div class="stat-card">
-                        <div>
-                            <div class="text-light-gray small mb-1">Conversaciones Leídas</div>
-                            <div class="fs-2 fw-bold">0</div>
+
+                <div class="conversation-list" id="ticketList">
+                    {% if not tickets %}
+                    <div class="text-center text-muted mt-5 small p-3">No hay tickets abiertos actualmente.</div>
+                    {% else %}
+                    {% for ticket in tickets %}
+                    <a href="#" class="ticket-chat-card d-flex gap-3 align-items-center" id="card-{{ ticket.id }}"
+                        data-ticket-id="{{ ticket.id }}"
+                        onclick="loadTicket(this.getAttribute('data-ticket-id'), event)">
+                        <div class="user-initials bg-success text-white FW-BOLD">{{ ticket.usuario.nombre|slice:":1" }}
                         </div>
-                        <i class="far fa-check-square stat-icon" style="color: var(--color-green);"></i>
-                    </div>
+                        <div class="w-100 overflow-hidden">
+                            <div class="d-flex justify-content-between align-items-baseline">
+                                <div class="fw-bold text-white">{{ ticket.usuario.nombre }} {{ ticket.usuario.apellido
+                                    }}</div>
+                                <div class="small text-muted" style="font-size: 0.75rem;">{{
+                                    ticket.fecha_creacion|date:"g:i a" }}</div>
+                            </div>
+                            <div class="small text-white fw-bold truncate mb-1" style="font-size: 0.85rem;">{{
+                                ticket.asunto|truncatechars:35 }}</div>
+                            <div class="d-flex justify-content-between align-items-baseline">
+                                <div class="small text-muted" style="font-size: 0.75rem;">#{{ ticket.numero_reclamo }}
+                                </div>
+                                <div class="small text-info fw-bold" style="font-size: 0.7rem;">{{
+                                    ticket.estado_soporte.nombre }}</div>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                    {% endif %}
                 </div>
             </div>
 
-            <div class="chat-container">
+            <div class="chat-window" id="chatWindow">
 
-                <div class="conversation-list">
-                    <h6 class="text-light-gray mb-2 ms-1">Conversaciones</h6>
-
-                    <div class="chat-card active d-flex gap-3">
-                        <div class="user-avatar bg-success text-white"><i class="fas fa-user"></i></div>
-                        <div class="w-100">
-                            <div class="fw-bold">Laura Leon</div>
-                            <div class="small text-white text-decoration-underline mb-2" style="opacity: 0.8;">
-                                laura.p@email.com</div>
-                            <div class="small fw-bold">¿Puedo cambiar la fecha de mi entrada?</div>
-                            <div class="small mt-1" style="opacity: 0.7; font-size: 0.75rem;">17-mar, 10:15 a. m.</div>
-                        </div>
-                    </div>
-
-                    <div class="chat-card d-flex gap-3">
-                        <div class="user-avatar bg-success text-white"><i class="fas fa-user"></i></div>
-                        <div class="w-100">
-                            <div class="fw-bold" style="color: var(--color-green);">Laura Leon</div>
-                            <div class="small text-light-gray text-decoration-underline mb-2">laura.p@email.com</div>
-                            <div class="small text-light-gray">¿Puedo cambiar la fecha de mi entrada?</div>
-                            <div class="text-muted mt-1" style="font-size: 0.75rem;">17-mar, 10:15 a. m.</div>
-                        </div>
-                    </div>
+                <div class="no-ticket-selected" id="noTicketSelected">
+                    <i class="fas fa-comments fs-1" style="opacity: 0.2;"></i>
+                    <h5 class="fw-bold text-muted">Selecciona una conversación</h5>
+                    <p class="text-muted small">Haz clic en un ticket de la bandeja de entrada para ver la conversación.
+                    </p>
                 </div>
 
-                <div class="chat-window">
-                    <div class="chat-header">
-                        <div class="user-avatar bg-success text-white"><i class="fas fa-user"></i></div>
+                <div class="loading-spinner" id="chatLoading"></div>
+
+                <div class="chat-header" id="chatHeader">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="user-initials bg-success text-white FW-BOLD fs-4"
+                            style="width: 48px; height: 48px;">L</div>
                         <div>
-                            <div class="fw-bold fs-5 text-white">Laura Leon</div>
-                            <div class="small text-light-gray text-decoration-underline">laura.p@email.com</div>
+                            <div class="fw-bold fs-5 text-white"><span id="headerUserName">---</span> <span
+                                    class="ticket-status-badge" id="headerTicketStatus">Abierto</span></div>
+                            <div class="small text-muted">#<span id="headerTicketId">---</span> &nbsp;•&nbsp; <span
+                                    id="headerUserEmail">---</span></div>
                         </div>
                     </div>
-
-                    <div class="chat-messages">
-                        <div class="message message-incoming">
-                            <div class="msg-info"><strong>Laura Pérez</strong> 10:15 a. m.</div>
-                            <div>¿Puedo cambiar la fecha de mi entrada?</div>
-                        </div>
-
-                        <div class="message message-outgoing">
-                            <div class="msg-info"><strong>Soporte</strong> 10:17 a. m.</div>
-                            <div>Hola Laura, ¿para qué evento necesitas cambiar la fecha?</div>
-                        </div>
-                    </div>
-
-                    <div class="chat-input-area">
-                        <input type="text" placeholder="Escribe tu respuesta...">
-                        <button class="btn-send"><i class="far fa-paper-plane"></i></button>
-                    </div>
+                    <button class="btn-action-support btn-close-ticket btn-sm" onclick="closeTicket(event)"><i
+                            class="fas fa-times me-2"></i> Cerrar Ticket</button>
                 </div>
 
+                <div class="chat-messages" id="chatMessages">
+                </div>
+
+                <div class="chat-input-area" id="chatInputArea">
+                    <div class="chat-input-wrapper">
+                        <input type="text" id="replyInput" placeholder="Escribe tu respuesta aquí...">
+                    </div>
+                    <button class="btn-action-support btn-send" id="btnSendReply" onclick="sendMessage()"><i
+                            class="far fa-paper-plane"></i></button>
+                </div>
             </div>
+
         </main>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        let currentTicketId = null;
+
+        function loadTicket(ticketId, event) {
+            if (event) event.preventDefault();
+
+            const cards = document.querySelectorAll('.ticket-chat-card');
+            cards.forEach(c => c.classList.remove('active'));
+            document.getElementById('card-' + ticketId).classList.add('active');
+
+            currentTicketId = ticketId;
+            const noSel = document.getElementById('noTicketSelected');
+            const loading = document.getElementById('chatLoading');
+            const header = document.getElementById('chatHeader');
+            const msgs = document.getElementById('chatMessages');
+            const input = document.getElementById('chatInputArea');
+
+            noSel.style.display = 'none';
+            header.style.display = 'none';
+            msgs.style.display = 'none';
+            input.style.display = 'none';
+            loading.style.display = 'block';
+
+            fetch(`/soporte/api/mensajes/${ticketId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    loading.style.display = 'none';
+                    header.style.display = 'flex';
+                    msgs.style.display = 'flex';
+                    input.style.display = 'flex';
+
+                    document.getElementById('headerUserName').innerText = data.usuario_nombre;
+                    document.getElementById('headerUserEmail').innerText = data.usuario_correo;
+                    document.getElementById('headerTicketId').innerText = data.numero_reclamo;
+                    document.getElementById('headerTicketStatus').innerText = data.estado_ticket;
+
+                    const initialsBox = header.querySelector('.user-initials');
+                    initialsBox.innerText = data.usuario_nombre.charAt(0);
+
+                    msgs.innerHTML = '';
+
+                    data.mensajes.forEach(msg => {
+                        appendMessageBubble(msg, msgs);
+                    });
+
+                    scrollToBottom();
+                    document.getElementById('replyInput').focus();
+                })
+                .catch(error => {
+                    console.error('Error cargando ticket:', error);
+                    alert('No se pudo cargar la conversación. Inténtalo de nuevo.');
+                    loading.style.display = 'none';
+                    noSel.style.display = 'flex';
+                });
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('replyInput');
+            const mensajeTexto = input.value.trim();
+            const msgsContainer = document.getElementById('chatMessages');
+
+            if (!mensajeTexto || !currentTicketId) return;
+
+            input.disabled = true;
+            document.getElementById('btnSendReply').disabled = true;
+
+            const csrfToken = getCookie('csrftoken');
+
+            const payload = {
+                ticket_id: currentTicketId,
+                mensaje: mensajeTexto
+            };
+
+            fetch('/soporte/api/enviar-mensaje/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify(payload) // <-- AQUI ESTA LA CORRECCIÓN A MAYÚSCULAS
+            })
+                .then(response => response.json())
+                .then(data => {
+                    input.disabled = false;
+                    document.getElementById('btnSendReply').disabled = false;
+
+                    if (data.success) {
+                        input.value = '';
+                        appendMessageBubble(data, msgsContainer);
+                        scrollToBottom();
+                    } else {
+                        alert('Error al enviar: ' + (data.error || 'Desconocido'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error enviando mensaje:', error);
+                    alert('No se pudo enviar el mensaje. Inténtalo de nuevo.');
+                    input.disabled = false;
+                    document.getElementById('btnSendReply').disabled = false;
+                });
+        }
+
+        function closeTicket(event) {
+            if (!currentTicketId) return;
+            if (!confirm("¿Estás seguro de que quieres marcar este ticket como 'Cerrado'?")) return;
+
+            event.target.disabled = true;
+            event.target.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Cerrando...';
+
+            const csrfToken = getCookie('csrftoken');
+
+            fetch('/soporte/api/cerrar-ticket/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ ticket_id: currentTicketId }) // <-- AQUI ESTA LA CORRECCIÓN A MAYÚSCULAS
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('headerTicketStatus').innerText = data.nuevo_estado;
+                        const card = document.getElementById('card-' + currentTicketId);
+                        if (card) card.querySelector('.small.text-info').innerText = data.nuevo_estado;
+
+                        alert('El ticket ha sido cerrado correctamente.');
+                        event.target.disabled = false;
+                        event.target.innerHTML = '<i class="fas fa-times me-2"></i> Cerrar Ticket';
+                    } else {
+                        alert('Error al cerrar ticket: ' + (data.error || 'Desconocido'));
+                        event.target.disabled = false;
+                        event.target.innerHTML = '<i class="fas fa-times me-2"></i> Cerrar Ticket';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error cerrando ticket:', error);
+                    alert('Ocurrió un error. Inténtalo de nuevo.');
+                    event.target.disabled = false;
+                    event.target.innerHTML = '<i class="fas fa-times me-2"></i> Cerrar Ticket';
+                });
+        }
+
+        function appendMessageBubble(msgData, container) {
+            const row = document.createElement('div');
+            row.className = 'message-row ' + (msgData.es_admin_respuesta ? 'msg-out' : 'msg-in');
+
+            const bubbleHtml = `
+                <div class="message-bubble">
+                    <div class="msg-info">
+                        <strong>${msgData.remitente_nombre}</strong>
+                        <span>${msgData.fecha_envio_formateada}</span>
+                    </div>
+                    <div>${msgData.mensaje}</div>
+                </div>
+            `;
+
+            row.innerHTML = bubbleHtml;
+            container.appendChild(row);
+        }
+
+        function scrollToBottom() {
+            const msgs = document.getElementById('chatMessages');
+            msgs.scrollTop = msgs.scrollHeight;
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        document.getElementById('replyInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') { sendMessage(); }
+        });
+    </script>
 </body>
 
 </html>
