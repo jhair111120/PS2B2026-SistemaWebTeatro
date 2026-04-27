@@ -1,0 +1,194 @@
+{% extends "layouts/base.html" %} {% load static %} {% block title %}Inicio |
+Teatro Al Aire Libre{% endblock %} {% block content %}
+
+<!-- ══════════════════════════════
+     HERO
+══════════════════════════════ -->
+
+<link
+  rel="stylesheet"
+  href="{% static 'css/pages/users/inicio.css' %}"
+/>
+
+<section class="hero-section relative py-24 text-center">
+  <!-- Overlay visual → manejado en CSS -->
+  <div class="hero-overlay absolute inset-0"></div>
+
+  <!-- Contenido centrado -->
+  <div class="relative z-10 max-w-4xl mx-auto px-4">
+    <h1 class="hero-title mb-2">Vive la Magia del Teatro</h1>
+    <h1 class="hero-title hero-title--accent mb-6">Bajo las Estrellas</h1>
+
+    <p class="hero-subtitle mb-8">
+      Disfruta de los mejores espectáculos culturales, conciertos y obras de
+      teatro en el corazón de La Paz, Bolivia.
+    </p>
+
+    <div class="flex justify-center gap-4 flex-wrap">
+      <a href="#" class="btn-primary">Ver Eventos</a>
+      <a href="#" class="btn-outline">Conocer Más</a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+     EVENTOS DESTACADOS
+══════════════════════════════ -->
+<section class="max-w-7xl mx-auto px-4 py-16">
+  <!-- Encabezado de sección -->
+  <div class="text-center mb-12">
+    <h2 class="section-title">No Te Pierdas Estos Espectáculos</h2>
+    <p class="section-subtitle mt-2">
+      Los eventos más esperados de la temporada. ¡Reserva tus entradas ahora!
+    </p>
+  </div>
+
+  <!-- Grid de cards -->
+  <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+    <!-- ── CARD 1 ── -->
+    <div class="event-card fade-in">
+      <!-- Imagen con badge superpuesto -->
+      <div class="relative overflow-hidden">
+        <img
+          src="{% static 'img/rata-blanca.jpg' %}"
+          onerror="
+            this.src =
+              'https://via.placeholder.com/400x250/151920/fff?text=Rata+Blanca'
+          "
+          class="card-img w-full h-56 object-cover"
+          alt="Rata Blanca"
+        />
+        <div class="event-date-badge absolute top-4 left-4">
+          Viernes<br />
+          <span class="badge-day">27</span><br />
+          <small>Marzo</small>
+        </div>
+      </div>
+
+      <!-- Cuerpo de la card -->
+      <div class="p-6">
+        <h5 class="event-title mb-3">Concierto Rata Blanca</h5>
+        <p class="event-meta mb-1">📅 Viernes, 27 de Marzo, 2026</p>
+        <p class="event-meta mb-4">⏰ 19:00 Hrs.</p>
+
+        <div class="flex justify-between mb-4">
+          <div>
+            <span class="event-label">Desde</span><br />
+            <span class="event-price">Bs. 150</span>
+          </div>
+          <div class="text-right">
+            <span class="event-label">Disponibles</span><br />
+            <span class="event-price">270</span>
+          </div>
+        </div>
+
+        <button class="btn-primary w-full">Comprar Entradas</button>
+      </div>
+    </div>
+
+    <!-- ── CARD 2 ── -->
+    <div class="event-card fade-in">
+      <div class="relative overflow-hidden">
+        <img
+          src="{% static 'img/wisin-yandel.jpg' %}"
+          onerror="
+            this.src =
+              'https://via.placeholder.com/400x250/151920/fff?text=Wisin+y+Yandel'
+          "
+          class="card-img w-full h-56 object-cover"
+          alt="Wisin Y Yandel"
+        />
+        <div class="event-date-badge absolute top-4 left-4">
+          Sábado<br />
+          <span class="badge-day">28</span><br />
+          <small>Marzo</small>
+        </div>
+      </div>
+
+      <div class="p-6">
+        <h5 class="event-title mb-3">Concierto Wisin Y Yandel</h5>
+        <p class="event-meta mb-1">📅 Sábado, 28 de Marzo, 2026</p>
+        <p class="event-meta mb-4">⏰ 20:00 Hrs.</p>
+
+        <div class="flex justify-between mb-4">
+          <div>
+            <span class="event-label">Desde</span><br />
+            <span class="event-price">Bs. 230</span>
+          </div>
+          <div class="text-right">
+            <span class="event-label">Disponibles</span><br />
+            <span class="event-price">15</span>
+          </div>
+        </div>
+
+        <button class="btn-primary w-full">Comprar Entradas</button>
+      </div>
+    </div>
+
+    <!-- ── CARD 3 ── -->
+    <div class="event-card fade-in">
+      <div class="relative overflow-hidden">
+        <img
+          src="{% static 'img/slipknot.jpg' %}"
+          onerror="
+            this.src =
+              'https://via.placeholder.com/400x250/151920/fff?text=Slipknot'
+          "
+          class="card-img w-full h-56 object-cover"
+          alt="Slipknot"
+        />
+        <div class="event-date-badge absolute top-4 left-4">
+          Viernes<br />
+          <span class="badge-day">10</span><br />
+          <small>Abril</small>
+        </div>
+      </div>
+
+      <div class="p-6">
+        <h5 class="event-title mb-3">Concierto Slipknot</h5>
+        <p class="event-meta mb-1">📅 Viernes, 10 de Abril, 2026</p>
+        <p class="event-meta mb-4">⏰ 19:00 Hrs.</p>
+
+        <div class="flex justify-between mb-4">
+          <div>
+            <span class="event-label">Desde</span><br />
+            <span class="event-price">Bs. 500</span>
+          </div>
+          <div class="text-right">
+            <span class="event-label">Disponibles</span><br />
+            <span class="event-price">2</span>
+          </div>
+        </div>
+
+        <button class="btn-primary w-full">Comprar Entradas</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA secundario -->
+  <div class="text-center mt-10">
+    <button class="btn-outline">Ver más</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+     UBICACIÓN
+══════════════════════════════ -->
+<section class="max-w-5xl mx-auto px-4 py-16 text-center">
+  <h2 class="section-title mb-3">Ubicación</h2>
+  <p class="section-subtitle mb-6">Avenida del Poeta, La Paz</p>
+
+  <div class="map-container">
+    <img
+      src="{% static 'img/mapa.jpg' %}"
+      onerror="
+        this.src =
+          'https://via.placeholder.com/900x450/1E293B/fff?text=Mapa+Avenida+del+Poeta'
+      "
+      class="w-full h-auto"
+      alt="Mapa de Ubicación"
+    />
+  </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,306 @@
+/* ══════════════════════════════
+   VARIABLES
+══════════════════════════════ */
+:root {
+  --color-primary: #0EA5E9;
+  --color-accent: #10B981;
+
+  --bg-main: #0A0E14;
+  --bg-card: #151920;
+  --bg-soft: #1E293B;
+  --bg-hover: #243244;
+
+  --text-main: #E5E7EB;
+  --text-muted: #9CA3AF;
+
+  --danger: #EF4444;
+}
+
+/* ══════════════════════════════
+   BASE
+══════════════════════════════ */
+body {
+  background: var(--bg-main);
+  color: var(--text-main);
+  font-family: 'Inter', sans-serif;
+}
+
+/* ══════════════════════════════
+   SIDEBAR
+══════════════════════════════ */
+.sidebar {
+  background: var(--bg-card);
+  border-right: 1px solid var(--bg-soft);
+}
+
+.sidebar-brand {
+  font-weight: 700;
+  font-size: 1rem;
+  color: white;
+}
+
+.nav-link {
+  color: var(--text-muted);
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+  background: var(--bg-hover);
+  color: white;
+}
+
+.nav-link--active {
+  background: var(--color-primary);
+  color: white;
+}
+
+/* ══════════════════════════════
+   TOPBAR
+══════════════════════════════ */
+.topbar {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--bg-soft);
+}
+
+.topbar-title {
+  font-weight: 600;
+}
+
+.topbar-icon {
+  color: var(--text-muted);
+  transition: 0.2s;
+}
+
+.topbar-icon:hover {
+  color: var(--color-primary);
+}
+
+.notif-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--danger);
+  border-radius: 50%;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  background: var(--color-primary);
+  border-radius: 50%;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.topbar-username {
+  font-size: 0.9rem;
+}
+
+/* ══════════════════════════════
+   INBOX PANEL
+══════════════════════════════ */
+.inbox-panel {
+  background: var(--bg-card);
+  border-right: 1px solid var(--bg-soft);
+}
+
+.inbox-title {
+  font-weight: 600;
+}
+
+.inbox-search {
+  border-bottom: 1px solid var(--bg-soft);
+}
+
+.search-box {
+  background: var(--bg-soft);
+  border-radius: 0.5rem;
+}
+
+.search-icon {
+  color: var(--text-muted);
+}
+
+.search-input {
+  color: white;
+}
+
+/* ══════════════════════════════
+   TICKET LIST
+══════════════════════════════ */
+.ticket-item {
+  border-bottom: 1px solid var(--bg-soft);
+  transition: all 0.2s ease;
+}
+
+.ticket-item:hover {
+  background: var(--bg-hover);
+}
+
+.ticket-avatar {
+  width: 36px;
+  height: 36px;
+  background: var(--bg-soft);
+  border-radius: 50%;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.ticket-user {
+  font-weight: 500;
+}
+
+.ticket-time {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.ticket-subject {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.ticket-number {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.ticket-status {
+  font-size: 0.75rem;
+  color: var(--color-accent);
+}
+
+/* ══════════════════════════════
+   EMPTY STATES
+══════════════════════════════ */
+.empty-inbox {
+  color: var(--text-muted);
+}
+
+.empty-chat-icon {
+  font-size: 2rem;
+  color: var(--text-muted);
+}
+
+.empty-chat-title {
+  font-weight: 600;
+}
+
+.empty-chat-body {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+/* ══════════════════════════════
+   CHAT HEADER
+══════════════════════════════ */
+.chat-header {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--bg-soft);
+}
+
+.chat-avatar {
+  width: 36px;
+  height: 36px;
+  background: var(--color-primary);
+  border-radius: 50%;
+  font-weight: 600;
+}
+
+.chat-user-name {
+  font-weight: 600;
+}
+
+.chat-user-meta {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* BADGE */
+.status-badge {
+  background: var(--color-accent);
+  color: #022c22;
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.4rem;
+}
+
+/* ══════════════════════════════
+   CHAT MENSAJES
+══════════════════════════════ */
+#chatMessages {
+  background: var(--bg-main);
+}
+
+/* burbujas (puedes usarlas con JS luego) */
+.message {
+  max-width: 70%;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.6rem;
+  font-size: 0.9rem;
+}
+
+.message--user {
+  background: var(--color-primary);
+  align-self: flex-end;
+}
+
+.message--support {
+  background: var(--bg-soft);
+}
+
+/* ══════════════════════════════
+   INPUT CHAT
+══════════════════════════════ */
+.chat-input-area {
+  background: var(--bg-card);
+  border-top: 1px solid var(--bg-soft);
+}
+
+.reply-input {
+  background: var(--bg-soft);
+  border-radius: 0.5rem;
+  color: white;
+}
+
+.btn-send {
+  background: var(--color-primary);
+  color: white;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.btn-send:hover {
+  background: #0284c7;
+  transform: translateY(-1px);
+}
+
+/* ══════════════════════════════
+   BOTON CERRAR
+══════════════════════════════ */
+.btn-close-ticket {
+  background: transparent;
+  border-radius: 0.5rem;
+  color: var(--danger);
+  transition: all 0.2s ease;
+}
+
+.btn-close-ticket:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* ══════════════════════════════
+   SCROLL PERSONALIZADO
+══════════════════════════════ */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-soft);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+}

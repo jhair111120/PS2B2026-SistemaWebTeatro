@@ -1,0 +1,270 @@
+/* ══════════════════════════════
+   VARIABLES
+══════════════════════════════ */
+:root {
+  --color-primary: #0EA5E9;
+  --color-accent: #10B981;
+
+  --bg-main: #0A0E14;
+  --bg-card: #151920;
+  --bg-soft: #1E293B;
+
+  --text-main: #E5E7EB;
+  --text-muted: #9CA3AF;
+
+  --danger: #EF4444;
+}
+
+/* ══════════════════════════════
+   BASE
+══════════════════════════════ */
+body {
+  background: var(--bg-main);
+  color: var(--text-main);
+  font-family: 'Inter', sans-serif;
+}
+
+/* ══════════════════════════════
+   TITULOS
+══════════════════════════════ */
+.page-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: white;
+}
+
+.page-subtitle {
+  color: var(--text-muted);
+}
+
+/* ══════════════════════════════
+   TABS
+══════════════════════════════ */
+.tabs-border {
+  border-color: var(--bg-soft);
+}
+
+.tab-btn {
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.5rem 0.5rem 0 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.tab-btn:hover {
+  color: white;
+  background: var(--bg-soft);
+}
+
+.tab-btn--active {
+  background: var(--bg-card);
+  color: white;
+  border-bottom: 2px solid var(--color-primary);
+}
+
+/* ══════════════════════════════
+   CONTENIDO TABS
+══════════════════════════════ */
+.tab-content {
+  animation: fadeIn 0.4s ease;
+}
+
+/* ══════════════════════════════
+   CARDS
+══════════════════════════════ */
+.profile-card {
+  background: var(--bg-card);
+  border-radius: 1rem;
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.profile-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+}
+
+.card-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+/* ══════════════════════════════
+   AVATAR
+══════════════════════════════ */
+.avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--bg-soft);
+  color: var(--color-primary);
+  font-size: 1.5rem;
+}
+
+.avatar-name {
+  font-weight: 600;
+}
+
+.avatar-email {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* ══════════════════════════════
+   FORMULARIOS
+══════════════════════════════ */
+.form-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.form-input {
+  background: var(--bg-soft);
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.8rem;
+  color: white;
+  transition: all 0.25s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+}
+
+.form-input::placeholder {
+  color: #6b7280;
+}
+
+/* CHECKBOX */
+.form-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+/* ══════════════════════════════
+   FILAS
+══════════════════════════════ */
+.notif-row {
+  background: var(--bg-soft);
+  border-radius: 0.6rem;
+  transition: all 0.2s ease;
+}
+
+.notif-row:hover {
+  background: #243244;
+}
+
+.notif-label {
+  color: var(--text-main);
+}
+
+/* ══════════════════════════════
+   SEGURIDAD
+══════════════════════════════ */
+.session-row {
+  border-bottom: 1px solid var(--bg-soft);
+}
+
+.session-device {
+  font-weight: 500;
+}
+
+.session-time {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.badge-active {
+  background: var(--color-accent);
+  color: #022c22;
+  padding: 0.2rem 0.6rem;
+  border-radius: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* ══════════════════════════════
+   COMPRAS
+══════════════════════════════ */
+.purchase-row {
+  border-bottom: 1px solid var(--bg-soft);
+}
+
+.purchase-name {
+  font-weight: 500;
+}
+
+.purchase-date {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.purchase-price {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+/* ══════════════════════════════
+   PAGOS
+══════════════════════════════ */
+.payment-row {
+  background: var(--bg-soft);
+  border-radius: 0.6rem;
+}
+
+.payment-number {
+  letter-spacing: 2px;
+}
+
+/* ══════════════════════════════
+   LINKS PELIGRO
+══════════════════════════════ */
+.link-danger {
+  color: var(--danger);
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.link-danger:hover {
+  text-decoration: underline;
+}
+
+/* ══════════════════════════════
+   BOTONES
+══════════════════════════════ */
+.btn-primary {
+  background: var(--color-primary);
+  color: white;
+  padding: 0.6rem 1.4rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background: #0284c7;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(14, 165, 233, 0.3);
+}
+
+/* ══════════════════════════════
+   ANIMACIONES
+══════════════════════════════ */
+.fade-in {
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeIn 0.5s ease forwards;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

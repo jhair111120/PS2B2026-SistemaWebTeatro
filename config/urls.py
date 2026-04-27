@@ -1,47 +1,46 @@
 """
 URL configuration for config project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.0/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
 from django.urls import path
 from django.views.generic import TemplateView
 
-# Importamos las vistas (CON TUS NUEVAS RUTAS DE CARPETAS)
+# Importación de vistas de aplicaciones
 from apps.users.views import signup_view, login_view, logout_view, perfil_view
-# Asegúrate de importar las vistas de soporte aquí
 from apps.support.views import support_dashboard, ticket_messages_api, send_message_api, close_ticket_api
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     
-    # Rutas de las interfaces visuales públicas
-    path('', TemplateView.as_view(template_name='pages/usuarios/inicio.html'), name='inicio'),
-    
-    # Rutas de Autenticación
+    # ================= RUTAS DE USUARIO (PÁGINAS PÚBLICAS Y PERFIL) =================
+    path('', TemplateView.as_view(template_name='pages/users/inicio.html'), name='inicio'),
+    path('comprar-entrada/', TemplateView.as_view(template_name='pages/users/comprar_entrada.html'), name='comprar_entradas'),
+    path('perfil/', perfil_view, name='perfil'),
+
+    # ================= RUTAS DE AUTENTICACIÓN =================
     path('signup/', signup_view, name='signup'),
     path('login/', login_view, name='login'),
     path('logout/', logout_view, name='logout'),
 
-    # Ruta: Mi Perfil
-    path('perfil/', perfil_view, name='perfil'),
+    # ================= RUTAS DE MÓDULOS (SEGÚN TU ESTRUCTURA DE CARPETAS) =================
     
-    # ================= RUTAS DE SOPORTE (ADMIN) =================
-    # 1. Panel Principal (http://127.0.0.1:8000/soporte/)
-    path('soporte/', support_dashboard, name='support_dashboard'),
+    # Eventos
+    path('eventos/', TemplateView.as_view(template_name='pages/events/eventos.html'), name='eventos'),
     
-    # 2. APIs para AJAX (No devuelven HTML, devuelven datos JSON)
+    # Reservas
+    path('reservas/', TemplateView.as_view(template_name='pages/reservations/reservas.html'), name='reservas'),
+    
+    # Pagos
+    path('pagos/', TemplateView.as_view(template_name='pages/payments/pagos.html'), name='pagos'),
+    
+    # Mis Tickets (Entradas compradas)
+    path('mis-tickets/', TemplateView.as_view(template_name='pages/tickets/tickets.html'), name='mis_tickets'),
+
+    # ================= RUTAS DE SOPORTE =================
+    # Vista principal de soporte
+    path('soporte/', TemplateView.as_view(template_name='pages/support/support.html'), name='support'),
+    
+    # APIs para AJAX (JSON)
     path('soporte/api/mensajes/<int:ticket_id>/', ticket_messages_api, name='ticket_messages_api'),
     path('soporte/api/enviar-mensaje/', send_message_api, name='send_message_api'),
     path('soporte/api/cerrar-ticket/', close_ticket_api, name='close_ticket_api'),
