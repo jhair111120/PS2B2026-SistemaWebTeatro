@@ -34,6 +34,8 @@ ALLOWED_HOSTS = []
 
 AUTH_USER_MODEL = 'users.Usuario'
 
+TAILWIND_APP_NAME = 'theme'
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -52,6 +54,10 @@ INSTALLED_APPS = [
     'apps.tickets',
     'apps.support',
     # 'apps.catalog',
+
+    # Apps Externas
+    'tailwind',
+    'theme',
 ]
 
 MIDDLEWARE = [

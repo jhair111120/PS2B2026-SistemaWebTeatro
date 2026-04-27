@@ -1,0 +1,206 @@
+/* ══════════════════════════════
+   VARIABLES (PALETA)
+══════════════════════════════ */
+:root {
+  --color-primary: #0EA5E9;   /* Azul eléctrico */
+  --color-accent: #10B981;    /* Verde */
+  --bg-main: #0A0E14;
+  --bg-card: #151920;
+  --bg-soft: #1E293B;
+  --text-main: #E5E7EB;
+  --text-muted: #9CA3AF;
+}
+
+/* ══════════════════════════════
+   BASE
+══════════════════════════════ */
+body {
+  background: var(--bg-main);
+  color: var(--text-main);
+  font-family: 'Inter', sans-serif;
+}
+
+/* ══════════════════════════════
+   HERO
+══════════════════════════════ */
+.hero-section {
+  background: url('/static/img/hero-bg.jpg') center/cover no-repeat;
+}
+
+.hero-overlay {
+  background: linear-gradient(
+    to bottom,
+    rgba(10, 14, 20, 0.8),
+    rgba(10, 14, 20, 0.95)
+  );
+}
+
+.hero-title {
+  font-size: 3rem;
+  font-weight: 800;
+  color: white;
+}
+
+.hero-title--accent {
+  color: var(--color-primary);
+}
+
+.hero-subtitle {
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  line-height: 1.6;
+}
+
+/* ══════════════════════════════
+   BOTONES
+══════════════════════════════ */
+.btn-primary {
+  background: var(--color-primary);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.6rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 0 transparent;
+}
+
+.btn-primary:hover {
+  background: #0284c7;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(14, 165, 233, 0.3);
+}
+
+.btn-outline {
+  border: 2px solid var(--color-primary);
+  color: var(--color-primary);
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.6rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-outline:hover {
+  background: var(--color-primary);
+  color: white;
+}
+
+/* ══════════════════════════════
+   SECCIONES
+══════════════════════════════ */
+.section-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: white;
+}
+
+.section-subtitle {
+  color: var(--text-muted);
+}
+
+/* ══════════════════════════════
+   CARDS DE EVENTOS
+══════════════════════════════ */
+.event-card {
+  background: var(--bg-card);
+  border-radius: 1rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+}
+
+.event-card:hover {
+  transform: translateY(-6px);
+  border-color: var(--color-primary);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.card-img {
+  transition: transform 0.4s ease;
+}
+
+.event-card:hover .card-img {
+  transform: scale(1.05);
+}
+
+/* ══════════════════════════════
+   BADGE FECHA
+══════════════════════════════ */
+.event-date-badge {
+  background: rgba(21, 25, 32, 0.9);
+  color: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  text-align: center;
+  backdrop-filter: blur(5px);
+}
+
+.badge-day {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--color-accent);
+}
+
+/* ══════════════════════════════
+   TEXTO EVENTO
+══════════════════════════════ */
+.event-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: white;
+}
+
+.event-meta {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.event-label {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.event-price {
+  color: var(--color-accent);
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+/* ══════════════════════════════
+   MAPA
+══════════════════════════════ */
+.map-container {
+  border-radius: 1rem;
+  overflow: hidden;
+  border: 1px solid var(--bg-soft);
+  transition: all 0.3s ease;
+}
+
+.map-container:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 10px 30px rgba(14, 165, 233, 0.2);
+}
+
+/* ══════════════════════════════
+   ANIMACIONES
+══════════════════════════════ */
+.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInUp 0.8s ease forwards;
+}
+
+.fade-in:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.fade-in:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

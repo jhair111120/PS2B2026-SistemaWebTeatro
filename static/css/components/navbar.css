@@ -1,0 +1,70 @@
+/* ================= VARIABLES (si no las tienes ya) ================= */
+:root {
+  --bg-navbar: #0a0a0a;
+  --color-blue: #3b82f6; /* Tailwind blue-500 */
+}
+
+/* ================= NAVBAR ================= */
+nav {
+  background-color: var(--bg-navbar);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(6px);
+}
+
+/* ================= BOTONES (COMPLEMENTO A TAILWIND) ================= */
+
+/* Botón primario (Registrarse) */
+.btn-primary {
+  background-color: var(--color-blue);
+  color: white;
+  transition: all 0.25s ease;
+}
+
+.btn-primary:hover {
+  background-color: #2563eb; /* blue-600 */
+  transform: translateY(-1px);
+}
+
+/* Botón outline (Login) */
+.btn-outline {
+  border: 1px solid rgba(255,255,255,0.2);
+  color: white;
+  transition: all 0.25s ease;
+}
+
+.btn-outline:hover {
+  background-color: white;
+  color: black;
+}
+
+/* ================= ICONOS / INTERACCIONES ================= */
+.icon-hover {
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.icon-hover:hover {
+  transform: scale(1.1);
+  color: white;
+}
+
+/* ================= DROPDOWN ================= */
+#dropdownMenu {
+  background-color: var(--bg-navbar);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  border-radius: 0.75rem;
+  animation: fadeIn 0.2s ease;
+}
+
+/* Animación suave */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

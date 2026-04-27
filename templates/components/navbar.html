@@ -1,3 +1,130 @@
-<nav class="bg-gray-800 text-white p-4">
-    <h1>Mi Sistema de Eventos</h1>
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/components/navbar.css' %}" />
+
+<!-- NAVBAR -->
+<nav class="text-white sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+    <!-- Logo -->
+    <a href="/" class="flex flex-col leading-tight group">
+      <span
+        class="font-semibold text-lg tracking-wide group-hover:text-blue-400 transition"
+      >
+        TEATRO AL AIRE LIBRE
+      </span>
+      <span class="text-xs text-gray-400"> "JAIME LAREDO" </span>
+    </a>
+
+    <!-- Menu Desktop -->
+    <div class="hidden md:flex items-center space-x-2">
+      <a
+        href="/"
+        class="px-4 py-2 rounded-lg bg-white/10 text-white text-sm font-medium"
+      >
+        Inicio
+      </a>
+      <a
+        href="#"
+        class="px-4 py-2 rounded-lg text-sm text-gray-300 hover:text-white hover:bg-white/5 transition"
+      >
+        Eventos
+      </a>
+      <a
+        href="#"
+        class="px-4 py-2 rounded-lg text-sm text-gray-300 hover:text-white hover:bg-white/5 transition"
+      >
+        Mis entradas
+      </a>
+    </div>
+
+    <!-- Right Section -->
+    <div class="flex items-center space-x-5">
+      <!-- Cart -->
+      <div class="relative cursor-pointer group icon-hover">
+        <i class="fas fa-shopping-cart text-lg text-gray-300"></i>
+        <span
+          class="absolute -top-2 -right-2 bg-blue-500 text-[10px] font-semibold rounded-full px-1.5 py-0.5"
+        >
+          2
+        </span>
+      </div>
+
+      {% if request.session.usuario_id %}
+      <!-- User Dropdown -->
+      <div class="relative">
+        <button
+          onclick="toggleDropdown()"
+          class="flex items-center space-x-2 hover:bg-white/5 px-3 py-2 rounded-lg transition"
+        >
+          <div
+            class="w-9 h-9 flex items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-purple-500 shadow-md"
+          >
+            <i class="far fa-user text-sm"></i>
+          </div>
+
+          <span class="text-sm text-gray-300">Mi Cuenta</span>
+        </button>
+
+        <!-- Dropdown -->
+        <div
+          id="dropdownMenu"
+          class="hidden absolute right-0 mt-3 w-64 rounded-xl overflow-hidden"
+        >
+          <!-- User Info -->
+          <div class="px-4 py-3 border-b border-white/10">
+            <p class="text-sm font-semibold text-white">
+              {{ request.session.usuario_nombre_completo }}
+            </p>
+            <p class="text-xs text-gray-400">
+              {{ request.session.usuario_correo }}
+            </p>
+          </div>
+
+          <!-- Options -->
+          <div class="py-2 text-sm">
+            <a
+              href="#"
+              class="flex items-center px-4 py-2 text-gray-300 hover:bg-white/5 hover:text-white transition"
+            >
+              <i class="fas fa-ticket-alt mr-3 text-xs"></i> Mis Entradas
+            </a>
+
+            <a
+              href="{% url 'perfil' %}"
+              class="flex items-center px-4 py-2 text-gray-300 hover:bg-white/5 hover:text-white transition"
+            >
+              <i class="far fa-user mr-3 text-xs"></i> Mi Perfil
+            </a>
+
+            <a
+              href="{% url 'logout' %}"
+              class="flex items-center px-4 py-2 text-red-400 hover:bg-red-500/10 transition"
+            >
+              <i class="fas fa-sign-out-alt mr-3 text-xs"></i> Cerrar Sesión
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {% else %}
+      <!-- Auth Buttons -->
+      <div class="flex items-center space-x-2">
+        <button
+          onclick="openAuthModal('login')"
+          class="btn-outline px-4 py-2 text-sm rounded-lg"
+        >
+          Iniciar Sesión
+        </button>
+
+        <button
+          onclick="openAuthModal('signup')"
+          class="btn-primary px-4 py-2 text-sm rounded-lg shadow"
+        >
+          Registrarse
+        </button>
+      </div>
+      {% endif %}
+    </div>
+  </div>
 </nav>
+
+<script src="{% static 'js/components/navbar.js' %}"></script>

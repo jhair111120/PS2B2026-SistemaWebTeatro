@@ -1,0 +1,213 @@
+{% extends "layouts/base.html" %} {% load static %} {% block title %}Mi Perfil |
+Teatro Al Aire Libre{% endblock %} {% block content %}
+
+<link
+  rel="stylesheet"
+  href="{% static 'css/pages/users/perfil.css' %}"
+/>
+
+<div class="max-w-6xl mx-auto px-4 py-8">
+  <!-- Header -->
+  <div class="mb-6">
+    <h2 class="page-title">Mi Perfil</h2>
+    <p class="page-subtitle">
+      Administra tu información personal y preferencias
+    </p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="flex flex-wrap gap-2 border-b tabs-border mb-6">
+    <button class="tab-btn tab-btn--active" data-tab="personal">
+      Información Personal
+    </button>
+    <button class="tab-btn" data-tab="notificaciones">Notificaciones</button>
+    <button class="tab-btn" data-tab="seguridad">Seguridad</button>
+    <button class="tab-btn" data-tab="compras">Mis Compras</button>
+  </div>
+
+  <!-- ══ PERSONAL ══ -->
+  <div class="tab-content fade-in" id="personal">
+    <div class="profile-card p-6">
+      <h5 class="card-title mb-6">Datos Personales</h5>
+
+      <!-- Avatar -->
+      <div class="flex items-center gap-4 mb-6">
+        <div class="avatar flex items-center justify-center">
+          <i class="far fa-user"></i>
+        </div>
+        <div>
+          <h5 class="avatar-name">
+            {{ usuario.nombre }} {{ usuario.apellido }}
+          </h5>
+          <p class="avatar-email">{{ usuario.correo }}</p>
+        </div>
+      </div>
+
+      <form action="{% url 'perfil' %}" method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update_profile" />
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="form-label mb-1">Nombre</label>
+            <input
+              type="text"
+              name="nombre"
+              class="form-input w-full"
+              value="{{ usuario.nombre }}"
+              required
+              oninput="
+                this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')
+              "
+            />
+          </div>
+
+          <div>
+            <label class="form-label mb-1">Apellido</label>
+            <input
+              type="text"
+              name="apellido"
+              class="form-input w-full"
+              value="{{ usuario.apellido }}"
+              required
+              oninput="
+                this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')
+              "
+            />
+          </div>
+
+          <div>
+            <label class="form-label mb-1">Correo Electrónico</label>
+            <input
+              type="email"
+              name="correo"
+              class="form-input w-full"
+              value="{{ usuario.correo }}"
+              required
+            />
+          </div>
+
+          <div>
+            <label class="form-label mb-1">Teléfono</label>
+            <input
+              type="tel"
+              name="telefono"
+              class="form-input w-full"
+              value="{{ usuario.telefono|default:'' }}"
+              oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+            />
+          </div>
+
+          <div>
+            <label class="form-label mb-1">DNI</label>
+            <input
+              type="text"
+              name="dni"
+              class="form-input w-full"
+              value="{{ usuario.dni|default:'' }}"
+            />
+          </div>
+        </div>
+
+        <div class="text-right mt-6">
+          <button class="btn-primary">Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ══ NOTIFICACIONES ══ -->
+  <div class="tab-content hidden" id="notificaciones">
+    <div class="profile-card p-6">
+      <h5 class="card-title mb-4">Preferencias de Notificaciones</h5>
+
+      {% for item in notificaciones %}
+      <div class="notif-row flex justify-between items-center p-4 mb-3">
+        <span class="notif-label">{{ item }}</span>
+        <input type="checkbox" class="form-checkbox" />
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ══ SEGURIDAD ══ -->
+  <div class="tab-content hidden" id="seguridad">
+    <div class="profile-card p-6 mb-6">
+      <h5 class="card-title mb-4">Cambiar Contraseña</h5>
+
+      <form action="{% url 'perfil' %}" method="POST" class="max-w-md">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update_password" />
+
+        <div class="flex flex-col gap-3">
+          <input
+            type="password"
+            name="current_password"
+            placeholder="Contraseña actual"
+            class="form-input w-full"
+          />
+          <input
+            type="password"
+            name="new_password"
+            placeholder="Nueva contraseña"
+            class="form-input w-full"
+          />
+          <input
+            type="password"
+            name="confirm_password"
+            placeholder="Confirmar contraseña"
+            class="form-input w-full"
+          />
+        </div>
+
+        <button class="btn-primary mt-4">Actualizar</button>
+      </form>
+    </div>
+
+    <div class="profile-card p-6">
+      <h6 class="card-title mb-3">Sesiones activas</h6>
+
+      <div class="flex justify-between items-center session-row pb-3 mb-3">
+        <div>
+          <p class="session-device">Windows • Chrome</p>
+          <p class="session-time">Activo ahora</p>
+        </div>
+        <span class="badge-active">Actual</span>
+      </div>
+
+      <div class="flex justify-between items-center">
+        <div>
+          <p class="session-device">iPhone • Safari</p>
+          <p class="session-time">Hace 2 días</p>
+        </div>
+        <a href="#" class="link-danger">Cerrar sesión</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ COMPRAS ══ -->
+  <div class="tab-content hidden" id="compras">
+    <div class="profile-card p-6 mb-6">
+      <h6 class="card-title mb-4">Historial</h6>
+
+      <div class="flex justify-between items-center purchase-row pb-3 mb-3">
+        <div>
+          <p class="purchase-name">Concierto</p>
+          <p class="purchase-date">14 abril</p>
+        </div>
+        <span class="purchase-price">Bs. 250</span>
+      </div>
+    </div>
+
+    <div class="profile-card p-6">
+      <h6 class="card-title mb-4">Métodos de pago</h6>
+
+      <div class="payment-row flex justify-between items-center p-4">
+        <span class="payment-number">•••• 4242</span>
+        <a href="#" class="link-danger">Eliminar</a>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="{% static 'js/pages/users/perfil.js' %}"></script>
+{% endblock %}

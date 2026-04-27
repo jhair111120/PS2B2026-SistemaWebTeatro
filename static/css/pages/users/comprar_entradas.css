@@ -1,0 +1,244 @@
+/* ══════════════════════════════
+   VARIABLES
+══════════════════════════════ */
+:root {
+  --color-primary: #0EA5E9;
+  --color-accent: #10B981;
+
+  --bg-main: #0A0E14;
+  --bg-card: #151920;
+  --bg-soft: #1E293B;
+
+  --text-main: #E5E7EB;
+  --text-muted: #9CA3AF;
+
+  --danger: #EF4444;
+}
+
+/* ══════════════════════════════
+   BASE
+══════════════════════════════ */
+body {
+  background: var(--bg-main);
+  color: var(--text-main);
+  font-family: 'Inter', sans-serif;
+}
+
+/* ══════════════════════════════
+   LINK VOLVER
+══════════════════════════════ */
+.back-link {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.back-link:hover {
+  color: var(--color-primary);
+  transform: translateX(-3px);
+}
+
+/* ══════════════════════════════
+   BANNER
+══════════════════════════════ */
+.event-banner {
+  border-radius: 1rem;
+  border: 1px solid var(--bg-soft);
+  transition: all 0.3s ease;
+}
+
+.event-banner:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 10px 30px rgba(14, 165, 233, 0.2);
+}
+
+.banner-img {
+  transition: transform 0.4s ease;
+}
+
+.event-banner:hover .banner-img {
+  transform: scale(1.03);
+}
+
+/* ══════════════════════════════
+   CARD INFO EVENTO
+══════════════════════════════ */
+.info-card {
+  background: var(--bg-card);
+  border-radius: 1rem;
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.info-card:hover {
+  border-color: var(--color-primary);
+}
+
+/* TITULOS */
+.event-main-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.section-heading {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.section-body {
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* ══════════════════════════════
+   RATING
+══════════════════════════════ */
+.rating-stars {
+  color: #fbbf24;
+  font-weight: 500;
+}
+
+.rating-count {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* ══════════════════════════════
+   DETALLES EVENTO
+══════════════════════════════ */
+.event-detail {
+  background: var(--bg-soft);
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.event-detail--sub {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* ══════════════════════════════
+   LISTA INFO
+══════════════════════════════ */
+.info-list li {
+  background: var(--bg-soft);
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+}
+
+/* ══════════════════════════════
+   CARD COMPRA
+══════════════════════════════ */
+.purchase-card {
+  background: var(--bg-card);
+  border-radius: 1rem;
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.purchase-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.purchase-title {
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+/* ══════════════════════════════
+   TIPOS DE ENTRADA
+══════════════════════════════ */
+.ticket-row {
+  background: var(--bg-soft);
+  border-radius: 0.5rem;
+  transition: all 0.25s ease;
+}
+
+.ticket-row:hover {
+  background: #243244;
+  transform: translateX(4px);
+}
+
+.ticket-zone {
+  font-weight: 500;
+}
+
+.ticket-price {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+/* ══════════════════════════════
+   DISPONIBILIDAD (PROGRESS)
+══════════════════════════════ */
+.availability-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.availability-pct {
+  font-size: 0.85rem;
+  color: var(--color-primary);
+}
+
+.availability-note {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* BARRA */
+.progress-track {
+  height: 8px;
+  background: var(--bg-soft);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--color-accent),
+    var(--color-primary)
+  );
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+/* ══════════════════════════════
+   BOTON
+══════════════════════════════ */
+.btn-primary {
+  background: var(--color-primary);
+  color: white;
+  padding: 0.7rem 1.4rem;
+  border-radius: 0.6rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background: #0284c7;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(14, 165, 233, 0.3);
+}
+
+/* ══════════════════════════════
+   ANIMACIONES
+══════════════════════════════ */
+.fade-in {
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeIn 0.5s ease forwards;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,0 +1,126 @@
+{% extends "layouts/base.html" %} {% load static %} {% block title %}Inicio |
+Teatro Al Aire Libre{% endblock %} {% block content %}
+
+<link
+  rel="stylesheet"
+  href="{% static 'css/pages/users/comprar_entradas.css' %}"
+/>
+
+<div class="min-h-screen py-10 px-4">
+  <div class="max-w-7xl mx-auto">
+    <!-- Botón volver -->
+    <a href="#" class="back-link inline-block mb-4">← Volver</a>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- ══ COLUMNA IZQUIERDA ══ -->
+      <div class="lg:col-span-2 flex flex-col gap-6">
+        <!-- Banner -->
+        <div class="event-banner overflow-hidden">
+          <img
+            src="{% static 'img/rata-blanca.jpg' %}"
+            alt="Rata Blanca"
+            class="banner-img w-full h-[250px] md:h-[350px] lg:h-[450px] object-cover"
+          />
+        </div>
+
+        <!-- Card info del evento -->
+        <div class="info-card p-6">
+          <h2 class="event-main-title mb-2">Concierto de Rata Blanca</h2>
+
+          <!-- Rating -->
+          <div class="flex items-center gap-2 mb-4">
+            <span class="rating-stars">⭐ 4.8</span>
+            <span class="rating-count">(254 reseñas)</span>
+          </div>
+
+          <!-- Grid de detalles -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div class="flex items-center gap-2 event-detail">
+              📅 martes, 21 de abril de 2026
+            </div>
+            <div class="flex items-center gap-2 event-detail">🕒 19:30 hrs</div>
+            <div class="flex items-start gap-2 event-detail">
+              📍 Teatro al Aire Libre<br />
+              <span class="event-detail--sub">La Paz, Bolivia</span>
+            </div>
+            <div class="flex items-start gap-2 event-detail">
+              🎟️ Capacidad<br />
+              <span class="event-detail--sub">800 disponibles</span>
+            </div>
+          </div>
+
+          <!-- Descripción -->
+          <div class="mb-6">
+            <h3 class="section-heading mb-2">Acerca del Evento</h3>
+            <p class="section-body">
+              Únete a nosotros para una experiencia cultural inolvidable en el
+              Teatro al Aire Libre de La Paz. Este evento presenta una magnífica
+              selección de talento artístico que te transportará a través de la
+              rica herencia cultural boliviana. Con artistas de renombre
+              nacional e internacional, prometemos una noche llena de emociones,
+              música y tradición bajo las estrellas de La Paz.
+            </p>
+          </div>
+
+          <!-- Información importante -->
+          <div>
+            <h3 class="section-heading mb-2">Información Importante</h3>
+            <ul class="info-list flex flex-col gap-2">
+              <li>
+                ✔️ Las puertas se abren 1 hora antes del inicio del evento
+              </li>
+              <li>
+                ✔️ Se recomienda llegar con anticipación para evitar
+                inconvenientes
+              </li>
+              <li>
+                ✔️ Evento para todas las edades - Menores acompañados de adultos
+              </li>
+              <li>
+                ✔️ En caso de lluvia, el evento se realizará bajo carpa cubierta
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ COLUMNA DERECHA (COMPRA) ══ -->
+      <div class="purchase-card p-6 h-fit">
+        <h3 class="purchase-title mb-4">Comprar Entradas</h3>
+
+        <!-- Tipos de entrada -->
+        <div class="flex flex-col gap-3 mb-4">
+          <div class="ticket-row flex justify-between p-3">
+            <span class="ticket-zone">Zona VIP</span>
+            <span class="ticket-price">Bs. 400</span>
+          </div>
+          <div class="ticket-row flex justify-between p-3">
+            <span class="ticket-zone">Graderías</span>
+            <span class="ticket-price">Bs. 200</span>
+          </div>
+          <div class="ticket-row flex justify-between p-3">
+            <span class="ticket-zone">General</span>
+            <span class="ticket-price">Bs. 150</span>
+          </div>
+        </div>
+
+        <!-- Barra de disponibilidad -->
+        <div class="mb-4">
+          <div class="flex justify-between mb-1">
+            <span class="availability-label">Disponibles</span>
+            <span class="availability-pct">45%</span>
+          </div>
+          <div class="progress-track w-full">
+            <div class="progress-fill" style="width: 45%"></div>
+          </div>
+          <p class="availability-note mt-1">370 entradas disponibles de 800</p>
+        </div>
+
+        <!-- CTA -->
+        <button class="btn-primary w-full">Seleccionar Asientos</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
