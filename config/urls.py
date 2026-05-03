@@ -15,6 +15,9 @@ urlpatterns = [
     # ================= RUTAS DE USUARIO (PÁGINAS PÚBLICAS Y PERFIL) =================
     path('', TemplateView.as_view(template_name='pages/users/inicio.html'), name='inicio'),
     path('comprar-entrada/', TemplateView.as_view(template_name='pages/users/comprar_entrada.html'), name='comprar_entradas'),
+    path('seleccionar-zona/', TemplateView.as_view(template_name='pages/users/seleccionar_zona.html'), name='seleccionar_zona'),
+    path('finalizar-compra/', TemplateView.as_view(template_name='pages/users/finalizar_compra.html'), name='finalizar_compra'),
+    path('compra-exitosa/', TemplateView.as_view(template_name='pages/users/compra_exitosa.html'), name='compra_exitosa'),
     path('perfil/', perfil_view, name='perfil'),
 
     # ================= RUTAS DE AUTENTICACIÓN =================

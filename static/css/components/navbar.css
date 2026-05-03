@@ -1,40 +1,71 @@
-/* ================= VARIABLES (si no las tienes ya) ================= */
+/* ================= VARIABLES ================= */
 :root {
-  --bg-navbar: #0a0a0a;
-  --color-blue: #3b82f6; /* Tailwind blue-500 */
+  --bg-navbar: #0A0E14;
+  --color-blue-action: #00AEEF;
+  --font-logo: 'IM Fell Great Primer SC', serif;
 }
 
 /* ================= NAVBAR ================= */
 nav {
   background-color: var(--bg-navbar);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(6px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* ================= BOTONES (COMPLEMENTO A TAILWIND) ================= */
-
-/* Botón primario (Registrarse) */
-.btn-primary {
-  background-color: var(--color-blue);
+.nav-logo-main {
+  font-family: var(--font-logo);
+  font-size: 1.5rem;
+  letter-spacing: 0.05em;
   color: white;
-  transition: all 0.25s ease;
+}
+
+.nav-logo-sub {
+  font-family: var(--font-logo);
+  font-size: 1.1rem;
+  color: #E5E7EB;
+}
+
+/* ================= MENU LINKS ================= */
+.nav-link {
+  padding: 0.5rem 1.5rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+  color: var(--color-blue-action);
+}
+
+.nav-link.active {
+  background-color: var(--color-blue-action);
+  color: white !important;
+}
+
+/* ================= BOTONES ================= */
+.btn-primary {
+  background-color: var(--color-blue-action);
+  color: white;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
 }
 
 .btn-primary:hover {
-  background-color: #2563eb; /* blue-600 */
-  transform: translateY(-1px);
+  background-color: #0099d1;
 }
 
-/* Botón outline (Login) */
 .btn-outline {
-  border: 1px solid rgba(255,255,255,0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   color: white;
-  transition: all 0.25s ease;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
 }
 
 .btn-outline:hover {
-  background-color: white;
-  color: black;
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 /* ================= ICONOS / INTERACCIONES ================= */

@@ -2,8 +2,8 @@
    VARIABLES (PALETA)
 ══════════════════════════════ */
 :root {
-  --color-primary: #0EA5E9;   /* Azul eléctrico */
-  --color-accent: #10B981;    /* Verde */
+  --color-primary: #00AEEF;   /* Azul logo */
+  --color-accent: #00FFD1;    /* Aquamarine/Cyan */
   --bg-main: #0A0E14;
   --bg-card: #151920;
   --bg-soft: #1E293B;
@@ -24,31 +24,35 @@ body {
    HERO
 ══════════════════════════════ */
 .hero-section {
-  background: url('/static/img/hero-bg.jpg') center/cover no-repeat;
+  background: linear-gradient(rgba(10, 14, 20, 0.75), rgba(10, 14, 20, 0.85)), url('/static/img/hero-bg.jpg') center/cover no-repeat;
+  min-height: 95vh;
+  display: flex;
+  align-items: center;
+  position: relative;
 }
 
 .hero-overlay {
-  background: linear-gradient(
-    to bottom,
-    rgba(10, 14, 20, 0.8),
-    rgba(10, 14, 20, 0.95)
-  );
+  display: none; /* Quitamos el overlay absoluto para usar el gradient en el background */
 }
 
 .hero-title {
-  font-size: 3rem;
+  font-size: 5rem;
   font-weight: 800;
   color: white;
+  line-height: 1.1;
 }
 
 .hero-title--accent {
-  color: var(--color-primary);
+  color: var(--color-accent);
 }
 
 .hero-subtitle {
-  color: var(--text-muted);
-  font-size: 1.2rem;
-  line-height: 1.6;
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 600;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* ══════════════════════════════
@@ -57,31 +61,61 @@ body {
 .btn-primary {
   background: var(--color-primary);
   color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.6rem;
+  padding: 0.6rem 1.5rem;
+  border-radius: 0.5rem;
   font-weight: 600;
+  font-size: 1rem;
   transition: all 0.3s ease;
-  box-shadow: 0 0 0 transparent;
+  border: none;
+  cursor: pointer;
 }
 
-.btn-primary:hover {
-  background: #0284c7;
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(14, 165, 233, 0.3);
+.btn-buy {
+  background: #00AEEF;
+  color: white;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 700;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255,255,255,0.2);
+  width: 100%;
+}
+
+.btn-buy:hover {
+  background: #0099d1;
+  box-shadow: 0 5px 15px rgba(0, 174, 239, 0.4);
+}
+
+.btn-view-more {
+  background: #1A1C1E;
+  color: white;
+  padding: 0.75rem 2rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  border: 1px solid #374151;
+  transition: all 0.3s ease;
+}
+
+.btn-view-more:hover {
+  background: #2D2F31;
+  border-color: #4B5563;
 }
 
 .btn-outline {
-  border: 2px solid var(--color-primary);
-  color: var(--color-primary);
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.6rem;
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: white;
+  padding: 0.6rem 1.5rem;
+  border-radius: 0.5rem;
   font-weight: 600;
+  font-size: 1rem;
   transition: all 0.3s ease;
 }
 
 .btn-outline:hover {
-  background: var(--color-primary);
-  color: white;
+  background: rgba(255,255,255,0.1);
+  border-color: white;
 }
 
 /* ══════════════════════════════
@@ -126,44 +160,46 @@ body {
    BADGE FECHA
 ══════════════════════════════ */
 .event-date-badge {
-  background: rgba(21, 25, 32, 0.9);
+  background: rgba(10, 14, 20, 0.9);
   color: white;
   padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
-  font-size: 0.8rem;
+  border-radius: 0.25rem;
+  font-size: 0.7rem;
   text-align: center;
   backdrop-filter: blur(5px);
+  font-weight: bold;
 }
 
 .badge-day {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: var(--color-accent);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  line-height: 1;
 }
 
 /* ══════════════════════════════
    TEXTO EVENTO
 ══════════════════════════════ */
 .event-title {
-  font-size: 1.2rem;
-  font-weight: 600;
+  font-size: 1.3rem;
+  font-weight: 700;
   color: white;
 }
 
 .event-meta {
-  color: var(--text-muted);
-  font-size: 0.9rem;
+  color: var(--text-main);
+  font-size: 0.95rem;
 }
 
 .event-label {
   color: var(--text-muted);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
 }
 
 .event-price {
-  color: var(--color-accent);
-  font-weight: bold;
-  font-size: 1.1rem;
+  color: white;
+  font-weight: 800;
+  font-size: 1.2rem;
 }
 
 /* ══════════════════════════════

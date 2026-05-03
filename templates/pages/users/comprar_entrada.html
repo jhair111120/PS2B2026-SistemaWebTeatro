@@ -6,118 +6,167 @@ Teatro Al Aire Libre{% endblock %} {% block content %}
   href="{% static 'css/pages/users/comprar_entradas.css' %}"
 />
 
-<div class="min-h-screen py-10 px-4">
-  <div class="max-w-7xl mx-auto">
-    <!-- Botón volver -->
-    <a href="#" class="back-link inline-block mb-4">← Volver</a>
+<div class="min-h-screen py-8 px-4">
+  <div class="max-w-6xl mx-auto">
+    <div class="mb-6">
+      <a href="javascript:history.back()" class="back-link flex items-center gap-2">
+        <i class="fas fa-arrow-left"></i>
+        <span>Volver</span>
+      </a>
+    </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- ══ COLUMNA IZQUIERDA ══ -->
-      <div class="lg:col-span-2 flex flex-col gap-6">
-        <!-- Banner -->
-        <div class="event-banner overflow-hidden">
+    <div class="main-event-grid">
+      <div class="event-details-column">
+        <div class="event-banner-wrapper mb-6">
           <img
             src="{% static 'img/rata-blanca.jpg' %}"
+            onerror="this.src='https://via.placeholder.com/800x500/151920/fff?text=Rata+Blanca'"
             alt="Rata Blanca"
-            class="banner-img w-full h-[250px] md:h-[350px] lg:h-[450px] object-cover"
+            class="banner-img-v2"
           />
         </div>
 
-        <!-- Card info del evento -->
-        <div class="info-card p-6">
-          <h2 class="event-main-title mb-2">Concierto de Rata Blanca</h2>
+        <div class="info-card-v2 p-8">
+          <h2 class="event-title-v2 mb-2">Concierto de Rata Blanca</h2>
 
-          <!-- Rating -->
-          <div class="flex items-center gap-2 mb-4">
-            <span class="rating-stars">⭐ 4.8</span>
-            <span class="rating-count">(254 reseñas)</span>
+          <div class="flex items-center gap-2 mb-8">
+            <i class="fas fa-star text-yellow-500"></i>
+            <span class="font-bold text-white">4.8</span>
+            <span class="text-gray-500 text-sm">(254 reseñas)</span>
           </div>
 
-          <!-- Grid de detalles -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div class="flex items-center gap-2 event-detail">
-              📅 martes, 21 de abril de 2026
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+            <div class="flex items-center gap-4">
+              <div class="icon-box"><i class="far fa-calendar-alt"></i></div>
+              <div>
+                <p class="detail-label">Fecha</p>
+                <p class="detail-value">martes, 21 de abril de 2026</p>
+              </div>
             </div>
-            <div class="flex items-center gap-2 event-detail">🕒 19:30 hrs</div>
-            <div class="flex items-start gap-2 event-detail">
-              📍 Teatro al Aire Libre<br />
-              <span class="event-detail--sub">La Paz, Bolivia</span>
+            <div class="flex items-center gap-4">
+              <div class="icon-box"><i class="far fa-clock"></i></div>
+              <div>
+                <p class="detail-label">Hora</p>
+                <p class="detail-value">19:30 hrs</p>
+              </div>
             </div>
-            <div class="flex items-start gap-2 event-detail">
-              🎟️ Capacidad<br />
-              <span class="event-detail--sub">800 disponibles</span>
+            <div class="flex items-center gap-4">
+              <div class="icon-box"><i class="fas fa-map-marker-alt"></i></div>
+              <div>
+                <p class="detail-label">Ubicación</p>
+                <p class="detail-value font-semibold">Teatro al Aire Libre</p>
+                <p class="detail-sub">La Paz, Bolivia</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-4">
+              <div class="icon-box"><i class="fas fa-users"></i></div>
+              <div>
+                <p class="detail-label">Capacidad</p>
+                <p class="detail-value font-semibold">2000 personas</p>
+                <p class="detail-sub">870 disponibles</p>
+              </div>
             </div>
           </div>
 
-          <!-- Descripción -->
-          <div class="mb-6">
-            <h3 class="section-heading mb-2">Acerca del Evento</h3>
-            <p class="section-body">
-              Únete a nosotros para una experiencia cultural inolvidable en el
-              Teatro al Aire Libre de La Paz. Este evento presenta una magnífica
-              selección de talento artístico que te transportará a través de la
-              rica herencia cultural boliviana. Con artistas de renombre
-              nacional e internacional, prometemos una noche llena de emociones,
-              música y tradición bajo las estrellas de La Paz.
+          <div class="section-divider-v2"></div>
+
+          <div class="mb-8">
+            <h3 class="section-subtitle-v2 mb-4">Acerca del Evento</h3>
+            <p class="section-text-v2">
+              Únete a nosotros para una experiencia cultural inolvidable en el Teatro al Aire Libre de La Paz. Este evento presenta una magnífica selección de talento artístico que te transportará a través de la rica herencia cultural boliviana. Con artistas de renombre nacional e internacional, prometemos una noche llena de emociones, música y tradición bajo las estrellas de La Paz.
             </p>
           </div>
 
-          <!-- Información importante -->
+          <div class="section-divider-v2"></div>
+
           <div>
-            <h3 class="section-heading mb-2">Información Importante</h3>
-            <ul class="info-list flex flex-col gap-2">
-              <li>
-                ✔️ Las puertas se abren 1 hora antes del inicio del evento
-              </li>
-              <li>
-                ✔️ Se recomienda llegar con anticipación para evitar
-                inconvenientes
-              </li>
-              <li>
-                ✔️ Evento para todas las edades - Menores acompañados de adultos
-              </li>
-              <li>
-                ✔️ En caso de lluvia, el evento se realizará bajo carpa cubierta
-              </li>
-            </ul>
+            <h3 class="section-subtitle-v2 mb-4">Información Importante</h3>
+            <div class="flex flex-col gap-3">
+              <div class="flex items-center gap-3 text-gray-300">
+                <i class="fas fa-info-circle text-[#00AEEF]"></i>
+                <span class="text-sm">Las puertas se abren 1 hora antes del inicio del evento</span>
+              </div>
+              <div class="flex items-center gap-3 text-gray-300">
+                <i class="fas fa-info-circle text-[#00AEEF]"></i>
+                <span class="text-sm">Se recomienda llegar con anticipación para evitar inconvenientes</span>
+              </div>
+              <div class="flex items-center gap-3 text-gray-300">
+                <i class="fas fa-info-circle text-[#00AEEF]"></i>
+                <span class="text-sm">Evento para todas las edades - Menores acompañados de adultos</span>
+              </div>
+              <div class="flex items-center gap-3 text-gray-300">
+                <i class="fas fa-info-circle text-[#00AEEF]"></i>
+                <span class="text-sm">En caso de lluvia, el evento se realizará bajo carpas cubiertas</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- ══ COLUMNA DERECHA (COMPRA) ══ -->
-      <div class="purchase-card p-6 h-fit">
-        <h3 class="purchase-title mb-4">Comprar Entradas</h3>
+      <div class="purchase-sidebar-column">
+        <div class="purchase-card-v2 flex flex-col justify-between">
+          <div>
+            <h3 class="purchase-title-v2">Comprar Entradas</h3>
 
-        <!-- Tipos de entrada -->
-        <div class="flex flex-col gap-3 mb-4">
-          <div class="ticket-row flex justify-between p-3">
-            <span class="ticket-zone">Zona VIP</span>
-            <span class="ticket-price">Bs. 400</span>
+            <div class="flex flex-col gap-3">
+              <div class="ticket-row-v2">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <h5 class="zone-name">SUPER VIP</h5>
+                    <p class="zone-desc">Mejor vista al escenario</p>
+                  </div>
+                  <span class="zone-price">Bs. 600</span>
+                </div>
+              </div>
+              <div class="ticket-row-v2">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <h5 class="zone-name">VIP</h5>
+                    <p class="zone-desc">Mejores asientos</p>
+                  </div>
+                  <span class="zone-price">Bs. 400</span>
+                </div>
+              </div>
+              <div class="ticket-row-v2">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <h5 class="zone-name">PLATEA</h5>
+                    <p class="zone-desc">Buena vista</p>
+                  </div>
+                  <span class="zone-price">Bs. 200</span>
+                </div>
+              </div>
+              <div class="ticket-row-v2">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <h5 class="zone-name">GENERAL</h5>
+                    <p class="zone-desc">Entrada estándar</p>
+                  </div>
+                  <span class="zone-price">Bs. 150</span>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="ticket-row flex justify-between p-3">
-            <span class="ticket-zone">Graderías</span>
-            <span class="ticket-price">Bs. 200</span>
-          </div>
-          <div class="ticket-row flex justify-between p-3">
-            <span class="ticket-zone">General</span>
-            <span class="ticket-price">Bs. 150</span>
+
+          <div class="mt-6">
+            <div class="occupancy-section mb-6">
+              <div class="flex justify-between text-sm mb-2">
+                <span class="text-gray-400">Ocupación</span>
+                <span class="text-white">49%</span>
+              </div>
+              <div class="progress-bar-v2 mb-2">
+                <div class="progress-fill-v2" style="width: 49%;"></div>
+              </div>
+              <p class="text-xs text-gray-500">870 entradas disponibles de 2000</p>
+            </div>
+
+            <hr class="border-white/10 mb-6">
+
+            <a href="{% url 'seleccionar_zona' %}" onclick="localStorage.removeItem('purchaseCart');localStorage.removeItem('purchaseDeadline');" class="btn-select-zone w-full font-bold inline-flex justify-center items-center" style="text-decoration: none;">
+              Seleccionar Zona
+            </a>
           </div>
         </div>
-
-        <!-- Barra de disponibilidad -->
-        <div class="mb-4">
-          <div class="flex justify-between mb-1">
-            <span class="availability-label">Disponibles</span>
-            <span class="availability-pct">45%</span>
-          </div>
-          <div class="progress-track w-full">
-            <div class="progress-fill" style="width: 45%"></div>
-          </div>
-          <p class="availability-note mt-1">370 entradas disponibles de 800</p>
-        </div>
-
-        <!-- CTA -->
-        <button class="btn-primary w-full">Seleccionar Asientos</button>
       </div>
     </div>
   </div>

@@ -7,6 +7,14 @@ Teatro Al Aire Libre{% endblock %} {% block content %}
 />
 
 <div class="max-w-6xl mx-auto px-4 py-8">
+  <!-- Botón Volver -->
+  <div class="mb-4">
+    <a href="{% url 'inicio' %}" class="back-link flex items-center gap-2">
+      <i class="fas fa-arrow-left"></i>
+      <span>Volver al Inicio</span>
+    </a>
+  </div>
+
   <!-- Header -->
   <div class="mb-6">
     <h2 class="page-title">Mi Perfil</h2>
@@ -119,14 +127,56 @@ Teatro Al Aire Libre{% endblock %} {% block content %}
   <!-- ══ NOTIFICACIONES ══ -->
   <div class="tab-content hidden" id="notificaciones">
     <div class="profile-card p-6">
-      <h5 class="card-title mb-4">Preferencias de Notificaciones</h5>
+      <h5 class="card-title mb-1">Preferencias de Notificaciones</h5>
+      <p class="notif-description mb-6">Configura qué notificaciones deseas recibir</p>
 
-      {% for item in notificaciones %}
+      <!-- Opción 1 -->
       <div class="notif-row flex justify-between items-center p-4 mb-3">
-        <span class="notif-label">{{ item }}</span>
-        <input type="checkbox" class="form-checkbox" />
+        <div>
+          <h6 class="notif-label font-semibold mb-0">Notificaciones de eventos</h6>
+          <p class="notif-description mb-0">Recibe emails sobre nuevos eventos y actualizaciones</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" checked>
+          <span class="slider"></span>
+        </label>
       </div>
-      {% endfor %}
+
+      <!-- Opción 2 -->
+      <div class="notif-row flex justify-between items-center p-4 mb-3">
+        <div>
+          <h6 class="notif-label font-semibold mb-0">Promociones y ofertas</h6>
+          <p class="notif-description mb-0">Recibe emails sobre descuentos y promociones especiales</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <!-- Opción 3 -->
+      <div class="notif-row flex justify-between items-center p-4 mb-3">
+        <div>
+          <h6 class="notif-label font-semibold mb-0">Recordatorios por email</h6>
+          <p class="notif-description mb-0">Recibe email recordatorios antes de tus eventos</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <!-- Opción 4 -->
+      <div class="notif-row flex justify-between items-center p-4 mb-3">
+        <div>
+          <h6 class="notif-label font-semibold mb-0">Notificaciones push</h6>
+          <p class="notif-description mb-0">Recibe notificaciones en tu dispositivo</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
     </div>
   </div>
 

@@ -1,16 +1,12 @@
 {% extends "layouts/base.html" %} {% load static %} {% block title %}Inicio |
 Teatro Al Aire Libre{% endblock %} {% block content %}
-
-<!-- ══════════════════════════════
-     HERO
-══════════════════════════════ -->
-
 <link
   rel="stylesheet"
   href="{% static 'css/pages/users/inicio.css' %}"
 />
 
-<section class="hero-section relative py-24 text-center">
+<div class="w-full min-h-screen bg-[#0A0E14]">
+<section class="hero-section text-center">
   <!-- Overlay visual → manejado en CSS -->
   <div class="hero-overlay absolute inset-0"></div>
 
@@ -25,8 +21,8 @@ Teatro Al Aire Libre{% endblock %} {% block content %}
     </p>
 
     <div class="flex justify-center gap-4 flex-wrap">
-      <a href="#" class="btn-primary">Ver Eventos</a>
-      <a href="#" class="btn-outline">Conocer Más</a>
+      <a href="#eventos-destacados" class="btn-primary">Ver Eventos</a>
+      <a href="#ubicacion" class="btn-outline">Conocer Más</a>
     </div>
   </div>
 </section>
@@ -34,7 +30,7 @@ Teatro Al Aire Libre{% endblock %} {% block content %}
 <!-- ══════════════════════════════
      EVENTOS DESTACADOS
 ══════════════════════════════ -->
-<section class="max-w-7xl mx-auto px-4 py-16">
+<section id="eventos-destacados" class="max-w-7xl mx-auto px-4 py-16">
   <!-- Encabezado de sección -->
   <div class="text-center mb-12">
     <h2 class="section-title">No Te Pierdas Estos Espectáculos</h2>
@@ -68,8 +64,12 @@ Teatro Al Aire Libre{% endblock %} {% block content %}
       <!-- Cuerpo de la card -->
       <div class="p-6">
         <h5 class="event-title mb-3">Concierto Rata Blanca</h5>
-        <p class="event-meta mb-1">📅 Viernes, 27 de Marzo, 2026</p>
-        <p class="event-meta mb-4">⏰ 19:00 Hrs.</p>
+        <p class="event-meta mb-1 flex items-center gap-2">
+          <i class="far fa-calendar-alt text-[#00AEEF]"></i> Viernes, 27 de Marzo, 2026
+        </p>
+        <p class="event-meta mb-4 flex items-center gap-2">
+          <i class="far fa-clock text-[#00AEEF]"></i> 19:00 Hrs.
+        </p>
 
         <div class="flex justify-between mb-4">
           <div>
@@ -82,7 +82,7 @@ Teatro Al Aire Libre{% endblock %} {% block content %}
           </div>
         </div>
 
-        <button class="btn-primary w-full">Comprar Entradas</button>
+        <a href="{% url 'comprar_entradas' %}" class="btn-buy inline-block text-center" style="text-decoration: none;">Comprar Entradas!</a>
       </div>
     </div>
 
@@ -107,8 +107,12 @@ Teatro Al Aire Libre{% endblock %} {% block content %}
 
       <div class="p-6">
         <h5 class="event-title mb-3">Concierto Wisin Y Yandel</h5>
-        <p class="event-meta mb-1">📅 Sábado, 28 de Marzo, 2026</p>
-        <p class="event-meta mb-4">⏰ 20:00 Hrs.</p>
+        <p class="event-meta mb-1 flex items-center gap-2">
+          <i class="far fa-calendar-alt text-[#00AEEF]"></i> Sábado, 28 de Marzo, 2026
+        </p>
+        <p class="event-meta mb-4 flex items-center gap-2">
+          <i class="far fa-clock text-[#00AEEF]"></i> 20:00 Hrs.
+        </p>
 
         <div class="flex justify-between mb-4">
           <div>
@@ -121,7 +125,7 @@ Teatro Al Aire Libre{% endblock %} {% block content %}
           </div>
         </div>
 
-        <button class="btn-primary w-full">Comprar Entradas</button>
+        <a href="{% url 'comprar_entradas' %}" class="btn-buy inline-block text-center" style="text-decoration: none;">Comprar Entradas!</a>
       </div>
     </div>
 
@@ -146,8 +150,12 @@ Teatro Al Aire Libre{% endblock %} {% block content %}
 
       <div class="p-6">
         <h5 class="event-title mb-3">Concierto Slipknot</h5>
-        <p class="event-meta mb-1">📅 Viernes, 10 de Abril, 2026</p>
-        <p class="event-meta mb-4">⏰ 19:00 Hrs.</p>
+        <p class="event-meta mb-1 flex items-center gap-2">
+          <i class="far fa-calendar-alt text-[#00AEEF]"></i> Viernes, 10 de Abril, 2026
+        </p>
+        <p class="event-meta mb-4 flex items-center gap-2">
+          <i class="far fa-clock text-[#00AEEF]"></i> 19:00 Hrs.
+        </p>
 
         <div class="flex justify-between mb-4">
           <div>
@@ -160,25 +168,25 @@ Teatro Al Aire Libre{% endblock %} {% block content %}
           </div>
         </div>
 
-        <button class="btn-primary w-full">Comprar Entradas</button>
+        <a href="{% url 'comprar_entradas' %}" class="btn-buy inline-block text-center" style="text-decoration: none;">Comprar Entradas!</a>
       </div>
     </div>
   </div>
 
   <!-- CTA secundario -->
   <div class="text-center mt-10">
-    <button class="btn-outline">Ver más</button>
+    <a href="{% url 'eventos' %}" class="btn-view-more inline-block" style="text-decoration: none;">Ver más</a>
   </div>
 </section>
 
 <!-- ══════════════════════════════
      UBICACIÓN
 ══════════════════════════════ -->
-<section class="max-w-5xl mx-auto px-4 py-16 text-center">
+<section id="ubicacion" class="max-w-5xl mx-auto px-4 py-16 text-center">
   <h2 class="section-title mb-3">Ubicación</h2>
   <p class="section-subtitle mb-6">Avenida del Poeta, La Paz</p>
 
-  <div class="map-container">
+  <a href="https://maps.app.goo.gl/U5o9WHwugTRGs54fA" target="_blank" class="map-container block">
     <img
       src="{% static 'img/mapa.jpg' %}"
       onerror="
@@ -188,7 +196,8 @@ Teatro Al Aire Libre{% endblock %} {% block content %}
       class="w-full h-auto"
       alt="Mapa de Ubicación"
     />
-  </div>
+  </a>
 </section>
+</div>
 
 {% endblock %}
