@@ -1,0 +1,683 @@
+{% extends "layouts/admin_base.html" %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block admin_content %}
+<div class="admin-dashboard">
+
+<!-- ========== DASHBOARD ========== -->
+<section id="panel-dashboard" class="admin-panel admin-section">
+  <div class="admin-page-head">
+    <h1 class="admin-page-title">Dashboard</h1>
+    <p class="admin-page-desc">Bienvenido al panel de administración del Teatro al Aire Libre</p>
+  </div>
+
+  <div class="admin-kpi-grid">
+    <div class="admin-card">
+      <div class="admin-kpi-card__row">
+        <div>
+          <p class="admin-kpi-card__label">Total de ventas</p>
+          <p class="admin-kpi-card__value">Bs. 400.000</p>
+        </div>
+        <span class="admin-kpi-card__icon admin-kpi-card__icon--sky"><i class="fas fa-dollar-sign"></i></span>
+      </div>
+    </div>
+    <div class="admin-card">
+      <div class="admin-kpi-card__row">
+        <div>
+          <p class="admin-kpi-card__label">Reservas activas</p>
+          <p class="admin-kpi-card__value">650</p>
+        </div>
+        <span class="admin-kpi-card__icon admin-kpi-card__icon--emerald"><i class="fas fa-users"></i></span>
+      </div>
+    </div>
+    <div class="admin-card">
+      <div class="admin-kpi-card__row">
+        <div>
+          <p class="admin-kpi-card__label">Ocupación promedio</p>
+          <p class="admin-kpi-card__value">62 %</p>
+        </div>
+        <span class="admin-kpi-card__icon admin-kpi-card__icon--violet"><i class="fas fa-arrow-trend-up"></i></span>
+      </div>
+    </div>
+    <div class="admin-card">
+      <div class="admin-kpi-card__row">
+        <div>
+          <p class="admin-kpi-card__label">Eventos activos</p>
+          <p class="admin-kpi-card__value">{{ eventos|length }}</p>
+        </div>
+        <span class="admin-kpi-card__icon admin-kpi-card__icon--amber"><i class="fas fa-calendar-check"></i></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-grid-2">
+    <div class="admin-card">
+      <h3 class="admin-card__title">Ventas de la Semana</h3>
+      <p class="admin-card__subtitle">Ingreso en Bolivianos</p>
+      <div class="admin-chart-box">
+        <canvas id="chart-ventas-semana" aria-label="Gráfico de ventas semanales"></canvas>
+      </div>
+    </div>
+    <div class="admin-card">
+      <h3 class="admin-card__title">Ocupación por zonas</h3>
+      <p class="admin-card__subtitle">Porcentaje de ocupación actual</p>
+      <div class="admin-chart-box admin-chart-box--pie">
+        <canvas id="chart-ocupacion-zonas" aria-label="Gráfico de ocupación por zona"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <h3 class="admin-page-title" style="font-size: 1.125rem;">Próximos eventos</h3>
+    <p class="admin-page-desc">Eventos activos ordenados por fecha</p>
+    <div class="admin-event-grid" style="margin-top: 1rem;">
+      {% for evento in proximos_eventos %}
+        {% cycle '73' '49' '33' '95' as pct silent %}
+        {% cycle '1250' '890' '640' '1980' as vend silent %}
+        {% cycle '2000' '1500' '1200' '2100' as cap silent %}
+        <div class="admin-card">
+          <p class="cell-strong" style="margin:0;">{{ evento.nombre }}</p>
+          <div class="admin-event-card__meta">
+            <span><i class="fas fa-calendar"></i>{{ evento.fecha_evento|date:"j M Y" }}</span>
+            <span><i class="fas fa-clock"></i>{{ evento.hora_evento|time:"H:i" }}</span>
+          </div>
+          <div class="admin-event-card__footer">
+            <span class="admin-event-card__stats">Vendidos {{ vend }} / {{ cap }}</span>
+            <span class="admin-event-card__pct">{{ pct }}% ocupación</span>
+          </div>
+          <div class="admin-progress">
+            <div class="admin-progress__bar" style="width: {{ pct }}%"></div>
+          </div>
+        </div>
+      {% empty %}
+        <p class="admin-empty">No hay eventos próximos registrados.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="admin-card">
+    <h3 class="admin-card__title">Tendencia de ventas mensuales</h3>
+    <p class="admin-card__subtitle">Comparación de los últimos 3 meses</p>
+    <div class="admin-chart-box admin-chart-box--sm">
+      <canvas id="chart-tendencia-mensual" aria-label="Tendencia de ventas"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ========== EVENTOS ========== -->
+<section id="panel-eventos" class="admin-panel admin-section hidden">
+  <div class="admin-page-head-row">
+    <div class="admin-page-head">
+      <h1 class="admin-page-title">Gestión de Eventos</h1>
+      <p class="admin-page-desc">Crea, edita y administra eventos del teatro.</p>
+    </div>
+    <button type="button" class="admin-btn-primary"><i class="fas fa-plus"></i> Nuevo Evento</button>
+  </div>
+
+  <div class="admin-table-shell">
+    <div class="admin-table-shell__head">
+      <h2>Todos los Eventos</h2>
+    </div>
+    <div class="admin-table-scroll">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Evento</th>
+            <th>Fecha y Hora</th>
+            <th>Precios (Bs.)</th>
+            <th>Ocupación</th>
+            <th>Estado</th>
+            <th class="cell-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for evento in eventos %}
+            {% cycle '73' '49' '33' '95' '62' as occ_pct silent %}
+            {% cycle '#f97316' '#0ea5e9' '#ef4444' '#22c55e' '#8b5cf6' as bar_hex silent %}
+            <tr>
+              <td class="cell-strong">{{ evento.nombre }}</td>
+              <td class="cell-muted">
+                <div class="admin-stack" style="gap:0.25rem;">
+                  <span><i class="fas fa-calendar-day" style="color:#38bdf8;margin-right:0.35rem;"></i>{{ evento.fecha_evento|date:"d/m/Y" }}</span>
+                  <span><i class="fas fa-clock" style="color:#38bdf8;margin-right:0.35rem;"></i>{{ evento.hora_evento|time:"H:i" }}</span>
+                </div>
+              </td>
+              <td class="cell-muted cell-xs">
+                {% for ez in evento.eventozona_set.all %}
+                  <div>{{ ez.zona.nombre }}: {{ ez.precio_base }}</div>
+                {% empty %}
+                  <span class="cell-muted">—</span>
+                {% endfor %}
+              </td>
+              <td>
+                <div class="admin-mini-progress">
+                  <div class="admin-mini-progress__track">
+                    <div class="admin-mini-progress__fill" style="width: {{ occ_pct }}%; background-color: {{ bar_hex }};"></div>
+                  </div>
+                  <p class="cell-xs cell-muted" style="margin:0.35rem 0 0;">1450 / 2000 · {{ occ_pct }}%</p>
+                </div>
+              </td>
+              <td>
+                {% if 'final' in evento.estado_evento.nombre|lower %}
+                  <span class="admin-badge admin-badge--neutral">finalizado</span>
+                {% else %}
+                  <span class="admin-badge admin-badge--ok">activo</span>
+                {% endif %}
+              </td>
+              <td class="cell-right">
+                <button type="button" class="admin-icon-action admin-icon-action--edit" title="Editar"><i class="fas fa-pen"></i></button>
+                <button type="button" class="admin-icon-action admin-icon-action--del" title="Eliminar"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="6" style="text-align:center;padding:2rem;color:#94a3b8;">No hay eventos registrados.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ========== ZONAS ========== -->
+<section id="panel-zonas" class="admin-panel admin-section hidden">
+  <div class="admin-page-head">
+    <h1 class="admin-page-title">Zonas y Asientos</h1>
+    <p class="admin-page-desc">Mapa de sala, zonas y configuración de asientos por evento.</p>
+  </div>
+  <div class="admin-placeholder-box">
+    <i class="fas fa-vector-square"></i>
+    <p>Editor de plano y asientos (próximamente)</p>
+  </div>
+</section>
+
+<!-- ========== RESERVAS ========== -->
+<section id="panel-reservas" class="admin-panel admin-section hidden">
+  <div class="admin-page-head">
+    <h1 class="admin-page-title">Reservas</h1>
+    <p class="admin-page-desc">Administra las reservas activas, confirmadas y expiradas.</p>
+  </div>
+  <div class="admin-kpi-grid admin-kpi-grid--3">
+    <div class="admin-card admin-flex-between">
+      <div>
+        <p class="admin-kpi-card__label">Reservas Activas</p>
+        <p class="admin-kpi-card__value">2</p>
+      </div>
+      <span class="admin-kpi-card__icon admin-kpi-card__icon--amber"><i class="fas fa-clock"></i></span>
+    </div>
+    <div class="admin-card admin-flex-between">
+      <div>
+        <p class="admin-kpi-card__label">Confirmadas</p>
+        <p class="admin-kpi-card__value">0</p>
+      </div>
+      <span class="admin-kpi-card__icon admin-kpi-card__icon--emerald"><i class="fas fa-check"></i></span>
+    </div>
+    <div class="admin-card admin-flex-between">
+      <div>
+        <p class="admin-kpi-card__label">Expiradas</p>
+        <p class="admin-kpi-card__value">1</p>
+      </div>
+      <span class="admin-kpi-card__icon admin-kpi-card__icon--red"><i class="fas fa-xmark"></i></span>
+    </div>
+  </div>
+  <div class="admin-filters">
+    <div class="admin-input-wrap">
+      <i class="fas fa-magnifying-glass"></i>
+      <input class="admin-input" type="search" placeholder="Buscar por nombre, email o evento..." />
+    </div>
+    <select class="admin-select"><option>Todos los estados</option><option>activa</option><option>confirmada</option><option>expirada</option></select>
+  </div>
+  <div class="admin-table-shell">
+    <div class="admin-table-shell__head"><h2>Todas las Reservas</h2></div>
+    <div class="admin-table-scroll">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>ID</th><th>Usuario</th><th>Evento</th><th>Asiento</th><th>Monto</th><th>Tiempo</th><th>Estado</th><th class="cell-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="cell-xs" style="font-family:ui-monospace,monospace;">R001</td>
+            <td><div class="cell-strong">María Gonzales</div><div class="cell-xs cell-muted">maria@mail.com</div></td>
+            <td class="cell-muted">Concierto Folklórico Nacional</td>
+            <td class="cell-muted"><i class="fas fa-location-dot" style="color:#38bdf8;"></i> VIP - A-15</td>
+            <td>Bs. 150</td>
+            <td class="admin-text-amber"><i class="fas fa-clock"></i> Expirada</td>
+            <td><span class="admin-badge admin-badge--warn">activa</span></td>
+            <td class="cell-right admin-actions-gap"><button type="button" class="admin-btn-success" style="padding:0.35rem 0.75rem;font-size:0.75rem;">Confirmar</button><button type="button" class="admin-btn-danger" style="padding:0.35rem 0.75rem;font-size:0.75rem;">Cancelar</button></td>
+          </tr>
+          <tr>
+            <td class="cell-xs" style="font-family:ui-monospace,monospace;">R002</td>
+            <td><div class="cell-strong">Carlos Rojas</div><div class="cell-xs cell-muted">carlos@mail.com</div></td>
+            <td class="cell-muted">Festival de Música Andina</td>
+            <td class="cell-muted"><i class="fas fa-location-dot" style="color:#38bdf8;"></i> General - F-12</td>
+            <td>Bs. 80</td>
+            <td class="cell-muted">12 min</td>
+            <td><span class="admin-badge admin-badge--danger">expirada</span></td>
+            <td class="cell-right cell-muted">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ========== VENTAS ========== -->
+<section id="panel-ventas" class="admin-panel admin-section hidden">
+  <div class="admin-page-head">
+    <h1 class="admin-page-title">Ventas</h1>
+    <p class="admin-page-desc">Historial de compras y tickets digitales</p>
+  </div>
+  <div class="admin-kpi-grid admin-kpi-grid--3">
+    <div class="admin-card admin-flex-between">
+      <div>
+        <p class="admin-kpi-card__label">Ingresos Totales</p>
+        <p class="admin-kpi-card__value">Bs. 400</p>
+        <p class="cell-xs" style="color:#6ee7b7;margin:0.35rem 0 0;"><i class="fas fa-arrow-up"></i> +18.2%</p>
+      </div>
+      <span class="admin-kpi-card__icon admin-kpi-card__icon--emerald"><i class="fas fa-dollar-sign"></i></span>
+    </div>
+    <div class="admin-card admin-flex-between">
+      <div>
+        <p class="admin-kpi-card__label">Ventas Completadas</p>
+        <p class="admin-kpi-card__value">2</p>
+      </div>
+      <span class="admin-kpi-card__icon admin-kpi-card__icon--sky"><i class="fas fa-credit-card"></i></span>
+    </div>
+    <div class="admin-card admin-flex-between">
+      <div>
+        <p class="admin-kpi-card__label">Pendientes</p>
+        <p class="admin-kpi-card__value">1</p>
+      </div>
+      <span class="admin-kpi-card__icon admin-kpi-card__icon--amber"><i class="fas fa-hourglass-half"></i></span>
+    </div>
+  </div>
+  <div class="admin-filters">
+    <div class="admin-input-wrap"><i class="fas fa-magnifying-glass"></i><input class="admin-input" type="search" placeholder="Buscar por nombre, email o evento..." /></div>
+    <select class="admin-select"><option>Todos los estados</option><option>completado</option><option>pendiente</option></select>
+  </div>
+  <div class="admin-table-shell">
+    <div class="admin-table-shell__head"><h2>Historial de Ventas</h2></div>
+    <div class="admin-table-scroll">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>ID</th><th>Cliente</th><th>Evento</th><th>Asientos</th><th>Monto</th><th>Método</th><th>Fecha</th><th>Estado</th><th class="cell-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="cell-xs" style="font-family:monospace;">V001</td>
+            <td><div class="cell-strong">Ana López</div><div class="cell-xs cell-muted">ana@mail.com</div></td>
+            <td class="cell-muted"><i class="fas fa-calendar" style="color:#38bdf8;"></i> Concierto Folklórico Nacional</td>
+            <td class="cell-muted"><i class="fas fa-location-dot" style="color:#38bdf8;"></i> VIP (2)</td>
+            <td>Bs. 300</td>
+            <td>Tarjeta de crédito</td>
+            <td>15 mar 2026</td>
+            <td><span class="admin-badge admin-badge--ok">completado</span></td>
+            <td class="cell-right"><button type="button" class="admin-icon-btn" style="color:#38bdf8;"><i class="fas fa-eye"></i></button></td>
+          </tr>
+          <tr>
+            <td class="cell-xs" style="font-family:monospace;">V002</td>
+            <td><div class="cell-strong">Luis Camacho</div><div class="cell-xs cell-muted">luis@mail.com</div></td>
+            <td class="cell-muted"><i class="fas fa-calendar" style="color:#38bdf8;"></i> Festival de Música Andina</td>
+            <td class="cell-muted"><i class="fas fa-location-dot" style="color:#38bdf8;"></i> General (1)</td>
+            <td>Bs. 80</td>
+            <td>QR Bancario</td>
+            <td>14 mar 2026</td>
+            <td><span class="admin-badge admin-badge--warn">pendiente</span></td>
+            <td class="cell-right"><button type="button" class="admin-icon-btn" style="color:#38bdf8;"><i class="fas fa-eye"></i></button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ========== REPORTES ========== -->
+<section id="panel-reportes" class="admin-panel admin-section hidden">
+  <div class="admin-page-head">
+    <h1 class="admin-page-title">Reportes</h1>
+    <p class="admin-page-desc">Genera reportes detallados de ventas y ocupación</p>
+  </div>
+  <div class="admin-card">
+    <h3 class="admin-card__title" style="font-size:0.9rem;">Configurar Reporte</h3>
+    <div class="admin-report-toolbar" style="margin-top:1rem;">
+      <div>
+        <label>Tipo de Reporte</label>
+        <select><option>Ventas</option><option>Ocupación</option><option>Reservas</option></select>
+      </div>
+      <div>
+        <label>Fecha Inicio</label>
+        <input type="date" value="2026-03-01" />
+      </div>
+      <div>
+        <label>Fecha Fin</label>
+        <input type="date" value="2026-03-31" />
+      </div>
+      <button type="button" class="admin-btn-danger"><i class="fas fa-file-pdf"></i> PDF</button>
+      <button type="button" class="admin-btn-success"><i class="fas fa-file-excel"></i> Excel</button>
+    </div>
+  </div>
+  <div class="admin-kpi-grid admin-kpi-grid--3">
+    <div class="admin-card">
+      <p class="admin-kpi-card__label">Ingresos Totales</p>
+      <p class="admin-kpi-card__value">Bs. 397.600</p>
+    </div>
+    <div class="admin-card">
+      <p class="admin-kpi-card__label">Tickets Vendidos</p>
+      <p class="admin-kpi-card__value">4970</p>
+      <p class="cell-xs cell-muted">4 eventos</p>
+    </div>
+    <div class="admin-card">
+      <p class="admin-kpi-card__label">Ocupación Promedio</p>
+      <p class="admin-kpi-card__value">62%</p>
+      <p class="cell-xs cell-muted">De capacidad total</p>
+    </div>
+  </div>
+  <div class="admin-grid-2">
+    <div class="admin-card">
+      <h3 class="admin-card__title">Ventas Semanales</h3>
+      <p class="admin-card__subtitle">Ingresos por día de la semana</p>
+      <div class="admin-chart-box admin-chart-box--sm"><canvas id="chart-reportes-semanal"></canvas></div>
+    </div>
+    <div class="admin-card">
+      <h3 class="admin-card__title">Ocupación por Zonas</h3>
+      <p class="admin-card__subtitle">Porcentaje de ocupación por sector</p>
+      <div class="admin-chart-box admin-chart-box--sm"><canvas id="chart-reportes-zonas-h"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== SOPORTE ========== -->
+<section id="panel-soporte" class="admin-panel admin-section hidden">
+  <div class="admin-page-head">
+    <h1 class="admin-page-title">Soporte</h1>
+    <p class="admin-page-desc">Atiende consultas de usuarios en tiempo real</p>
+  </div>
+  <div class="admin-kpi-grid admin-kpi-grid--3">
+    <div class="admin-card admin-flex-between">
+      <div><p class="admin-kpi-card__label">Conversaciones Totales</p><p class="admin-kpi-card__value">2</p></div>
+      <span class="admin-kpi-card__icon admin-kpi-card__icon--sky"><i class="fas fa-comments"></i></span>
+    </div>
+    <div class="admin-card admin-flex-between">
+      <div><p class="admin-kpi-card__label">Pendientes</p><p class="admin-kpi-card__value">2</p></div>
+      <span class="admin-kpi-card__icon admin-kpi-card__icon--amber"><i class="fas fa-clock"></i></span>
+    </div>
+    <div class="admin-card admin-flex-between">
+      <div><p class="admin-kpi-card__label">Respondidas</p><p class="admin-kpi-card__value">0</p></div>
+      <span class="admin-kpi-card__icon admin-kpi-card__icon--emerald"><i class="fas fa-check"></i></span>
+    </div>
+  </div>
+  <div class="admin-split-chat">
+    <div class="admin-chat-list">
+      <div class="admin-chat-list__head">Conversaciones</div>
+      <div class="admin-chat-list__body">
+        <button type="button" class="admin-chat-item">
+          <div class="admin-flex-between" style="align-items:center;">
+            <span class="cell-strong">Laura Pérez</span>
+            <span class="admin-badge admin-badge--warn" style="font-size:10px;padding:2px 6px;">nuevo</span>
+          </div>
+          <p class="cell-xs cell-muted">laura@mail.com</p>
+          <p class="cell-xs cell-muted" style="margin-top:0.35rem;">¿Puedo cambiar la fecha de mi entrada?</p>
+          <p style="font-size:10px;color:#475569;margin:0.35rem 0 0;">10:12</p>
+        </button>
+        <button type="button" class="admin-chat-item admin-chat-item--dim">
+          <div class="admin-flex-between" style="align-items:center;">
+            <span class="cell-strong">Roberto Silva</span>
+            <span class="admin-badge admin-badge--warn" style="font-size:10px;padding:2px 6px;">nuevo</span>
+          </div>
+          <p class="cell-xs cell-muted">roberto@mail.com</p>
+          <p class="cell-xs cell-muted" style="margin-top:0.35rem;">No recibí el correo de confirmación…</p>
+          <p style="font-size:10px;color:#475569;margin:0.35rem 0 0;">Ayer</p>
+        </button>
+      </div>
+    </div>
+    <div class="admin-chat-window">
+      <div style="border-bottom:1px solid rgba(51,65,85,0.75);padding:0.75rem 1rem;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <p class="cell-strong" style="margin:0;">Laura Pérez</p>
+          <p class="cell-xs cell-muted">laura@mail.com</p>
+        </div>
+        <span class="admin-badge admin-badge--ok">en línea</span>
+      </div>
+      <div class="admin-chat-bubbles">
+        <div class="admin-bubble-in">¿Puedo cambiar la fecha de mi entrada?<p style="margin:0.35rem 0 0;font-size:10px;color:#94a3b8;">Laura · 10:15</p></div>
+        <div class="admin-bubble-out">Hola Laura, revisa tu correo; enviamos un enlace para reprogramar.<p style="margin:0.35rem 0 0;font-size:10px;opacity:0.85;">Soporte · 10:17</p></div>
+      </div>
+      <div class="admin-chat-input-row">
+        <input type="text" placeholder="Escribe tu respuesta..." />
+        <button type="button"><i class="fas fa-paper-plane"></i></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== CONFIGURACIÓN ========== -->
+<section id="panel-configuracion" class="admin-panel admin-section admin-section--narrow hidden">
+  <div class="admin-page-head">
+    <h1 class="admin-page-title">Configuración</h1>
+    <p class="admin-page-desc">Administra las preferencias y configuración del sistema</p>
+  </div>
+  <div class="admin-tabs-inline">
+    <button type="button">General</button>
+    <button type="button">Notificaciones</button>
+    <button type="button">Seguridad</button>
+    <button type="button">Pagos</button>
+    <button type="button">Sistema</button>
+  </div>
+  <div class="admin-card">
+    <h3 class="admin-card__title">Información General</h3>
+    <p class="admin-card__subtitle">Actualiza la información del teatro y del administrador</p>
+    <div class="admin-form-grid" style="margin-top:1.5rem;">
+      <div class="admin-stack">
+        <p class="admin-form-section-title">Información del Teatro</p>
+        <div class="admin-form-stack"><label>Nombre del Teatro</label><input type="text" value="Teatro al Aire Libre" /></div>
+        <div class="admin-form-stack"><label>Ubicación</label><input type="text" value="La Paz, Bolivia" /></div>
+        <div class="admin-form-stack"><label>Capacidad Total</label><input type="text" value="2000" /></div>
+        <div class="admin-form-stack"><label>Teléfono</label><input type="text" value="+591 2 1234567" /></div>
+      </div>
+      <div class="admin-stack">
+        <p class="admin-form-section-title">Información del Administrador</p>
+        <div class="admin-form-stack"><label>Nombre Completo</label><input type="text" value="Administrador" /></div>
+        <div class="admin-form-stack"><label>Email</label><input type="email" value="admin@teatro.bo" /></div>
+      </div>
+    </div>
+    <div style="margin-top:2rem;display:flex;justify-content:flex-end;">
+      <button type="button" class="admin-btn-primary"><i class="fas fa-floppy-disk"></i> Guardar Cambios</button>
+    </div>
+  </div>
+</section>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function () {
+    var ACTIVE = 'admin-nav-btn--active';
+
+    function showTab(tab) {
+      document.querySelectorAll('.admin-panel').forEach(function (el) {
+        el.classList.add('hidden');
+      });
+      var panel = document.getElementById('panel-' + tab);
+      if (panel) panel.classList.remove('hidden');
+
+      document.querySelectorAll('.admin-nav-btn').forEach(function (btn) {
+        btn.classList.toggle(ACTIVE, btn.getAttribute('data-admin-tab') === tab);
+      });
+
+      if (tab === 'dashboard') initDashboardCharts();
+      if (tab === 'reportes') {
+        setTimeout(function () { initReportesCharts(); }, 80);
+      }
+    }
+
+    document.body.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-admin-tab]');
+      if (!btn) return;
+      e.preventDefault();
+      showTab(btn.getAttribute('data-admin-tab'));
+    });
+
+    var dashboardChartsDone = false;
+    var reportesChartsDone = false;
+
+    function chartDefaults() {
+      if (typeof Chart === 'undefined') return null;
+      Chart.defaults.color = '#94a3b8';
+      Chart.defaults.borderColor = 'rgba(148, 163, 184, 0.15)';
+      return Chart;
+    }
+
+    function initDashboardCharts() {
+      var C = chartDefaults();
+      if (!C || dashboardChartsDone) return;
+      dashboardChartsDone = true;
+
+      var ctxBar = document.getElementById('chart-ventas-semana');
+      if (ctxBar) {
+        new Chart(ctxBar.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+            datasets: [{
+              label: 'Bs.',
+              data: [8200, 5400, 9100, 11200, 9800, 13500, 10200],
+              backgroundColor: 'rgba(14, 165, 233, 0.85)',
+              borderRadius: 6,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, max: 14000, grid: { color: 'rgba(148,163,184,0.1)' } },
+              x: { grid: { display: false } },
+            },
+          },
+        });
+      }
+
+      var ctxPie = document.getElementById('chart-ocupacion-zonas');
+      if (ctxPie) {
+        new Chart(ctxPie.getContext('2d'), {
+          type: 'doughnut',
+          data: {
+            labels: ['VIP', 'General', 'Gradería B', 'Gradería A'],
+            datasets: [{
+              data: [85, 55, 68, 72],
+              backgroundColor: ['#1e3a5f', '#ea580c', '#7c3aed', '#16a34a'],
+              borderWidth: 0,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } },
+          },
+        });
+      }
+
+      var ctxLine = document.getElementById('chart-tendencia-mensual');
+      if (ctxLine) {
+        new Chart(ctxLine.getContext('2d'), {
+          type: 'line',
+          data: {
+            labels: ['Ene', 'Feb', 'Mar'],
+            datasets: [{
+              label: 'Ingresos',
+              data: [320000, 280000, 400000],
+              borderColor: '#22c55e',
+              backgroundColor: 'rgba(34, 197, 94, 0.1)',
+              fill: true,
+              tension: 0.35,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, grid: { color: 'rgba(148,163,184,0.1)' } },
+              x: { grid: { display: false } },
+            },
+          },
+        });
+      }
+    }
+
+    function initReportesCharts() {
+      var C = chartDefaults();
+      if (!C || reportesChartsDone) return;
+      reportesChartsDone = true;
+
+      var c1 = document.getElementById('chart-reportes-semanal');
+      if (c1) {
+        new Chart(c1.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+            datasets: [{
+              data: [9000, 7000, 11000, 8500, 12000, 14000, 10000],
+              backgroundColor: '#22d3ee',
+              borderRadius: 4,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, grid: { color: 'rgba(148,163,184,0.1)' } },
+              x: { grid: { display: false } },
+            },
+          },
+        });
+      }
+
+      var c2 = document.getElementById('chart-reportes-zonas-h');
+      if (c2) {
+        new Chart(c2.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: ['VIP', 'Gradería A', 'Gradería B', 'General'],
+            datasets: [{
+              label: '%',
+              data: [85, 72, 68, 55],
+              backgroundColor: '#22c55e',
+              borderRadius: 4,
+            }],
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { beginAtZero: true, max: 100, grid: { color: 'rgba(148,163,184,0.1)' } },
+              y: { grid: { display: false } },
+            },
+          },
+        });
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function () { showTab('dashboard'); });
+    } else {
+      showTab('dashboard');
+    }
+  })();
+</script>
+{% endblock %}
