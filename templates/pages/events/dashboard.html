@@ -1,0 +1,62 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Panel administrador | Teatro{% endblock %}
+
+{% block content %}
+<section class="max-w-7xl mx-auto px-4 py-10">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+    <div>
+      <h1 class="text-2xl font-semibold text-gray-900">Panel de administración</h1>
+      <p class="text-sm text-gray-600 mt-1">Listado de eventos</p>
+    </div>
+    <a
+      href="{% url 'inicio' %}"
+      class="inline-flex items-center justify-center px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+    >
+      Volver al inicio
+    </a>
+  </div>
+
+  <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+    <table class="min-w-full divide-y divide-gray-200 text-sm">
+      <thead class="bg-gray-50">
+        <tr>
+          <th scope="col" class="px-4 py-3 text-left font-semibold text-gray-700">ID</th>
+          <th scope="col" class="px-4 py-3 text-left font-semibold text-gray-700">Nombre</th>
+          <th scope="col" class="px-4 py-3 text-left font-semibold text-gray-700">Estado</th>
+          <th scope="col" class="px-4 py-3 text-left font-semibold text-gray-700">Fecha</th>
+          <th scope="col" class="px-4 py-3 text-left font-semibold text-gray-700">Hora</th>
+          <th scope="col" class="px-4 py-3 text-left font-semibold text-gray-700">Lugar</th>
+          <th scope="col" class="px-4 py-3 text-left font-semibold text-gray-700">Descripción</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for evento in eventos %}
+          <tr class="hover:bg-gray-50/80">
+            <td class="px-4 py-3 text-gray-600 whitespace-nowrap">{{ evento.id }}</td>
+            <td class="px-4 py-3 font-medium text-gray-900">{{ evento.nombre }}</td>
+            <td class="px-4 py-3 text-gray-700">{{ evento.estado_evento.nombre }}</td>
+            <td class="px-4 py-3 text-gray-700 whitespace-nowrap">{{ evento.fecha_evento|date:"d/m/Y" }}</td>
+            <td class="px-4 py-3 text-gray-700 whitespace-nowrap">{{ evento.hora_evento|time:"H:i" }}</td>
+            <td class="px-4 py-3 text-gray-700 max-w-xs">{{ evento.lugar }}</td>
+            <td class="px-4 py-3 text-gray-600 max-w-md">
+              {% if evento.descripcion %}
+                {{ evento.descripcion|truncatechars:120 }}
+              {% else %}
+                <span class="text-gray-400">—</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+              No hay eventos registrados.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

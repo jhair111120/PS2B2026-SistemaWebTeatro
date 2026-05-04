@@ -6,7 +6,13 @@ from django.urls import path
 from django.views.generic import TemplateView
 
 # Importación de vistas de aplicaciones
-from apps.users.views import signup_view, login_view, logout_view, perfil_view
+from apps.users.views import (
+    signup_view,
+    login_view,
+    logout_view,
+    perfil_view,
+    admin_panel,
+)
 from apps.support.views import support_dashboard, ticket_messages_api, send_message_api, close_ticket_api
 
 urlpatterns = [
@@ -21,6 +27,7 @@ urlpatterns = [
     path('signup/', signup_view, name='signup'),
     path('login/', login_view, name='login'),
     path('logout/', logout_view, name='logout'),
+    path('admin-panel/', admin_panel, name='admin_panel'),
 
     # ================= RUTAS DE MÓDULOS (SEGÚN TU ESTRUCTURA DE CARPETAS) =================
     
