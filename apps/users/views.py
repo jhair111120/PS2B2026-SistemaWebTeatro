@@ -5,6 +5,7 @@ from django.views.decorators.cache import never_cache
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from django.urls import reverse
+from django.utils import timezone
 
 from .models import Usuario, Rol
 from apps.events.models import Evento
@@ -96,7 +97,8 @@ def login_view(request):
                 request.session.set_expiry(60 * 60 * 4)
 
                 # 🔥 REDIRECCIÓN POR ROL
-                if usuario.rol.nombre.lower() == 'administrador':
+                rol = (usuario.rol.nombre or '').strip().lower()
+                if rol == 'administrador':
                     return redirect('admin_panel')
                 else:
                     return redirect('inicio')
@@ -139,14 +141,29 @@ def perfil_view(request):
 # =========================
 # 🛠️ PANEL ADMIN
 # =========================
+@never_cache
 def admin_panel(request):
+    if not request.session.get('usuario_id'):
+        return redirect('login')
+
     rol = (request.session.get('usuario_rol') or '').strip().lower()
 
     if rol != 'administrador':
         return redirect('inicio')
 
-    eventos = Evento.objects.all()
+    hoy = timezone.localdate()
+    eventos = (
+        Evento.objects.select_related('estado_evento')
+        .prefetch_related('eventozona_set__zona')
+        .order_by('-fecha_evento', '-hora_evento')
+    )
+    proximos_eventos = (
+        Evento.objects.select_related('estado_evento')
+        .filter(fecha_evento__gte=hoy)
+        .order_by('fecha_evento', 'hora_evento')[:4]
+    )
 
     return render(request, 'pages/admin/dashboard.html', {
-        'eventos': eventos
+        'eventos': eventos,
+        'proximos_eventos': proximos_eventos,
     })

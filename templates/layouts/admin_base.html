@@ -1,0 +1,154 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Panel de administración{% endblock %} · Teatro La Paz</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="{% static 'css/pages/admin/panel.css' %}" />
+    {% block extra_head %}{% endblock %}
+  </head>
+  <body class="admin-body">
+    <div class="admin-layout">
+      <aside class="admin-sidebar" aria-label="Navegación principal">
+        <div class="admin-sidebar__brand">
+          <div class="admin-sidebar__brand-inner">
+            <span class="admin-sidebar__logo">
+              <i class="fas fa-theater-masks"></i>
+            </span>
+            <div>
+              <p class="admin-sidebar__title">Teatro La Paz</p>
+              <p class="admin-sidebar__subtitle">Panel de Administración</p>
+            </div>
+          </div>
+        </div>
+
+        <nav class="admin-sidebar__nav" id="admin-sidebar-nav">
+          <button type="button" data-admin-tab="dashboard" class="admin-nav-btn admin-nav-btn--active">
+            <i class="fas fa-grip"></i>
+            Dashboard
+          </button>
+          <button type="button" data-admin-tab="eventos" class="admin-nav-btn">
+            <i class="fas fa-calendar-days"></i>
+            Eventos
+          </button>
+          <button type="button" data-admin-tab="zonas" class="admin-nav-btn">
+            <i class="fas fa-vector-square"></i>
+            Zonas y Asientos
+          </button>
+          <button type="button" data-admin-tab="reservas" class="admin-nav-btn">
+            <i class="fas fa-bookmark"></i>
+            Reservas
+          </button>
+          <button type="button" data-admin-tab="ventas" class="admin-nav-btn">
+            <i class="fas fa-cart-shopping"></i>
+            Ventas
+          </button>
+          <button type="button" data-admin-tab="reportes" class="admin-nav-btn">
+            <i class="fas fa-chart-column"></i>
+            Reportes
+          </button>
+          <button type="button" data-admin-tab="soporte" class="admin-nav-btn">
+            <i class="fas fa-comments"></i>
+            Soporte
+          </button>
+          <button type="button" data-admin-tab="configuracion" class="admin-nav-btn">
+            <i class="fas fa-gear"></i>
+            Configuración
+          </button>
+        </nav>
+
+        <div class="admin-sidebar__footer">
+          <p>Versión 1.0.0</p>
+          <p>© 2026 Teatro La Paz</p>
+        </div>
+      </aside>
+
+      <div class="admin-main">
+        <header class="admin-topbar">
+          <button type="button" id="admin-mobile-menu" class="admin-menu-toggle" aria-label="Abrir menú">
+            <i class="fas fa-bars"></i>
+          </button>
+
+          <div class="admin-search-wrap">
+            <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+            <input
+              type="search"
+              class="admin-search-input"
+              placeholder="Buscar eventos, reservas, ventas..."
+              autocomplete="off"
+            />
+          </div>
+
+          <div class="admin-topbar__actions">
+            <button type="button" class="admin-icon-btn" aria-label="Notificaciones">
+              <i class="fas fa-bell"></i>
+              <span class="admin-notify-dot" aria-hidden="true"></span>
+            </button>
+            <div class="admin-user-pill">
+              <span class="admin-user-avatar">A</span>
+              <span class="admin-user-name">Admin</span>
+              <i class="fas fa-chevron-down" aria-hidden="true"></i>
+            </div>
+          </div>
+        </header>
+
+        <main class="admin-content">{% block admin_content %}{% endblock %}</main>
+      </div>
+    </div>
+
+    <div id="admin-drawer-overlay" class="admin-drawer-overlay" aria-hidden="true"></div>
+    <aside id="admin-drawer" class="admin-drawer" aria-hidden="true">
+      <div class="admin-drawer__head">
+        <span class="admin-drawer__title">Menú</span>
+        <button type="button" id="admin-drawer-close" class="admin-drawer__close" aria-label="Cerrar">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="admin-drawer__nav" id="admin-drawer-nav"></div>
+    </aside>
+
+    <script>
+      (function () {
+        var drawerNav = document.getElementById('admin-drawer-nav');
+        var sidebarNav = document.getElementById('admin-sidebar-nav');
+        var drawer = document.getElementById('admin-drawer');
+        var overlay = document.getElementById('admin-drawer-overlay');
+
+        function closeDrawer() {
+          drawer.classList.remove('is-open');
+          overlay.classList.remove('is-visible');
+          drawer.setAttribute('aria-hidden', 'true');
+        }
+
+        function openDrawer() {
+          drawer.classList.add('is-open');
+          overlay.classList.add('is-visible');
+          drawer.setAttribute('aria-hidden', 'false');
+        }
+
+        if (drawerNav && sidebarNav) {
+          drawerNav.innerHTML = sidebarNav.innerHTML;
+          drawerNav.querySelectorAll('.admin-nav-btn').forEach(function (btn) {
+            btn.addEventListener('click', closeDrawer);
+          });
+        }
+
+        document.getElementById('admin-mobile-menu')?.addEventListener('click', openDrawer);
+        document.getElementById('admin-drawer-close')?.addEventListener('click', closeDrawer);
+        overlay?.addEventListener('click', closeDrawer);
+      })();
+    </script>
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>
