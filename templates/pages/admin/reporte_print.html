@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Reporte {{ tipo }} · {{ desde }} – {{ hasta }}</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 1.5rem; color: #111; }
+    h1 { font-size: 1.25rem; }
+    table { border-collapse: collapse; width: 100%; margin-top: 1rem; font-size: 0.85rem; }
+    th, td { border: 1px solid #ccc; padding: 0.4rem 0.5rem; text-align: left; }
+    th { background: #f0f0f0; }
+    .meta { color: #555; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <h1>Reporte: {{ tipo }}</h1>
+  <p class="meta">Desde {{ desde }} hasta {{ hasta }}. Guarda este archivo y ábrelo en el navegador; usa Imprimir → Guardar como PDF si lo necesitas.</p>
+
+  <h2>Ventas emitidas (muestra)</h2>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Fecha</th><th>Estado</th><th>Total</th><th>Evento</th><th>Cliente</th></tr>
+    </thead>
+    <tbody>
+      {% for v in ventas %}
+        <tr>
+          <td>{{ v.id }}</td>
+          <td>{{ v.fecha_venta|date:"d/m/Y H:i" }}</td>
+          <td>{{ v.estado_venta.nombre }}</td>
+          <td>{{ v.total }}</td>
+          <td>{{ v.reserva.evento.nombre }}</td>
+          <td>{% if v.usuario %}{{ v.usuario.correo }}{% else %}—{% endif %}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6">Sin ventas en el período.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2 style="margin-top:2rem;">Reservas (muestra)</h2>
+  <table>
+    <thead>
+      <tr><th>Código</th><th>Creada</th><th>Estado</th><th>Total</th><th>Evento</th><th>Usuario</th></tr>
+    </thead>
+    <tbody>
+      {% for r in reservas %}
+        <tr>
+          <td>{{ r.codigo_reserva }}</td>
+          <td>{{ r.fecha_creacion|date:"d/m/Y H:i" }}</td>
+          <td>{{ r.estado_reserva.nombre }}</td>
+          <td>{{ r.total_reserva }}</td>
+          <td>{{ r.evento.nombre }}</td>
+          <td>{% if r.usuario %}{{ r.usuario.correo }}{% elif r.creada_por_usuario %}{{ r.creada_por_usuario.correo }}{% else %}—{% endif %}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6">Sin reservas en el período.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>

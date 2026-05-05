@@ -1,21 +1,26 @@
 import calendar
+import csv
+import io
 import re
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 from decimal import Decimal
-from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.views.decorators.cache import never_cache
-from django.db import transaction
-from django.db.models import Count, Q, Sum
 from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.db.models import Count, Prefetch, Q, Sum
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_GET, require_POST
 
 from .models import Usuario, Rol
 from apps.events.models import Evento, EventoAsiento, EventoZona, Zona
-from apps.reservations.models import Reserva
-from apps.tickets.models import Venta
+from apps.payments.models import Pago
+from apps.reservations.models import DetalleReserva, EstadoReserva, Reserva
+from apps.tickets.models import Entrada, EstadoVenta, Venta
 
 
 # =========================
@@ -188,6 +193,234 @@ def _cap_publicada_dict(event_ids):
 
 def _ventas_emitidas_qs():
     return Venta.objects.filter(estado_venta__nombre__icontains='emitida')
+
+
+def _admin_gate(request):
+    if not request.session.get('usuario_id'):
+        return redirect('login')
+    if (request.session.get('usuario_rol') or '').strip().lower() != 'administrador':
+        return redirect('inicio')
+    return None
+
+
+def _parse_date_get(val, default):
+    if not val:
+        return default
+    try:
+        return date.fromisoformat(str(val).strip()[:10])
+    except ValueError:
+        return default
+
+
+def _reserva_tiempo_clase_texto(reserva, now):
+    nombre = (reserva.estado_reserva.nombre or '').lower()
+    if 'cancel' in nombre:
+        return 'cell-muted', 'Cancelada'
+    if 'confirm' in nombre:
+        return 'cell-muted', 'Confirmada'
+    if 'expir' in nombre:
+        return 'admin-text-amber', 'Expirada'
+    if reserva.fecha_expiracion:
+        exp = reserva.fecha_expiracion
+        if timezone.is_naive(exp):
+            exp = timezone.make_aware(exp, timezone.get_current_timezone())
+        if exp < now:
+            return 'admin-text-amber', 'Expiró'
+        diff = exp - now
+        total_s = max(0, int(diff.total_seconds()))
+        m, _s = divmod(total_s, 60)
+        h, m = divmod(m, 60)
+        if h >= 48:
+            return 'cell-muted', f'{h // 24} días'
+        if h > 0:
+            return 'cell-muted', f'{h}h {m}m'
+        return 'cell-muted', f'{m} min'
+    return 'cell-muted', '—'
+
+
+@never_cache
+@require_POST
+def admin_reserva_action(request):
+    gate = _admin_gate(request)
+    if gate:
+        return gate
+
+    rid = request.POST.get('reserva_id')
+    action = (request.POST.get('action') or '').strip().lower()
+    reserva = get_object_or_404(Reserva.objects.select_related('estado_reserva'), pk=rid)
+    nuevo_estado = None
+
+    if action == 'confirmar':
+        nuevo_estado = EstadoReserva.objects.filter(nombre__icontains='confirm').order_by('id').first()
+        if not nuevo_estado:
+            messages.error(request, 'No existe un estado de reserva tipo «confirmada» en la base.')
+    elif action == 'cancelar':
+        nuevo_estado = (
+            EstadoReserva.objects.filter(nombre__icontains='cancel').order_by('id').first()
+            or EstadoReserva.objects.filter(nombre__icontains='anul').order_by('id').first()
+        )
+        if not nuevo_estado:
+            messages.error(request, 'No existe un estado de reserva tipo «cancelada» en la base.')
+    else:
+        messages.error(request, 'Acción no válida.')
+        return redirect(reverse('admin_panel') + '?tab=reservas')
+
+    if nuevo_estado:
+        actual = (reserva.estado_reserva.nombre or '').lower()
+        if action == 'confirmar' and ('cancel' in actual or 'expir' in actual):
+            messages.warning(request, 'No se puede confirmar esta reserva en su estado actual.')
+        elif action == 'cancelar' and ('cancel' in actual or 'expir' in actual):
+            messages.warning(request, 'La reserva ya está cancelada o expirada.')
+        else:
+            reserva.estado_reserva = nuevo_estado
+            reserva.save(update_fields=['estado_reserva', 'actualizado_en'])
+            messages.success(request, 'Reserva actualizada.')
+
+    return redirect(reverse('admin_panel') + '?tab=reservas')
+
+
+@never_cache
+@require_GET
+def admin_report_export(request):
+    gate = _admin_gate(request)
+    if gate:
+        return gate
+
+    tz = timezone.get_current_timezone()
+    hoy = timezone.localdate()
+    desde = _parse_date_get(request.GET.get('rep_desde'), hoy.replace(day=1))
+    hasta = _parse_date_get(request.GET.get('rep_hasta'), hoy)
+    if hasta < desde:
+        desde, hasta = hasta, desde
+    tipo = (request.GET.get('rep_tipo') or 'ventas').strip().lower()
+    fmt = (request.GET.get('fmt') or 'csv').strip().lower()
+
+    desde_dt = timezone.make_aware(datetime.combine(desde, datetime.min.time()), tz)
+    hasta_dt = timezone.make_aware(datetime.combine(hasta + timedelta(days=1), datetime.min.time()), tz)
+
+    if fmt == 'pdf':
+        ventas_emit = (
+            Venta.objects.filter(
+                estado_venta__nombre__icontains='emitida',
+                fecha_venta__gte=desde_dt,
+                fecha_venta__lt=hasta_dt,
+            )
+            .select_related('reserva__evento', 'usuario', 'estado_venta')
+            .order_by('-fecha_venta')[:500]
+        )
+        reservas = (
+            Reserva.objects.filter(fecha_creacion__gte=desde_dt, fecha_creacion__lt=hasta_dt)
+            .select_related('evento', 'estado_reserva', 'usuario', 'creada_por_usuario')
+            .order_by('-fecha_creacion')[:500]
+        )
+        response = render(
+            request,
+            'pages/admin/reporte_print.html',
+            {'desde': desde, 'hasta': hasta, 'tipo': tipo, 'ventas': ventas_emit, 'reservas': reservas},
+        )
+        response['Content-Disposition'] = 'attachment; filename="reporte_teatro.html"'
+        return response
+
+    buffer = io.StringIO()
+    w = csv.writer(buffer)
+
+    if tipo == 'reservas':
+        w.writerow(['codigo_reserva', 'fecha_creacion', 'estado', 'evento', 'total', 'usuario_correo'])
+        for r in (
+            Reserva.objects.filter(fecha_creacion__gte=desde_dt, fecha_creacion__lt=hasta_dt)
+            .select_related('evento', 'estado_reserva', 'usuario', 'creada_por_usuario')
+            .order_by('-fecha_creacion')
+        ):
+            u = r.usuario or r.creada_por_usuario
+            w.writerow(
+                [
+                    r.codigo_reserva,
+                    r.fecha_creacion.isoformat(),
+                    r.estado_reserva.nombre,
+                    r.evento.nombre,
+                    str(r.total_reserva),
+                    u.correo if u else '',
+                ]
+            )
+    elif tipo == 'ocupacion':
+        w.writerow(['evento_id', 'evento', 'fecha_evento', 'zona', 'asientos_total', 'ocupados', 'pct_ocupacion'])
+        agg = (
+            EventoAsiento.objects.filter(
+                evento_zona__evento__fecha_evento__gte=desde,
+                evento_zona__evento__fecha_evento__lte=hasta,
+            )
+            .values(
+                'evento_zona__evento_id',
+                'evento_zona__evento__nombre',
+                'evento_zona__evento__fecha_evento',
+                'evento_zona__zona__nombre',
+            )
+            .annotate(tot=Count('id'), no_lib=Count('id', filter=~Q(estado='DISPONIBLE')))
+            .order_by('evento_zona__evento__fecha_evento', 'evento_zona__zona__nombre')
+        )
+        for row in agg:
+            t = row['tot'] or 0
+            ou = row['no_lib'] or 0
+            pct = round(100 * ou / t) if t else 0
+            w.writerow(
+                [
+                    row['evento_zona__evento_id'],
+                    row['evento_zona__evento__nombre'],
+                    row['evento_zona__evento__fecha_evento'].isoformat(),
+                    row['evento_zona__zona__nombre'] or '—',
+                    t,
+                    ou,
+                    pct,
+                ]
+            )
+    else:
+        w.writerow(['venta_id', 'fecha_venta', 'estado', 'total', 'evento', 'cliente_correo', 'codigo_reserva'])
+        for v in (
+            Venta.objects.filter(fecha_venta__gte=desde_dt, fecha_venta__lt=hasta_dt)
+            .select_related('reserva__evento', 'usuario', 'estado_venta')
+            .order_by('-fecha_venta')
+        ):
+            u = v.usuario
+            w.writerow(
+                [
+                    v.id,
+                    v.fecha_venta.isoformat(),
+                    v.estado_venta.nombre,
+                    str(v.total),
+                    v.reserva.evento.nombre,
+                    u.correo if u else '',
+                    v.reserva.codigo_reserva,
+                ]
+            )
+
+    response = HttpResponse('\ufeff' + buffer.getvalue(), content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = f'attachment; filename="reporte_{tipo}_{desde}_{hasta}.csv"'
+    return response
+
+
+@never_cache
+def admin_venta_detalle(request, venta_id):
+    gate = _admin_gate(request)
+    if gate:
+        return gate
+
+    venta = get_object_or_404(
+        Venta.objects.select_related(
+            'reserva__evento', 'usuario', 'empleado', 'estado_venta', 'canal_venta'
+        ).prefetch_related(
+            Prefetch(
+                'reserva__detalles',
+                queryset=DetalleReserva.objects.select_related('evento_zona__zona', 'evento_asiento__asiento'),
+            ),
+            Prefetch(
+                'reserva__pagos',
+                queryset=Pago.objects.select_related('metodo_pago', 'estado_pago').order_by('-fecha_creacion'),
+            ),
+            Prefetch('entradas', queryset=Entrada.objects.select_related('estado_entrada')),
+        ),
+        pk=venta_id,
+    )
+    return render(request, 'pages/admin/venta_detalle.html', {'venta': venta})
 
 
 @never_cache
@@ -364,6 +597,224 @@ def admin_panel(request):
         Zona.objects.annotate(num_asientos=Count('asiento')).order_by('orden_visual', 'nombre')
     )
 
+    # ——— Reservas / Ventas / Reportes (BD) ———
+    res_q = (request.GET.get('res_q') or '').strip()
+    res_estado = (request.GET.get('res_estado') or '').strip()
+    vta_q = (request.GET.get('vta_q') or '').strip()
+    vta_estado = (request.GET.get('vta_estado') or '').strip()
+
+    rep_desde = _parse_date_get(request.GET.get('rep_desde'), hoy.replace(day=1))
+    rep_hasta = _parse_date_get(request.GET.get('rep_hasta'), hoy)
+    if rep_hasta < rep_desde:
+        rep_desde, rep_hasta = rep_hasta, rep_desde
+    rep_tipo = (request.GET.get('rep_tipo') or 'ventas').strip()
+
+    reservas_qs = (
+        Reserva.objects.select_related(
+            'usuario', 'creada_por_usuario', 'evento', 'estado_reserva', 'canal_venta'
+        )
+        .prefetch_related(
+            Prefetch(
+                'detalles',
+                queryset=DetalleReserva.objects.select_related(
+                    'evento_zona__zona', 'evento_asiento__asiento'
+                ),
+            )
+        )
+        .order_by('-fecha_creacion')
+    )
+    if res_q:
+        rq = (
+            Q(codigo_reserva__icontains=res_q)
+            | Q(evento__nombre__icontains=res_q)
+            | Q(usuario__nombre__icontains=res_q)
+            | Q(usuario__apellido__icontains=res_q)
+            | Q(usuario__correo__icontains=res_q)
+            | Q(creada_por_usuario__nombre__icontains=res_q)
+            | Q(creada_por_usuario__apellido__icontains=res_q)
+            | Q(creada_por_usuario__correo__icontains=res_q)
+        )
+        if res_q.isdigit():
+            rq |= Q(pk=int(res_q))
+        reservas_qs = reservas_qs.filter(rq)
+    if res_estado:
+        reservas_qs = reservas_qs.filter(estado_reserva__nombre__iexact=res_estado)
+    reservas_list = list(reservas_qs[:400])
+
+    reservas_rows = []
+    for r in reservas_list:
+        as_parts = []
+        for d in r.detalles.all():
+            zn = d.evento_zona.zona.nombre if d.evento_zona_id else '—'
+            if d.evento_asiento_id:
+                a = d.evento_asiento.asiento
+                as_parts.append(f'{zn} · {a.fila}-{a.numero}')
+            else:
+                as_parts.append(f'{zn} (×{d.cantidad})')
+        as_txt = ', '.join(as_parts) if as_parts else '—'
+        t_cls, t_txt = _reserva_tiempo_clase_texto(r, now)
+        ne = (r.estado_reserva.nombre or '').lower()
+        reservas_rows.append(
+            {
+                'reserva': r,
+                'asiento_txt': as_txt,
+                'tiempo_class': t_cls,
+                'tiempo_txt': t_txt,
+                'puede_confirmar': ne == 'activa',
+                'puede_cancelar': ne in ('activa', 'confirmada'),
+            }
+        )
+
+    kpi_res_panel_activa = (
+        Reserva.objects.filter(estado_reserva__nombre__icontains='activa')
+        .exclude(estado_reserva__nombre__icontains='inactiv')
+        .count()
+    )
+    kpi_res_panel_confirm = Reserva.objects.filter(estado_reserva__nombre__icontains='confirm').count()
+    kpi_res_panel_exp = Reserva.objects.filter(estado_reserva__nombre__icontains='expir').count()
+    cat_estados_reserva = list(EstadoReserva.objects.all().order_by('nombre'))
+
+    ventas_qs = (
+        Venta.objects.select_related('reserva__evento', 'usuario', 'estado_venta', 'canal_venta')
+        .prefetch_related(
+            Prefetch(
+                'reserva__detalles',
+                queryset=DetalleReserva.objects.select_related(
+                    'evento_zona__zona', 'evento_asiento__asiento'
+                ),
+            ),
+            Prefetch(
+                'reserva__pagos',
+                queryset=Pago.objects.select_related('metodo_pago').order_by('-fecha_creacion'),
+            ),
+        )
+        .order_by('-fecha_venta')
+    )
+    if vta_q:
+        vq = (
+            Q(reserva__evento__nombre__icontains=vta_q)
+            | Q(usuario__nombre__icontains=vta_q)
+            | Q(usuario__apellido__icontains=vta_q)
+            | Q(usuario__correo__icontains=vta_q)
+            | Q(reserva__codigo_reserva__icontains=vta_q)
+        )
+        if vta_q.isdigit():
+            vq |= Q(pk=int(vta_q))
+        ventas_qs = ventas_qs.filter(vq)
+    if vta_estado:
+        ventas_qs = ventas_qs.filter(estado_venta__nombre__iexact=vta_estado)
+    ventas_list = list(ventas_qs[:400])
+
+    ventas_rows = []
+    for v in ventas_list:
+        pagos_l = list(v.reserva.pagos.all()[:1])
+        metodo = pagos_l[0].metodo_pago.nombre if pagos_l else '—'
+        ap = []
+        for d in v.reserva.detalles.all():
+            zn = d.evento_zona.zona.nombre if d.evento_zona_id else '—'
+            if d.evento_asiento_id:
+                a = d.evento_asiento.asiento
+                ap.append(f'{zn} ({a.fila}-{a.numero})')
+            else:
+                ap.append(f'{zn} ({d.cantidad})')
+        ventas_rows.append(
+            {
+                'venta': v,
+                'metodo': metodo,
+                'asientos_txt': ', '.join(ap) if ap else '—',
+            }
+        )
+
+    emitidas_panel = Venta.objects.filter(estado_venta__nombre__icontains='emitida')
+    kpi_vta_ingresos = emitidas_panel.aggregate(s=Sum('total'))['s'] or Decimal('0')
+    kpi_vta_emitidas = emitidas_panel.count()
+    kpi_vta_otras = Venta.objects.exclude(estado_venta__nombre__icontains='emitida').count()
+    cat_estados_venta = list(EstadoVenta.objects.all().order_by('nombre'))
+
+    rep_desde_dt = timezone.make_aware(datetime.combine(rep_desde, datetime.min.time()), tz)
+    rep_hasta_dt = timezone.make_aware(datetime.combine(rep_hasta + timedelta(days=1), datetime.min.time()), tz)
+
+    ventas_rango_emit = Venta.objects.filter(
+        estado_venta__nombre__icontains='emitida',
+        fecha_venta__gte=rep_desde_dt,
+        fecha_venta__lt=rep_hasta_dt,
+    )
+    rep_kpi_ingresos = ventas_rango_emit.aggregate(s=Sum('total'))['s'] or Decimal('0')
+    rep_kpi_tickets = Entrada.objects.filter(
+        venta__estado_venta__nombre__icontains='emitida',
+        venta__fecha_venta__gte=rep_desde_dt,
+        venta__fecha_venta__lt=rep_hasta_dt,
+    ).count()
+
+    as_rep = EventoAsiento.objects.filter(
+        evento_zona__evento__fecha_evento__gte=rep_desde,
+        evento_zona__evento__fecha_evento__lte=rep_hasta,
+    )
+    trp = as_rep.count()
+    orp = as_rep.exclude(estado='DISPONIBLE').count()
+    rep_kpi_ocup = round(100 * orp / trp) if trp else 0
+    rep_kpi_eventos = Evento.objects.filter(
+        fecha_evento__gte=rep_desde, fecha_evento__lte=rep_hasta
+    ).count()
+
+    end_d = min(rep_hasta, hoy)
+    start_win = max(rep_desde, end_d - timedelta(days=6))
+    dias_rep = []
+    dcur = start_win
+    while dcur <= end_d:
+        dias_rep.append(dcur)
+        dcur += timedelta(days=1)
+
+    rep_win_desde_dt = timezone.make_aware(datetime.combine(start_win, datetime.min.time()), tz)
+    rep_win_hasta_dt = timezone.make_aware(datetime.combine(end_d + timedelta(days=1), datetime.min.time()), tz)
+
+    day_sum_rep = defaultdict(lambda: Decimal('0'))
+    for fv, total in Venta.objects.filter(
+        estado_venta__nombre__icontains='emitida',
+        fecha_venta__gte=rep_win_desde_dt,
+        fecha_venta__lt=rep_win_hasta_dt,
+    ).values_list('fecha_venta', 'total'):
+        ld = timezone.localtime(fv, tz).date()
+        if start_win <= ld <= end_d:
+            day_sum_rep[ld] += total
+
+    dow_es = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+    rep_sem_labels = []
+    rep_sem_vals = []
+    for di in dias_rep:
+        rep_sem_labels.append(f'{dow_es[di.weekday()]} {di.day:02d}')
+        rep_sem_vals.append(float(day_sum_rep.get(di, Decimal('0'))))
+    rep_sem_ymax = max(rep_sem_vals + [1.0]) * 1.1
+
+    zr = (
+        EventoAsiento.objects.filter(
+            evento_zona__evento__fecha_evento__gte=rep_desde,
+            evento_zona__evento__fecha_evento__lte=rep_hasta,
+        )
+        .values('evento_zona__zona__nombre')
+        .annotate(tot=Count('id'), no_lib=Count('id', filter=~Q(estado='DISPONIBLE')))
+        .order_by('-tot')[:12]
+    )
+    rep_zonas_labels = []
+    rep_zonas_data = []
+    for z in zr:
+        nombre_z = z['evento_zona__zona__nombre'] or '—'
+        t = z['tot'] or 1
+        oc = z['no_lib'] or 0
+        rep_zonas_labels.append(nombre_z)
+        rep_zonas_data.append(round(100 * oc / t) if t else 0)
+    if not rep_zonas_labels:
+        rep_zonas_labels = ['Sin datos']
+        rep_zonas_data = [0]
+
+    reportes_chart_payload = {
+        'sem_labels': rep_sem_labels,
+        'sem_vals': rep_sem_vals,
+        'sem_ymax': max(round(rep_sem_ymax, 2), 500.0),
+        'zonas_labels': rep_zonas_labels,
+        'zonas_data': rep_zonas_data,
+    }
+
     return render(
         request,
         'pages/admin/dashboard.html',
@@ -379,5 +830,27 @@ def admin_panel(request):
             'kpi_eventos_activos': kpi_eventos_activos,
             'zonas_lista': zonas_lista,
             'chart_payload': chart_payload,
+            'res_q': res_q,
+            'res_estado': res_estado,
+            'reservas_rows': reservas_rows,
+            'kpi_res_panel_activa': kpi_res_panel_activa,
+            'kpi_res_panel_confirm': kpi_res_panel_confirm,
+            'kpi_res_panel_exp': kpi_res_panel_exp,
+            'cat_estados_reserva': cat_estados_reserva,
+            'vta_q': vta_q,
+            'vta_estado': vta_estado,
+            'ventas_rows': ventas_rows,
+            'kpi_vta_ingresos': kpi_vta_ingresos,
+            'kpi_vta_emitidas': kpi_vta_emitidas,
+            'kpi_vta_otras': kpi_vta_otras,
+            'cat_estados_venta': cat_estados_venta,
+            'rep_desde': rep_desde,
+            'rep_hasta': rep_hasta,
+            'rep_tipo': rep_tipo,
+            'rep_kpi_ingresos': rep_kpi_ingresos,
+            'rep_kpi_tickets': rep_kpi_tickets,
+            'rep_kpi_ocup': rep_kpi_ocup,
+            'rep_kpi_eventos': rep_kpi_eventos,
+            'reportes_chart_payload': reportes_chart_payload,
         },
     )

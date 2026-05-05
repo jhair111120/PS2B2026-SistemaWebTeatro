@@ -10,6 +10,7 @@
 {% block admin_content %}
 <div class="admin-dashboard">
 {{ chart_payload|json_script:"admin-dash-charts-data" }}
+{{ reportes_chart_payload|json_script:"admin-reportes-charts-data" }}
 
 <!-- ========== DASHBOARD ========== -->
 <section id="panel-dashboard" class="admin-panel admin-section">
@@ -257,68 +258,108 @@
 <section id="panel-reservas" class="admin-panel admin-section hidden">
   <div class="admin-page-head">
     <h1 class="admin-page-title">Reservas</h1>
-    <p class="admin-page-desc">Administra las reservas activas, confirmadas y expiradas.</p>
+    <p class="admin-page-desc">Listado de reservas reales con búsqueda, filtro por estado y acciones de confirmar o cancelar.</p>
   </div>
   <div class="admin-kpi-grid admin-kpi-grid--3">
     <div class="admin-card admin-flex-between">
       <div>
-        <p class="admin-kpi-card__label">Reservas Activas</p>
-        <p class="admin-kpi-card__value">2</p>
+        <p class="admin-kpi-card__label">Activas</p>
+        <p class="admin-kpi-card__value">{{ kpi_res_panel_activa }}</p>
       </div>
       <span class="admin-kpi-card__icon admin-kpi-card__icon--amber"><i class="fas fa-clock"></i></span>
     </div>
     <div class="admin-card admin-flex-between">
       <div>
         <p class="admin-kpi-card__label">Confirmadas</p>
-        <p class="admin-kpi-card__value">0</p>
+        <p class="admin-kpi-card__value">{{ kpi_res_panel_confirm }}</p>
       </div>
       <span class="admin-kpi-card__icon admin-kpi-card__icon--emerald"><i class="fas fa-check"></i></span>
     </div>
     <div class="admin-card admin-flex-between">
       <div>
         <p class="admin-kpi-card__label">Expiradas</p>
-        <p class="admin-kpi-card__value">1</p>
+        <p class="admin-kpi-card__value">{{ kpi_res_panel_exp }}</p>
       </div>
       <span class="admin-kpi-card__icon admin-kpi-card__icon--red"><i class="fas fa-xmark"></i></span>
     </div>
   </div>
-  <div class="admin-filters">
+  <form class="admin-filters" method="get" action="{% url 'admin_panel' %}">
+    <input type="hidden" name="tab" value="reservas" />
     <div class="admin-input-wrap">
       <i class="fas fa-magnifying-glass"></i>
-      <input class="admin-input" type="search" placeholder="Buscar por nombre, email o evento..." />
+      <input class="admin-input" type="search" name="res_q" value="{{ res_q }}" placeholder="Código, evento, nombre o correo..." />
     </div>
-    <select class="admin-select"><option>Todos los estados</option><option>activa</option><option>confirmada</option><option>expirada</option></select>
-  </div>
+    <select class="admin-select" name="res_estado">
+      <option value="">Todos los estados</option>
+      {% for er in cat_estados_reserva %}
+        <option value="{{ er.nombre }}" {% if res_estado == er.nombre %}selected{% endif %}>{{ er.nombre }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="admin-btn-primary" style="padding:0.5rem 1rem;font-size:0.8125rem;">Buscar</button>
+  </form>
   <div class="admin-table-shell">
-    <div class="admin-table-shell__head"><h2>Todas las Reservas</h2></div>
+    <div class="admin-table-shell__head"><h2>Reservas</h2></div>
     <div class="admin-table-scroll">
       <table class="admin-table">
         <thead>
           <tr>
-            <th>ID</th><th>Usuario</th><th>Evento</th><th>Asiento</th><th>Monto</th><th>Tiempo</th><th>Estado</th><th class="cell-right">Acciones</th>
+            <th>Código</th><th>Cliente</th><th>Evento</th><th>Ubicación / detalle</th><th>Monto</th><th>Tiempo / exp.</th><th>Estado</th><th class="cell-right">Acciones</th>
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td class="cell-xs" style="font-family:ui-monospace,monospace;">R001</td>
-            <td><div class="cell-strong">María Gonzales</div><div class="cell-xs cell-muted">maria@mail.com</div></td>
-            <td class="cell-muted">Concierto Folklórico Nacional</td>
-            <td class="cell-muted"><i class="fas fa-location-dot" style="color:#38bdf8;"></i> VIP - A-15</td>
-            <td>Bs. 150</td>
-            <td class="admin-text-amber"><i class="fas fa-clock"></i> Expirada</td>
-            <td><span class="admin-badge admin-badge--warn">activa</span></td>
-            <td class="cell-right admin-actions-gap"><button type="button" class="admin-btn-success" style="padding:0.35rem 0.75rem;font-size:0.75rem;">Confirmar</button><button type="button" class="admin-btn-danger" style="padding:0.35rem 0.75rem;font-size:0.75rem;">Cancelar</button></td>
-          </tr>
-          <tr>
-            <td class="cell-xs" style="font-family:ui-monospace,monospace;">R002</td>
-            <td><div class="cell-strong">Carlos Rojas</div><div class="cell-xs cell-muted">carlos@mail.com</div></td>
-            <td class="cell-muted">Festival de Música Andina</td>
-            <td class="cell-muted"><i class="fas fa-location-dot" style="color:#38bdf8;"></i> General - F-12</td>
-            <td>Bs. 80</td>
-            <td class="cell-muted">12 min</td>
-            <td><span class="admin-badge admin-badge--danger">expirada</span></td>
-            <td class="cell-right cell-muted">—</td>
-          </tr>
+          {% for row in reservas_rows %}
+            {% with r=row.reserva %}
+            {% with u=r.usuario|default:r.creada_por_usuario %}
+            <tr>
+              <td class="cell-xs" style="font-family:ui-monospace,monospace;">{{ r.codigo_reserva }}</td>
+              <td>
+                {% if u %}
+                  <div class="cell-strong">{{ u.nombre }} {{ u.apellido }}</div>
+                  <div class="cell-xs cell-muted">{{ u.correo }}</div>
+                {% else %}
+                  <span class="cell-muted">—</span>
+                {% endif %}
+              </td>
+              <td class="cell-muted">{{ r.evento.nombre }}</td>
+              <td class="cell-muted cell-xs"><i class="fas fa-location-dot" style="color:#38bdf8;"></i> {{ row.asiento_txt }}</td>
+              <td>Bs.&nbsp;{{ r.total_reserva|floatformat:2 }}</td>
+              <td class="{{ row.tiempo_class }}"><i class="fas fa-clock"></i> {{ row.tiempo_txt }}</td>
+              <td>
+                {% if 'expir' in r.estado_reserva.nombre|lower or 'cancel' in r.estado_reserva.nombre|lower %}
+                  <span class="admin-badge admin-badge--danger">{{ r.estado_reserva.nombre }}</span>
+                {% elif 'confirm' in r.estado_reserva.nombre|lower %}
+                  <span class="admin-badge admin-badge--ok">{{ r.estado_reserva.nombre }}</span>
+                {% else %}
+                  <span class="admin-badge admin-badge--warn">{{ r.estado_reserva.nombre }}</span>
+                {% endif %}
+              </td>
+              <td class="cell-right admin-actions-gap">
+                {% if row.puede_confirmar %}
+                  <form method="post" action="{% url 'admin_reserva_action' %}" style="display:inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="reserva_id" value="{{ r.pk }}" />
+                    <input type="hidden" name="action" value="confirmar" />
+                    <button type="submit" class="admin-btn-success" style="padding:0.35rem 0.75rem;font-size:0.75rem;">Confirmar</button>
+                  </form>
+                {% endif %}
+                {% if row.puede_cancelar %}
+                  <form method="post" action="{% url 'admin_reserva_action' %}" style="display:inline;" onsubmit="return confirm('¿Cancelar esta reserva?');">
+                    {% csrf_token %}
+                    <input type="hidden" name="reserva_id" value="{{ r.pk }}" />
+                    <input type="hidden" name="action" value="cancelar" />
+                    <button type="submit" class="admin-btn-danger" style="padding:0.35rem 0.75rem;font-size:0.75rem;">Cancelar</button>
+                  </form>
+                {% endif %}
+                {% if not row.puede_confirmar and not row.puede_cancelar %}
+                  <span class="cell-muted cell-xs">—</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endwith %}
+            {% endwith %}
+          {% empty %}
+            <tr><td colspan="8" style="text-align:center;padding:2rem;color:#94a3b8;">No hay reservas que coincidan.</td></tr>
+          {% endfor %}
         </tbody>
       </table>
     </div>
@@ -329,68 +370,86 @@
 <section id="panel-ventas" class="admin-panel admin-section hidden">
   <div class="admin-page-head">
     <h1 class="admin-page-title">Ventas</h1>
-    <p class="admin-page-desc">Historial de compras y tickets digitales</p>
+    <p class="admin-page-desc">Ventas registradas, totales por estado emitida y método de pago según el último pago de la reserva.</p>
   </div>
   <div class="admin-kpi-grid admin-kpi-grid--3">
     <div class="admin-card admin-flex-between">
       <div>
-        <p class="admin-kpi-card__label">Ingresos Totales</p>
-        <p class="admin-kpi-card__value">Bs. 400</p>
-        <p class="cell-xs" style="color:#6ee7b7;margin:0.35rem 0 0;"><i class="fas fa-arrow-up"></i> +18.2%</p>
+        <p class="admin-kpi-card__label">Ingresos (emitidas)</p>
+        <p class="admin-kpi-card__value">Bs.&nbsp;{{ kpi_vta_ingresos|floatformat:0 }}</p>
       </div>
       <span class="admin-kpi-card__icon admin-kpi-card__icon--emerald"><i class="fas fa-dollar-sign"></i></span>
     </div>
     <div class="admin-card admin-flex-between">
       <div>
-        <p class="admin-kpi-card__label">Ventas Completadas</p>
-        <p class="admin-kpi-card__value">2</p>
+        <p class="admin-kpi-card__label">Ventas emitidas</p>
+        <p class="admin-kpi-card__value">{{ kpi_vta_emitidas }}</p>
       </div>
       <span class="admin-kpi-card__icon admin-kpi-card__icon--sky"><i class="fas fa-credit-card"></i></span>
     </div>
     <div class="admin-card admin-flex-between">
       <div>
-        <p class="admin-kpi-card__label">Pendientes</p>
-        <p class="admin-kpi-card__value">1</p>
+        <p class="admin-kpi-card__label">Otras (no emitida)</p>
+        <p class="admin-kpi-card__value">{{ kpi_vta_otras }}</p>
       </div>
       <span class="admin-kpi-card__icon admin-kpi-card__icon--amber"><i class="fas fa-hourglass-half"></i></span>
     </div>
   </div>
-  <div class="admin-filters">
-    <div class="admin-input-wrap"><i class="fas fa-magnifying-glass"></i><input class="admin-input" type="search" placeholder="Buscar por nombre, email o evento..." /></div>
-    <select class="admin-select"><option>Todos los estados</option><option>completado</option><option>pendiente</option></select>
-  </div>
+  <form class="admin-filters" method="get" action="{% url 'admin_panel' %}">
+    <input type="hidden" name="tab" value="ventas" />
+    <div class="admin-input-wrap"><i class="fas fa-magnifying-glass"></i><input class="admin-input" type="search" name="vta_q" value="{{ vta_q }}" placeholder="ID venta, código reserva, evento o cliente..." /></div>
+    <select class="admin-select" name="vta_estado">
+      <option value="">Todos los estados</option>
+      {% for ev in cat_estados_venta %}
+        <option value="{{ ev.nombre }}" {% if vta_estado == ev.nombre %}selected{% endif %}>{{ ev.nombre }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="admin-btn-primary" style="padding:0.5rem 1rem;font-size:0.8125rem;">Buscar</button>
+  </form>
   <div class="admin-table-shell">
-    <div class="admin-table-shell__head"><h2>Historial de Ventas</h2></div>
+    <div class="admin-table-shell__head"><h2>Historial de ventas</h2></div>
     <div class="admin-table-scroll">
       <table class="admin-table">
         <thead>
           <tr>
-            <th>ID</th><th>Cliente</th><th>Evento</th><th>Asientos</th><th>Monto</th><th>Método</th><th>Fecha</th><th>Estado</th><th class="cell-right">Acciones</th>
+            <th>ID</th><th>Cliente</th><th>Evento</th><th>Detalle</th><th>Monto</th><th>Método</th><th>Fecha</th><th>Estado</th><th class="cell-right">Acciones</th>
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td class="cell-xs" style="font-family:monospace;">V001</td>
-            <td><div class="cell-strong">Ana López</div><div class="cell-xs cell-muted">ana@mail.com</div></td>
-            <td class="cell-muted"><i class="fas fa-calendar" style="color:#38bdf8;"></i> Concierto Folklórico Nacional</td>
-            <td class="cell-muted"><i class="fas fa-location-dot" style="color:#38bdf8;"></i> VIP (2)</td>
-            <td>Bs. 300</td>
-            <td>Tarjeta de crédito</td>
-            <td>15 mar 2026</td>
-            <td><span class="admin-badge admin-badge--ok">completado</span></td>
-            <td class="cell-right"><button type="button" class="admin-icon-btn" style="color:#38bdf8;"><i class="fas fa-eye"></i></button></td>
-          </tr>
-          <tr>
-            <td class="cell-xs" style="font-family:monospace;">V002</td>
-            <td><div class="cell-strong">Luis Camacho</div><div class="cell-xs cell-muted">luis@mail.com</div></td>
-            <td class="cell-muted"><i class="fas fa-calendar" style="color:#38bdf8;"></i> Festival de Música Andina</td>
-            <td class="cell-muted"><i class="fas fa-location-dot" style="color:#38bdf8;"></i> General (1)</td>
-            <td>Bs. 80</td>
-            <td>QR Bancario</td>
-            <td>14 mar 2026</td>
-            <td><span class="admin-badge admin-badge--warn">pendiente</span></td>
-            <td class="cell-right"><button type="button" class="admin-icon-btn" style="color:#38bdf8;"><i class="fas fa-eye"></i></button></td>
-          </tr>
+          {% for row in ventas_rows %}
+            {% with v=row.venta %}
+            <tr>
+              <td class="cell-xs" style="font-family:monospace;">{{ v.id }}</td>
+              <td>
+                {% if v.usuario %}
+                  <div class="cell-strong">{{ v.usuario.nombre }} {{ v.usuario.apellido }}</div>
+                  <div class="cell-xs cell-muted">{{ v.usuario.correo }}</div>
+                {% else %}
+                  <span class="cell-muted">Ventanilla / sin usuario</span>
+                {% endif %}
+              </td>
+              <td class="cell-muted"><i class="fas fa-calendar" style="color:#38bdf8;"></i> {{ v.reserva.evento.nombre }}</td>
+              <td class="cell-muted cell-xs"><i class="fas fa-location-dot" style="color:#38bdf8;"></i> {{ row.asientos_txt }}</td>
+              <td>Bs.&nbsp;{{ v.total|floatformat:2 }}</td>
+              <td class="cell-xs">{{ row.metodo }}</td>
+              <td class="cell-xs cell-muted">{{ v.fecha_venta|date:"d M Y H:i" }}</td>
+              <td>
+                {% if 'emit' in v.estado_venta.nombre|lower %}
+                  <span class="admin-badge admin-badge--ok">{{ v.estado_venta.nombre }}</span>
+                {% elif 'anul' in v.estado_venta.nombre|lower or 'reemb' in v.estado_venta.nombre|lower %}
+                  <span class="admin-badge admin-badge--danger">{{ v.estado_venta.nombre }}</span>
+                {% else %}
+                  <span class="admin-badge admin-badge--warn">{{ v.estado_venta.nombre }}</span>
+                {% endif %}
+              </td>
+              <td class="cell-right">
+                <a href="{% url 'admin_venta_detalle' v.id %}" class="admin-icon-btn" style="color:#38bdf8;text-decoration:none;" title="Ver detalle"><i class="fas fa-eye"></i></a>
+              </td>
+            </tr>
+            {% endwith %}
+          {% empty %}
+            <tr><td colspan="9" style="text-align:center;padding:2rem;color:#94a3b8;">No hay ventas que coincidan.</td></tr>
+          {% endfor %}
         </tbody>
       </table>
     </div>
@@ -401,52 +460,58 @@
 <section id="panel-reportes" class="admin-panel admin-section hidden">
   <div class="admin-page-head">
     <h1 class="admin-page-title">Reportes</h1>
-    <p class="admin-page-desc">Genera reportes detallados de ventas y ocupación</p>
+    <p class="admin-page-desc">Rango de fechas aplicado a ventas emitidas, entradas y asientos de eventos en esas fechas.</p>
   </div>
   <div class="admin-card">
-    <h3 class="admin-card__title" style="font-size:0.9rem;">Configurar Reporte</h3>
-    <div class="admin-report-toolbar" style="margin-top:1rem;">
+    <h3 class="admin-card__title" style="font-size:0.9rem;">Configurar reporte</h3>
+    <form class="admin-report-toolbar" style="margin-top:1rem;" method="get" action="{% url 'admin_panel' %}">
+      <input type="hidden" name="tab" value="reportes" />
       <div>
-        <label>Tipo de Reporte</label>
-        <select><option>Ventas</option><option>Ocupación</option><option>Reservas</option></select>
+        <label for="rep-tipo">Tipo (exportación CSV)</label>
+        <select id="rep-tipo" name="rep_tipo">
+          <option value="ventas" {% if rep_tipo == 'ventas' %}selected{% endif %}>Ventas</option>
+          <option value="ocupacion" {% if rep_tipo == 'ocupacion' %}selected{% endif %}>Ocupación</option>
+          <option value="reservas" {% if rep_tipo == 'reservas' %}selected{% endif %}>Reservas</option>
+        </select>
       </div>
       <div>
-        <label>Fecha Inicio</label>
-        <input type="date" value="2026-03-01" />
+        <label for="rep-desde">Fecha inicio</label>
+        <input id="rep-desde" type="date" name="rep_desde" value="{{ rep_desde|date:'Y-m-d' }}" />
       </div>
       <div>
-        <label>Fecha Fin</label>
-        <input type="date" value="2026-03-31" />
+        <label for="rep-hasta">Fecha fin</label>
+        <input id="rep-hasta" type="date" name="rep_hasta" value="{{ rep_hasta|date:'Y-m-d' }}" />
       </div>
-      <button type="button" class="admin-btn-danger"><i class="fas fa-file-pdf"></i> PDF</button>
-      <button type="button" class="admin-btn-success"><i class="fas fa-file-excel"></i> Excel</button>
-    </div>
+      <button type="submit" class="admin-btn-primary" style="align-self:flex-end;"><i class="fas fa-filter"></i> Aplicar</button>
+      <a class="admin-btn-danger" style="align-self:flex-end;text-decoration:none;display:inline-flex;align-items:center;gap:0.35rem;" href="{% url 'admin_report_export' %}?rep_desde={{ rep_desde|date:'Y-m-d' }}&amp;rep_hasta={{ rep_hasta|date:'Y-m-d' }}&amp;rep_tipo={{ rep_tipo }}&amp;fmt=pdf"><i class="fas fa-file-pdf"></i> PDF</a>
+      <a class="admin-btn-success" style="align-self:flex-end;text-decoration:none;display:inline-flex;align-items:center;gap:0.35rem;" href="{% url 'admin_report_export' %}?rep_desde={{ rep_desde|date:'Y-m-d' }}&amp;rep_hasta={{ rep_hasta|date:'Y-m-d' }}&amp;rep_tipo={{ rep_tipo }}&amp;fmt=csv"><i class="fas fa-file-excel"></i> Excel</a>
+    </form>
   </div>
   <div class="admin-kpi-grid admin-kpi-grid--3">
     <div class="admin-card">
-      <p class="admin-kpi-card__label">Ingresos Totales</p>
-      <p class="admin-kpi-card__value">Bs. 397.600</p>
+      <p class="admin-kpi-card__label">Ingresos (emitidas en rango)</p>
+      <p class="admin-kpi-card__value">Bs.&nbsp;{{ rep_kpi_ingresos|floatformat:0 }}</p>
     </div>
     <div class="admin-card">
-      <p class="admin-kpi-card__label">Tickets Vendidos</p>
-      <p class="admin-kpi-card__value">4970</p>
-      <p class="cell-xs cell-muted">4 eventos</p>
+      <p class="admin-kpi-card__label">Entradas emitidas</p>
+      <p class="admin-kpi-card__value">{{ rep_kpi_tickets }}</p>
+      <p class="cell-xs cell-muted">{{ rep_kpi_eventos }} evento(s) en fechas de función (rango)</p>
     </div>
     <div class="admin-card">
-      <p class="admin-kpi-card__label">Ocupación Promedio</p>
-      <p class="admin-kpi-card__value">62%</p>
-      <p class="cell-xs cell-muted">De capacidad total</p>
+      <p class="admin-kpi-card__label">Ocupación asientos (eventos en rango)</p>
+      <p class="admin-kpi-card__value">{{ rep_kpi_ocup }}%</p>
+      <p class="cell-xs cell-muted">No DISPONIBLE / total asientos programados</p>
     </div>
   </div>
   <div class="admin-grid-2">
     <div class="admin-card">
-      <h3 class="admin-card__title">Ventas Semanales</h3>
-      <p class="admin-card__subtitle">Ingresos por día de la semana</p>
+      <h3 class="admin-card__title">Ventas en ventana (emitidas)</h3>
+      <p class="admin-card__subtitle">Hasta 7 días dentro del rango seleccionado</p>
       <div class="admin-chart-box admin-chart-box--sm"><canvas id="chart-reportes-semanal"></canvas></div>
     </div>
     <div class="admin-card">
-      <h3 class="admin-card__title">Ocupación por Zonas</h3>
-      <p class="admin-card__subtitle">Porcentaje de ocupación por sector</p>
+      <h3 class="admin-card__title">Ocupación por zona</h3>
+      <p class="admin-card__subtitle">Eventos con fecha de función en el rango</p>
       <div class="admin-chart-box admin-chart-box--sm"><canvas id="chart-reportes-zonas-h"></canvas></div>
     </div>
   </div>
@@ -645,11 +710,6 @@
       showTab(btn.getAttribute('data-admin-tab'));
     });
 
-    try {
-      var tab = new URLSearchParams(window.location.search).get('tab');
-      if (tab && document.getElementById('panel-' + tab)) showTab(tab);
-    } catch (e) { /* noop */ }
-
     (function () {
       var root = document.getElementById('admin-modal-evento');
       if (!root) return;
@@ -803,19 +863,37 @@
       }
     }
 
+    function readReportesChartsPayload() {
+      var node = document.getElementById('admin-reportes-charts-data');
+      if (!node || !node.textContent) return null;
+      try {
+        return JSON.parse(node.textContent);
+      } catch (e) {
+        return null;
+      }
+    }
+
     function initReportesCharts() {
       var C = chartDefaults();
       if (!C || reportesChartsDone) return;
       reportesChartsDone = true;
+
+      var P = readReportesChartsPayload();
+      var labs = P && Array.isArray(P.sem_labels) ? P.sem_labels : [];
+      var vals = P && Array.isArray(P.sem_vals) ? P.sem_vals : [];
+      var ymax = P && typeof P.sem_ymax === 'number' ? P.sem_ymax : 500;
+      var zLabs = P && Array.isArray(P.zonas_labels) ? P.zonas_labels : [];
+      var zDat = P && Array.isArray(P.zonas_data) ? P.zonas_data : [];
 
       var c1 = document.getElementById('chart-reportes-semanal');
       if (c1) {
         new Chart(c1.getContext('2d'), {
           type: 'bar',
           data: {
-            labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+            labels: labs,
             datasets: [{
-              data: [9000, 7000, 11000, 8500, 12000, 14000, 10000],
+              label: 'Bs.',
+              data: vals,
               backgroundColor: '#22d3ee',
               borderRadius: 4,
             }],
@@ -825,7 +903,7 @@
             maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
-              y: { beginAtZero: true, grid: { color: 'rgba(148,163,184,0.1)' } },
+              y: { beginAtZero: true, suggestedMax: ymax, grid: { color: 'rgba(148,163,184,0.1)' } },
               x: { grid: { display: false } },
             },
           },
@@ -837,11 +915,11 @@
         new Chart(c2.getContext('2d'), {
           type: 'bar',
           data: {
-            labels: ['VIP', 'Gradería A', 'Gradería B', 'General'],
+            labels: zLabs,
             datasets: [{
               label: '%',
-              data: [85, 72, 68, 55],
-              backgroundColor: '#22c55e',
+              data: zDat,
+              backgroundColor: piePalette(zDat.length || 1),
               borderRadius: 4,
             }],
           },
@@ -849,7 +927,16 @@
             indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function (ctx) {
+                    return (ctx.label || '') + ': ' + ctx.parsed.x + '%';
+                  },
+                },
+              },
+            },
             scales: {
               x: { beginAtZero: true, max: 100, grid: { color: 'rgba(148,163,184,0.1)' } },
               y: { grid: { display: false } },
@@ -859,10 +946,19 @@
       }
     }
 
+    function initTabOnLoad() {
+      var tab = 'dashboard';
+      try {
+        var q = new URLSearchParams(window.location.search).get('tab');
+        if (q && document.getElementById('panel-' + q)) tab = q;
+      } catch (e) { /* noop */ }
+      showTab(tab);
+    }
+
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', function () { showTab('dashboard'); });
+      document.addEventListener('DOMContentLoaded', initTabOnLoad);
     } else {
-      showTab('dashboard');
+      initTabOnLoad();
     }
   })();
 </script>

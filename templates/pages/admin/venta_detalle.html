@@ -1,0 +1,103 @@
+{% extends "layouts/admin_base.html" %}
+
+{% block title %}Venta #{{ venta.id }}{% endblock %}
+
+{% block admin_content %}
+<div class="admin-dashboard admin-dashboard--narrow">
+  <div class="admin-page-head-row">
+    <div class="admin-page-head">
+      <h1 class="admin-page-title">Venta #{{ venta.id }}</h1>
+      <p class="admin-page-desc">Reserva {{ venta.reserva.codigo_reserva }} · {{ venta.reserva.evento.nombre }}</p>
+    </div>
+    <a href="{% url 'admin_panel' %}?tab=ventas" class="admin-btn-outline"><i class="fas fa-arrow-left"></i> Volver</a>
+  </div>
+
+  <div class="admin-card" style="margin-top:1rem;">
+    <h3 class="admin-card__title" style="font-size:0.9rem;">Resumen</h3>
+    <div class="admin-form-grid" style="margin-top:1rem;">
+      <div class="admin-stack">
+        <p class="cell-xs cell-muted" style="margin:0;">Total</p>
+        <p class="cell-strong" style="margin:0.25rem 0 0;">Bs.&nbsp;{{ venta.total|floatformat:2 }}</p>
+      </div>
+      <div class="admin-stack">
+        <p class="cell-xs cell-muted" style="margin:0;">Estado venta</p>
+        <p style="margin:0.25rem 0 0;"><span class="admin-badge admin-badge--ok">{{ venta.estado_venta.nombre }}</span></p>
+      </div>
+      <div class="admin-stack">
+        <p class="cell-xs cell-muted" style="margin:0;">Canal</p>
+        <p class="cell-strong" style="margin:0.25rem 0 0;">{{ venta.canal_venta.nombre }}</p>
+      </div>
+      <div class="admin-stack">
+        <p class="cell-xs cell-muted" style="margin:0;">Fecha venta</p>
+        <p class="cell-strong" style="margin:0.25rem 0 0;">{{ venta.fecha_venta|date:"d/m/Y H:i" }}</p>
+      </div>
+    </div>
+    {% if venta.usuario %}
+      <p class="cell-muted cell-xs" style="margin-top:1rem;">Cliente: {{ venta.usuario.nombre }} {{ venta.usuario.apellido }} · {{ venta.usuario.correo }}</p>
+    {% endif %}
+    {% if venta.empleado %}
+      <p class="cell-muted cell-xs" style="margin-top:0.35rem;">Empleado: {{ venta.empleado.nombre }} {{ venta.empleado.apellido }}</p>
+    {% endif %}
+  </div>
+
+  <div class="admin-card" style="margin-top:1rem;">
+    <h3 class="admin-card__title" style="font-size:0.9rem;">Pagos (reserva)</h3>
+    <div class="admin-table-scroll" style="margin-top:0.75rem;">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Monto</th>
+            <th>Método</th>
+            <th>Estado pago</th>
+            <th>Creado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in venta.reserva.pagos.all %}
+            <tr>
+              <td class="cell-xs">{{ p.id }}</td>
+              <td>Bs.&nbsp;{{ p.monto|floatformat:2 }}</td>
+              <td>{{ p.metodo_pago.nombre }}</td>
+              <td>{{ p.estado_pago.nombre }}</td>
+              <td class="cell-xs cell-muted">{{ p.fecha_creacion|date:"d/m/Y H:i" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="cell-muted" style="text-align:center;padding:1rem;">Sin pagos registrados.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="admin-card" style="margin-top:1rem;">
+    <h3 class="admin-card__title" style="font-size:0.9rem;">Entradas</h3>
+    <div class="admin-table-scroll" style="margin-top:0.75rem;">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Ubicación</th>
+            <th>Precio</th>
+            <th>Estado</th>
+            <th>Usada</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in venta.entradas.all %}
+            <tr>
+              <td class="cell-xs">{{ e.id }}</td>
+              <td class="cell-xs">{{ e.descripcion_ubicacion }}</td>
+              <td>Bs.&nbsp;{{ e.precio_pagado|floatformat:2 }}</td>
+              <td>{{ e.estado_entrada.nombre }}</td>
+              <td>{% if e.usada %}Sí{% else %}No{% endif %}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="cell-muted" style="text-align:center;padding:1rem;">Sin entradas.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -80,15 +80,18 @@
             <i class="fas fa-bars"></i>
           </button>
 
-          <div class="admin-search-wrap">
+          <form class="admin-search-wrap" method="get" action="{% url 'admin_panel' %}" style="margin:0;">
+            <input type="hidden" name="tab" value="reservas" />
             <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
             <input
               type="search"
+              name="res_q"
               class="admin-search-input"
-              placeholder="Buscar eventos, reservas, ventas..."
+              placeholder="Buscar reservas (código, evento, correo)…"
+              value="{{ request.GET.res_q }}"
               autocomplete="off"
             />
-          </div>
+          </form>
 
           <div class="admin-topbar__actions">
             <button type="button" class="admin-icon-btn admin-icon-btn--ghost" aria-label="Notificaciones" title="Sin notificaciones configuradas">
