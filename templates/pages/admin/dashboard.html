@@ -188,8 +188,24 @@
                 {% endif %}
               </td>
               <td class="cell-right">
-                <button type="button" class="admin-icon-action admin-icon-action--edit" title="Editar"><i class="fas fa-pen"></i></button>
-                <button type="button" class="admin-icon-action admin-icon-action--del" title="Eliminar"><i class="fas fa-trash"></i></button>
+                <button
+                  type="button"
+                  class="admin-icon-action admin-icon-action--edit js-edit-evento-btn"
+                  title="Editar"
+                  data-id="{{ ev.id }}"
+                  data-nombre="{{ ev.nombre|escape }}"
+                  data-fecha="{{ ev.fecha_evento|date:'Y-m-d' }}"
+                  data-hora="{{ ev.hora_evento|time:'H:i' }}"
+                  data-pvip="{% if fila.precio_vip != None %}{{ fila.precio_vip }}{% endif %}"
+                  data-pgrad="{% if fila.precio_grad != None %}{{ fila.precio_grad }}{% endif %}"
+                  data-pgen="{% if fila.precio_gen != None %}{{ fila.precio_gen }}{% endif %}"
+                  data-cap="{% if fila.cap_total %}{{ fila.cap_total }}{% endif %}"
+                  data-activo="{% if fila.es_activo %}1{% else %}0{% endif %}"
+                ><i class="fas fa-pen"></i></button>
+                <form method="post" action="{% url 'admin_evento_eliminar' ev.id %}" style="display:inline;" onsubmit="return confirm('¿Eliminar este evento?');">
+                  {% csrf_token %}
+                  <button type="submit" class="admin-icon-action admin-icon-action--del" title="Eliminar"><i class="fas fa-trash"></i></button>
+                </form>
               </td>
             </tr>
             {% endwith %}
@@ -783,9 +799,10 @@
       <h2 id="admin-modal-evento-title">Crear nuevo evento</h2>
       <button type="button" class="admin-modal__close" data-close-modal-evento aria-label="Cerrar"><i class="fas fa-times"></i></button>
     </div>
-    <form method="post" action="{% url 'admin_evento_nuevo' %}">
+    <form method="post" id="form-modal-evento" action="{% url 'admin_evento_nuevo' %}">
       {% csrf_token %}
       <div class="admin-modal__body">
+        <input type="hidden" id="modal-evento-id" value="" />
         <div class="admin-modal__field">
           <label for="modal-nombre-ev">Nombre del evento</label>
           <input type="text" id="modal-nombre-ev" name="nombre" required minlength="3" maxlength="150" placeholder="Ej: Concierto folklórico nacional" autocomplete="off" />
@@ -830,7 +847,7 @@
       </div>
       <div class="admin-modal__footer">
         <button type="button" class="admin-btn-outline" data-close-modal-evento>Cancelar</button>
-        <button type="submit" class="admin-btn-primary">Crear evento</button>
+        <button type="submit" class="admin-btn-primary" id="modal-evento-submit-btn">Crear evento</button>
       </div>
     </form>
   </div>
@@ -871,6 +888,52 @@
     (function () {
       var root = document.getElementById('admin-modal-evento');
       if (!root) return;
+      var form = document.getElementById('form-modal-evento');
+      var title = document.getElementById('admin-modal-evento-title');
+      var submitBtn = document.getElementById('modal-evento-submit-btn');
+      var idInput = document.getElementById('modal-evento-id');
+      var inputNombre = document.getElementById('modal-nombre-ev');
+      var inputFecha = document.getElementById('modal-fecha-ev');
+      var inputHora = document.getElementById('modal-hora-ev');
+      var inputVip = document.getElementById('modal-pvip');
+      var inputGrad = document.getElementById('modal-pgrad');
+      var inputGen = document.getElementById('modal-pgen');
+      var inputCap = document.getElementById('modal-cap');
+      var inputActivo = document.getElementById('modal-activo-ev');
+
+      function toCreateMode() {
+        if (!form) return;
+        form.action = "{% url 'admin_evento_nuevo' %}";
+        if (title) title.textContent = 'Crear nuevo evento';
+        if (submitBtn) submitBtn.textContent = 'Crear evento';
+        if (idInput) idInput.value = '';
+        if (inputNombre) inputNombre.value = '';
+        if (inputFecha) inputFecha.value = '';
+        if (inputHora) inputHora.value = '';
+        if (inputVip) inputVip.value = '';
+        if (inputGrad) inputGrad.value = '';
+        if (inputGen) inputGen.value = '';
+        if (inputCap) inputCap.value = '';
+        if (inputActivo) inputActivo.checked = true;
+      }
+
+      function toEditMode(btn) {
+        if (!form) return;
+        var id = btn.getAttribute('data-id');
+        if (!id) return;
+        form.action = '/admin-panel/eventos/' + id + '/editar/';
+        if (title) title.textContent = 'Editar evento';
+        if (submitBtn) submitBtn.textContent = 'Actualizar evento';
+        if (idInput) idInput.value = id;
+        if (inputNombre) inputNombre.value = btn.getAttribute('data-nombre') || '';
+        if (inputFecha) inputFecha.value = btn.getAttribute('data-fecha') || '';
+        if (inputHora) inputHora.value = btn.getAttribute('data-hora') || '';
+        if (inputVip) inputVip.value = btn.getAttribute('data-pvip') || '';
+        if (inputGrad) inputGrad.value = btn.getAttribute('data-pgrad') || '';
+        if (inputGen) inputGen.value = btn.getAttribute('data-pgen') || '';
+        if (inputCap) inputCap.value = btn.getAttribute('data-cap') || '';
+        if (inputActivo) inputActivo.checked = (btn.getAttribute('data-activo') || '0') === '1';
+      }
 
       function openModal() {
         root.classList.remove('hidden');
@@ -882,7 +945,17 @@
         root.setAttribute('aria-hidden', 'true');
       }
 
-      document.getElementById('btn-open-modal-evento')?.addEventListener('click', openModal);
+      document.getElementById('btn-open-modal-evento')?.addEventListener('click', function () {
+        toCreateMode();
+        openModal();
+      });
+
+      document.querySelectorAll('.js-edit-evento-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          toEditMode(btn);
+          openModal();
+        });
+      });
 
       root.querySelectorAll('[data-close-modal-evento]').forEach(function (el) {
         el.addEventListener('click', closeModal);

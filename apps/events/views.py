@@ -3,7 +3,7 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.db import transaction
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.dateparse import parse_date, parse_time
 from django.core.exceptions import ValidationError
@@ -159,6 +159,42 @@ def _payload_errors(request):
     return None, data
 
 
+def _save_event_and_zonas(ev, payload):
+    caps = _split_cap(payload['capacidad_total'], len(payload['precio_specs']))
+    ev.nombre = payload['nombre']
+    ev.descripcion = payload['descripcion']
+    ev.fecha_evento = payload['fecha_evento']
+    ev.hora_evento = payload['hora_evento']
+    ev.lugar = payload['lugar']
+    ev.imagen_url = payload['imagen_url'] or None
+    ev.estado_evento = payload['estado_evento']
+    ev.full_clean()
+    ev.save()
+
+    # upsert de zonas editables (VIP/Graderia/General) para este evento
+    zona_specs = {spec[0].id: (spec[0], spec[1]) for spec in payload['precio_specs']}
+    for idx, zona_id in enumerate(zona_specs.keys()):
+        zona_obj, precio = zona_specs[zona_id]
+        cap_zone = caps[idx] if idx < len(caps) else None
+        ez, _created = EventoZona.objects.get_or_create(
+            evento=ev,
+            zona=zona_obj,
+            defaults={
+                'precio_base': precio,
+                'capacidad_evento': cap_zone,
+                'nombre_display': zona_obj.nombre,
+                'limite_por_usuario': 4,
+                'habilitada': True,
+            },
+        )
+        ez.precio_base = precio
+        ez.capacidad_evento = cap_zone
+        ez.nombre_display = zona_obj.nombre
+        ez.habilitada = True
+        ez.full_clean()
+        ez.save()
+
+
 @never_cache
 @require_http_methods(['GET', 'POST'])
 def admin_evento_create(request):
@@ -177,35 +213,16 @@ def admin_evento_create(request):
             messages.error(request, m)
         return redirect_ok()
 
-    caps = _split_cap(payload['capacidad_total'], len(payload['precio_specs']))
     try:
         with transaction.atomic():
             ev = Evento(
-                nombre=payload['nombre'],
-                descripcion=payload['descripcion'],
+                nombre='tmp',
                 fecha_evento=payload['fecha_evento'],
                 hora_evento=payload['hora_evento'],
                 lugar=payload['lugar'],
-                imagen_url=payload['imagen_url'] or None,
                 estado_evento=payload['estado_evento'],
             )
-            ev.full_clean()
-            ev.save()
-
-            for i, spec in enumerate(payload['precio_specs']):
-                zona_obj, precio, _lbl = spec
-                cap_zone = caps[i]
-                ez = EventoZona(
-                    evento=ev,
-                    zona=zona_obj,
-                    precio_base=precio,
-                    capacidad_evento=cap_zone,
-                    nombre_display=zona_obj.nombre,
-                    limite_por_usuario=4,
-                    habilitada=True,
-                )
-                ez.full_clean()
-                ez.save()
+            _save_event_and_zonas(ev, payload)
 
         messages.success(request, 'Evento creado correctamente.')
     except ValidationError as e:
@@ -222,3 +239,49 @@ def admin_evento_create(request):
         messages.error(request, 'No se pudo guardar. Comprueba la base de datos o datos duplicados.')
 
     return redirect_ok()
+
+
+@never_cache
+@require_http_methods(['POST'])
+def admin_evento_update(request, evento_id):
+    gate = _require_admin(request)
+    if gate:
+        return gate
+
+    redirect_ok = lambda: redirect(reverse('admin_panel') + '?' + urlencode({'tab': 'eventos'}))
+    ev = get_object_or_404(Evento.objects.select_related('estado_evento'), pk=evento_id)
+
+    errs, payload = _payload_errors(request)
+    if errs:
+        for m in errs:
+            messages.error(request, m)
+        return redirect_ok()
+
+    try:
+        with transaction.atomic():
+            _save_event_and_zonas(ev, payload)
+        messages.success(request, 'Evento actualizado correctamente.')
+    except ValidationError as e:
+        if getattr(e, 'messages', None):
+            for msg in e.messages:
+                messages.error(request, str(msg))
+        else:
+            messages.error(request, str(e))
+    except Exception:
+        messages.error(request, 'No se pudo actualizar el evento.')
+    return redirect_ok()
+
+
+@never_cache
+@require_http_methods(['POST'])
+def admin_evento_delete(request, evento_id):
+    gate = _require_admin(request)
+    if gate:
+        return gate
+    ev = get_object_or_404(Evento, pk=evento_id)
+    try:
+        ev.delete()
+        messages.success(request, 'Evento eliminado.')
+    except Exception:
+        messages.error(request, 'No se pudo eliminar el evento. Puede tener ventas/reservas relacionadas.')
+    return redirect(reverse('admin_panel') + '?' + urlencode({'tab': 'eventos'}))

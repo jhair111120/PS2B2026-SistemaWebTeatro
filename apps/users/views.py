@@ -688,12 +688,30 @@ def admin_panel(request):
     for ev in eventos:
         st = seat_stats.get(ev.id, {'total_seats': 0, 'ocup': 0, 'pct': 0})
         cap_d = cap_mostrar(ev.id)
+        precio_vip = None
+        precio_grad = None
+        precio_gen = None
+        cap_total = 0
+        for ez in ev.eventozona_set.all():
+            nombre_z = (ez.zona.nombre or '').lower()
+            cap_total += int(ez.capacidad_evento or 0)
+            if ('vip' in nombre_z or 'prefer' in nombre_z) and precio_vip is None:
+                precio_vip = ez.precio_base
+            elif ('grader' in nombre_z) and precio_grad is None:
+                precio_grad = ez.precio_base
+            elif ('general' in nombre_z or 'fosa' in nombre_z or 'popular' in nombre_z) and precio_gen is None:
+                precio_gen = ez.precio_base
         eventos_filas.append(
             {
                 'evento': ev,
                 'ocup': st['ocup'],
                 'capacidad': cap_d,
                 'pct': st['pct'],
+                'precio_vip': precio_vip,
+                'precio_grad': precio_grad,
+                'precio_gen': precio_gen,
+                'cap_total': cap_total if cap_total > 0 else (cap_d or 0),
+                'es_activo': 'activ' in (ev.estado_evento.nombre or '').lower(),
             }
         )
 
