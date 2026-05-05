@@ -6,14 +6,14 @@ from collections import defaultdict
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from django.contrib import messages
-from django.core.exceptions import ValidationError
+from django.views.decorators.cache import never_cache
 from django.db import transaction
+from django.core.exceptions import ValidationError
 from django.db.models import Count, Prefetch, Q, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 
 from .models import Usuario, Rol
@@ -146,7 +146,7 @@ def perfil_view(request):
 
     usuario = Usuario.objects.get(id=usuario_id)
 
-    return render(request, 'pages/users/perfil.html', {
+    return render(request, 'pages/usuarios/perfil.html', {
         'usuario': usuario
     })
 
@@ -211,7 +211,6 @@ def _parse_date_get(val, default):
         return date.fromisoformat(str(val).strip()[:10])
     except ValueError:
         return default
-
 
 def _reserva_tiempo_clase_texto(reserva, now):
     nombre = (reserva.estado_reserva.nombre or '').lower()

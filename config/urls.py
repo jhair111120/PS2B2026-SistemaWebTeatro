@@ -21,7 +21,10 @@ from apps.users.views import (
     admin_config_security_save,
 )
 from apps.events.views import admin_evento_create, admin_evento_delete, admin_evento_update
-from apps.support.views import support_dashboard, ticket_messages_api, send_message_api, close_ticket_api
+from apps.support.views import (
+    support_dashboard, ticket_messages_api, send_message_api, close_ticket_api,
+    cliente_soporte_view, cliente_mensajes_api, cliente_enviar_mensaje_api
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -61,12 +64,15 @@ urlpatterns = [
     # Mis Tickets (Entradas compradas)
     path('mis-tickets/', TemplateView.as_view(template_name='pages/tickets/tickets.html'), name='mis_tickets'),
 
-    # ================= RUTAS DE SOPORTE =================
-    # Vista principal de soporte
-    path('soporte/', TemplateView.as_view(template_name='pages/support/support.html'), name='support'),
-    
-    # APIs para AJAX (JSON)
+    # ================= RUTAS DE SOPORTE (ADMIN) =================
+    path('soporte/', support_dashboard, name='support_dashboard'),
     path('soporte/api/mensajes/<int:ticket_id>/', ticket_messages_api, name='ticket_messages_api'),
     path('soporte/api/enviar-mensaje/', send_message_api, name='send_message_api'),
     path('soporte/api/cerrar-ticket/', close_ticket_api, name='close_ticket_api'),
+
+    # ================= RUTAS DE SOPORTE (CLIENTE) =================
+    path('mi-soporte/', cliente_soporte_view, name='cliente_soporte'),
+    path('mi-soporte/<int:ticket_id>/', cliente_soporte_view, name='cliente_soporte_detalle'),
+    path('mi-soporte/api/mensajes/<int:ticket_id>/', cliente_mensajes_api, name='cliente_mensajes_api'),
+    path('mi-soporte/api/enviar/<int:ticket_id>/', cliente_enviar_mensaje_api, name='cliente_enviar_mensaje_api'),
 ]
