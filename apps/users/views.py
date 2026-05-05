@@ -33,23 +33,41 @@ def signup_view(request):
         return redirect('/')
 
     if request.method == 'POST':
-        nombre    = request.POST.get('nombre', '').strip()
-        apellido  = request.POST.get('apellido', '').strip()
-        correo    = request.POST.get('correo', '').strip().lower()
-        password  = request.POST.get('password', '')
-        telefono  = request.POST.get('telefono', '').strip() or None
+        nombre = request.POST.get('nombre', '').strip()
+        apellido = request.POST.get('apellido', '').strip()
+        correo = request.POST.get('correo', '').strip().lower()
+        password = request.POST.get('password', '')
+        telefono = request.POST.get('telefono', '').strip() or None
 
-        if len(nombre) < 2 or len(apellido) < 2:
-            messages.error(request, "Nombre y apellido deben tener al menos 2 caracteres.")
-            return redirect(f"{reverse('login')}?tab=signup")
+        # Validaciones correctas (además de las visuales del modal)
+        if not re.match(r'^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}$', correo or ''):
+            messages.error(request, "Correo electrónico no válido.")
+            return redirect('/?action=signup')
+
+        if not re.match(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.-])[A-Za-z\d@$!%*?&.-]{8,}$', password or ''):
+            messages.error(request, "La contraseña no cumple con el formato seguro requerido.")
+            return redirect('/?action=signup')
+
+        # Validaciones (copiadas de Miguel)
+        if not re.match(r'^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(\s[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*$', nombre):
+            messages.error(request, "El nombre debe empezar con mayúscula y no tener mayúsculas dobles.")
+            return redirect('/?action=signup')
+
+        if not re.match(r'^[A-ZÁÉÍÓÚÑ][a-zA-ZáéíóúñÁÉÍÓÚÑ]*(\s[A-ZÁÉÍÓÚÑ][a-zA-ZáéíóúñÁÉÍÓÚÑ]*)*$', apellido):
+            messages.error(request, "El apellido debe tener la primera letra de cada palabra en mayúscula.")
+            return redirect('/?action=signup')
+
+        if telefono and not re.match(r'^[67]\d{7}$', telefono):
+            messages.error(request, "El celular en Bolivia debe empezar con 6 o 7 y tener 8 dígitos.")
+            return redirect('/?action=signup')
 
         if Usuario.objects.filter(correo=correo).exists():
             messages.error(request, "Este correo ya está registrado.")
-            return redirect(f"{reverse('login')}?tab=signup")
+            return redirect('/?action=signup')
 
         if telefono and Usuario.objects.filter(telefono=telefono).exists():
             messages.error(request, "Este teléfono ya está en uso.")
-            return redirect(f"{reverse('login')}?tab=signup")
+            return redirect('/?action=signup')
 
         rol_cliente, _ = Rol.objects.get_or_create(nombre='cliente')
 
@@ -68,14 +86,14 @@ def signup_view(request):
                 usuario.save()
 
             messages.success(request, "Cuenta creada correctamente.")
-            return redirect('login')
+            return redirect('/?action=login')
 
         except ValidationError as e:
             messages.error(request, e.messages[0])
         except Exception:
-            messages.error(request, "Error inesperado.")
+            messages.error(request, "Error inesperado al registrarte.")
 
-        return redirect('signup')
+        return redirect('/?action=signup')
 
     return redirect('/')
 
@@ -89,32 +107,43 @@ def login_view(request):
         return redirect('/')
 
     if request.method == 'POST':
-        correo   = request.POST.get('correo', '').strip().lower()
+        correo = request.POST.get('correo', '').strip().lower()
         password = request.POST.get('password', '')
+
+        if not correo or not password:
+            messages.error(request, "Ingresa tu correo y contraseña.")
+            return redirect('/?action=login')
+
+        if not re.match(r'^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}$', correo or ''):
+            messages.error(request, "Correo electrónico no válido.")
+            return redirect('/?action=login')
 
         try:
             usuario = Usuario.objects.select_related('rol').get(correo=correo)
 
             if not usuario.is_active:
-                messages.error(request, "Cuenta desactivada.")
-                return redirect('login')
+                messages.error(request, "Tu cuenta está desactivada.")
+                return redirect('/?action=login')
 
             if usuario.check_password(password):
                 request.session.flush()
 
                 request.session['usuario_id'] = usuario.id
                 request.session['usuario_nombre'] = usuario.nombre
+                request.session['usuario_nombre_completo'] = str(usuario)
                 request.session['usuario_correo'] = usuario.correo
                 request.session['usuario_rol'] = usuario.rol.nombre
 
                 request.session.set_expiry(60 * 60 * 4)
+
+                messages.success(request, f"Bienvenido {usuario.nombre}")
 
                 # 🔥 REDIRECCIÓN POR ROL
                 rol = (usuario.rol.nombre or '').strip().lower()
                 if rol == 'administrador':
                     return redirect('admin_panel')
                 else:
-                    return redirect('inicio')
+                    return redirect('/')
 
             else:
                 messages.error(request, "Credenciales incorrectas.")
@@ -122,7 +151,7 @@ def login_view(request):
         except Usuario.DoesNotExist:
             messages.error(request, "Credenciales incorrectas.")
 
-        return redirect('login')
+        return redirect('/?action=login')
 
     return redirect('/')
 
@@ -202,6 +231,100 @@ def _admin_gate(request):
     if (request.session.get('usuario_rol') or '').strip().lower() != 'administrador':
         return redirect('inicio')
     return None
+
+
+@never_cache
+@require_POST
+def admin_usuario_action(request):
+    gate = _admin_gate(request)
+    if gate:
+        return gate
+
+    uid = request.POST.get('usuario_id')
+    action = (request.POST.get('action') or '').strip().lower()
+    next_tab = request.POST.get('next_tab') or 'cuentas'
+
+    try:
+        uid_int = int(uid)
+    except (TypeError, ValueError):
+        messages.error(request, 'Usuario inválido.')
+        return redirect(reverse('admin_panel') + f'?tab={next_tab}')
+
+    usuario = Usuario.objects.select_related('rol').filter(pk=uid_int).first()
+    if not usuario:
+        messages.error(request, 'Usuario no encontrado.')
+        return redirect(reverse('admin_panel') + f'?tab={next_tab}')
+
+    current_admin_id = request.session.get('usuario_id')
+
+    # No permitir acciones destructivas sobre sí mismo
+    if current_admin_id and int(current_admin_id) == usuario.id and action in ('desactivar', 'eliminar'):
+        messages.warning(request, 'No puedes desactivarte o eliminarte a ti mismo.')
+        return redirect(reverse('admin_panel') + f'?tab={next_tab}')
+
+    if action == 'activar':
+        if usuario.activo:
+            messages.info(request, 'La cuenta ya está activa.')
+        else:
+            usuario.activo = True
+            usuario.save(update_fields=['activo', 'actualizado_en'])
+            messages.success(request, 'Cuenta activada.')
+
+    elif action == 'desactivar':
+        if not usuario.activo:
+            messages.info(request, 'La cuenta ya está desactivada.')
+        else:
+            # Evitar desactivar el último administrador activo
+            rol_nombre = (usuario.rol.nombre or '').strip().lower()
+            if rol_nombre == 'administrador':
+                admins_activos = Usuario.objects.filter(rol__nombre__iexact='administrador', activo=True).count()
+                if admins_activos <= 1:
+                    messages.error(request, 'No se puede desactivar el último administrador activo.')
+                    return redirect(reverse('admin_panel') + f'?tab={next_tab}')
+            usuario.activo = False
+            usuario.save(update_fields=['activo', 'actualizado_en'])
+            messages.success(request, 'Cuenta desactivada.')
+
+    elif action == 'set_rol':
+        rol_id = request.POST.get('rol_id')
+        try:
+            rol_id_int = int(rol_id)
+        except (TypeError, ValueError):
+            messages.error(request, 'Rol inválido.')
+            return redirect(reverse('admin_panel') + f'?tab={next_tab}')
+
+        nuevo_rol = Rol.objects.filter(pk=rol_id_int).first()
+        if not nuevo_rol:
+            messages.error(request, 'Rol no encontrado.')
+            return redirect(reverse('admin_panel') + f'?tab={next_tab}')
+
+        # Evitar quitar rol admin al último admin activo
+        if (usuario.rol.nombre or '').strip().lower() == 'administrador' and (nuevo_rol.nombre or '').strip().lower() != 'administrador':
+            admins_activos = Usuario.objects.filter(rol__nombre__iexact='administrador', activo=True).count()
+            if usuario.activo and admins_activos <= 1:
+                messages.error(request, 'No se puede quitar el rol de administrador al último administrador activo.')
+                return redirect(reverse('admin_panel') + f'?tab={next_tab}')
+
+        usuario.rol = nuevo_rol
+        usuario.save(update_fields=['rol', 'actualizado_en'])
+        messages.success(request, 'Rol actualizado.')
+
+    elif action == 'eliminar':
+        # Evitar borrar el último administrador activo
+        rol_nombre = (usuario.rol.nombre or '').strip().lower()
+        if rol_nombre == 'administrador' and usuario.activo:
+            admins_activos = Usuario.objects.filter(rol__nombre__iexact='administrador', activo=True).count()
+            if admins_activos <= 1:
+                messages.error(request, 'No se puede eliminar el último administrador activo.')
+                return redirect(reverse('admin_panel') + f'?tab={next_tab}')
+
+        usuario.delete()
+        messages.success(request, 'Cuenta eliminada.')
+
+    else:
+        messages.error(request, 'Acción no válida.')
+
+    return redirect(reverse('admin_panel') + f'?tab={next_tab}')
 
 
 def _parse_date_get(val, default):
@@ -1008,6 +1131,33 @@ def admin_panel(request):
     estados_pago = list(EstadoPago.objects.all().order_by('nombre'))
     metodos_pago = list(MetodoPago.objects.all().order_by('nombre'))
 
+    # ——— Cuentas (BD) ———
+    usr_q = (request.GET.get('usr_q') or '').strip()
+    usr_estado = (request.GET.get('usr_estado') or '').strip().lower()  # activo|inactivo|''
+    usr_rol = (request.GET.get('usr_rol') or '').strip().lower()
+
+    usuarios_qs = Usuario.objects.select_related('rol').order_by('-fecha_creacion')
+    if usr_q:
+        uq = (
+            Q(nombre__icontains=usr_q)
+            | Q(apellido__icontains=usr_q)
+            | Q(correo__icontains=usr_q)
+            | Q(telefono__icontains=usr_q)
+            | Q(dni__icontains=usr_q)
+        )
+        if usr_q.isdigit():
+            uq |= Q(pk=int(usr_q))
+        usuarios_qs = usuarios_qs.filter(uq)
+    if usr_estado == 'activo':
+        usuarios_qs = usuarios_qs.filter(activo=True)
+    elif usr_estado == 'inactivo':
+        usuarios_qs = usuarios_qs.filter(activo=False)
+    if usr_rol:
+        usuarios_qs = usuarios_qs.filter(rol__nombre__iexact=usr_rol)
+
+    usuarios_list = list(usuarios_qs[:400])
+    roles_list = list(Rol.objects.all().order_by('nombre'))
+
     current_admin = Usuario.objects.select_related('rol').filter(pk=request.session.get('usuario_id')).first()
     cfg_tab = (request.GET.get('cfg_tab') or 'general').strip().lower()
     noti_unread = SoporteMensaje.objects.count()
@@ -1069,5 +1219,10 @@ def admin_panel(request):
             'cfg_tab': cfg_tab,
             'noti_unread': noti_unread,
             'canales_count': canales_count,
+            'usr_q': usr_q,
+            'usr_estado': usr_estado,
+            'usr_rol': usr_rol,
+            'usuarios_list': usuarios_list,
+            'roles_list': roles_list,
         },
     )

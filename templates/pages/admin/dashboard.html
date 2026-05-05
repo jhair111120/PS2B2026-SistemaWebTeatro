@@ -100,7 +100,7 @@
           </div>
           {% if fila.capacidad %}
           <div class="admin-progress">
-            <div class="admin-progress__bar" style="width: {{ fila.pct }}%"></div>
+            <div class="admin-progress__bar" style="width: {{ fila.pct }}%;"></div>
           </div>
           {% endif %}
         </div>
@@ -529,6 +529,129 @@
       <h3 class="admin-card__title">Ocupación por zona</h3>
       <p class="admin-card__subtitle">Eventos con fecha de función en el rango</p>
       <div class="admin-chart-box admin-chart-box--sm"><canvas id="chart-reportes-zonas-h"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== CUENTAS ========== -->
+<section id="panel-cuentas" class="admin-panel admin-section hidden">
+  <div class="admin-page-head">
+    <h1 class="admin-page-title">Cuentas</h1>
+    <p class="admin-page-desc">Gestiona usuarios: activar/desactivar, rol y eliminación.</p>
+  </div>
+
+  <div class="admin-card">
+    <div class="admin-table-shell__head" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+      <h2 style="margin:0;">Usuarios</h2>
+      <form method="get" action="{% url 'admin_panel' %}" style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin:0;">
+        <input type="hidden" name="tab" value="cuentas" />
+        <input
+          type="search"
+          name="usr_q"
+          class="admin-search-input"
+          placeholder="Buscar (nombre, correo, teléfono, DNI)…"
+          value="{{ usr_q }}"
+          style="min-width: 260px;"
+        />
+        <select name="usr_estado" class="admin-select">
+          <option value="" {% if not usr_estado %}selected{% endif %}>Estado: todos</option>
+          <option value="activo" {% if usr_estado == 'activo' %}selected{% endif %}>Activos</option>
+          <option value="inactivo" {% if usr_estado == 'inactivo' %}selected{% endif %}>Inactivos</option>
+        </select>
+        <select name="usr_rol" class="admin-select">
+          <option value="" {% if not usr_rol %}selected{% endif %}>Rol: todos</option>
+          {% for r in roles_list %}
+            <option value="{{ r.nombre }}" {% if usr_rol == r.nombre|lower %}selected{% endif %}>{{ r.nombre|title }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="admin-btn-primary">Filtrar</button>
+        <a href="{% url 'admin_panel' %}?tab=cuentas" class="admin-btn-outline" style="text-decoration:none;">Limpiar</a>
+      </form>
+    </div>
+
+    <div class="admin-table-scroll" style="margin-top:1rem;">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Contacto</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th class="cell-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in usuarios_list %}
+            <tr>
+              <td class="cell-strong">
+                <div class="admin-stack" style="gap:0.2rem;">
+                  <span>{{ u.nombre }} {{ u.apellido }}</span>
+                  <span class="cell-xs cell-muted">ID {{ u.id }} · {{ u.fecha_creacion|date:"d/m/Y" }}</span>
+                </div>
+              </td>
+              <td class="cell-muted cell-xs">
+                <div class="admin-stack" style="gap:0.2rem;">
+                  <span><i class="fas fa-envelope" style="margin-right:0.35rem;color:#38bdf8;"></i>{{ u.correo }}</span>
+                  <span><i class="fas fa-phone" style="margin-right:0.35rem;color:#38bdf8;"></i>{{ u.telefono|default:"—" }}</span>
+                </div>
+              </td>
+              <td>
+                <form method="post" action="{% url 'admin_usuario_action' %}" style="margin:0;display:flex;gap:0.5rem;align-items:center;">
+                  {% csrf_token %}
+                  <input type="hidden" name="usuario_id" value="{{ u.id }}" />
+                  <input type="hidden" name="action" value="set_rol" />
+                  <input type="hidden" name="next_tab" value="cuentas" />
+                  <select name="rol_id" class="admin-select" onchange="this.form.submit()">
+                    {% for r in roles_list %}
+                      <option value="{{ r.id }}" {% if u.rol_id == r.id %}selected{% endif %}>{{ r.nombre|title }}</option>
+                    {% endfor %}
+                  </select>
+                </form>
+              </td>
+              <td>
+                {% if u.activo %}
+                  <span class="admin-badge admin-badge--ok">Activo</span>
+                {% else %}
+                  <span class="admin-badge admin-badge--neutral">Inactivo</span>
+                {% endif %}
+              </td>
+              <td class="cell-right">
+                <div class="admin-row-actions">
+                  {% if u.activo %}
+                    <form method="post" action="{% url 'admin_usuario_action' %}" style="display:inline;margin:0;">
+                      {% csrf_token %}
+                      <input type="hidden" name="usuario_id" value="{{ u.id }}" />
+                      <input type="hidden" name="action" value="desactivar" />
+                      <input type="hidden" name="next_tab" value="cuentas" />
+                      <button type="submit" class="admin-btn-outline">Desactivar</button>
+                    </form>
+                  {% else %}
+                    <form method="post" action="{% url 'admin_usuario_action' %}" style="display:inline;margin:0;">
+                      {% csrf_token %}
+                      <input type="hidden" name="usuario_id" value="{{ u.id }}" />
+                      <input type="hidden" name="action" value="activar" />
+                      <input type="hidden" name="next_tab" value="cuentas" />
+                      <button type="submit" class="admin-btn-primary">Activar</button>
+                    </form>
+                  {% endif %}
+
+                  <form method="post" action="{% url 'admin_usuario_action' %}" style="display:inline;margin:0;" onsubmit="return confirm('¿Eliminar esta cuenta? Esta acción no se puede deshacer.');">
+                    {% csrf_token %}
+                    <input type="hidden" name="usuario_id" value="{{ u.id }}" />
+                    <input type="hidden" name="action" value="eliminar" />
+                    <input type="hidden" name="next_tab" value="cuentas" />
+                    <button type="submit" class="admin-btn-danger">Eliminar</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="5" class="admin-empty">No se encontraron usuarios.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
 </section>

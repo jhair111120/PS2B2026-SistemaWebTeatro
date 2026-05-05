@@ -225,145 +225,146 @@ body {
 
 /* ── Overlay ────────────────────────────────────────────────── */
 #auth-modal-overlay {
-  background-color: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background-color: rgba(0, 0, 0, 0.55);
 }
 
 /* ── Tarjeta central ────────────────────────────────────────── */
 .auth-modal-card {
-  background-color: var(--color-bg-card);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  background-color: #ffffff;
+  border: 2px solid #000;
+  color: #000;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
 }
 
 /* ── Botón cerrar (×) ───────────────────────────────────────── */
 .auth-modal-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
   background: none;
-  border: none;
-  color: var(--color-text-muted);
-  font-size: 1.1rem;
-  cursor: pointer;
-  padding: 0.25rem;
-  line-height: 1;
-  transition: color var(--transition);
-}
-.auth-modal-close:hover { color: var(--color-white); }
-
-/* ── Logo / cabecera ────────────────────────────────────────── */
-.auth-logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 3rem;
-  height: 3rem;
+  border: 2px solid #000;
   border-radius: 50%;
-  background-color: rgba(14, 165, 233, 0.15);
-  color: var(--color-blue);
-  font-size: 1.25rem;
-}
-.auth-title    { color: var(--color-white); }
-.auth-subtitle { color: var(--color-text-muted); }
-
-/* ── Tabs ───────────────────────────────────────────────────── */
-.auth-tabs {
-  background-color: var(--color-bg-deep);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-.auth-tab {
-  background-color: transparent;
-  color: var(--color-text-muted);
-  border: none;
-  cursor: pointer;
-  transition: background-color var(--transition), color var(--transition);
-}
-.auth-tab:hover      { color: var(--color-white); }
-.auth-tab--active    { background-color: var(--color-blue); color: #fff; }
-
-/* ── Grupos de campos ───────────────────────────────────────── */
-.input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-.input-label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-}
-
-/* ── Input-wrapper (ícono + campo + ojo) ────────────────────── */
-.input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-.input-icon {
-  position: absolute;
-  left: 0.875rem;
-  color: var(--color-text-muted);
-  font-size: 0.85rem;
-  pointer-events: none;
-}
-
-/* Override del .input global dentro del modal:
-   usa bg elevado y borde más sutil */
-.auth-modal-card .input {
-  background-color: var(--color-bg-elevated);
-  border-color: rgba(255, 255, 255, 0.08);
-  padding: 0.6rem 0.875rem;
-}
-.auth-modal-card .input--icon {
-  padding-left: 2.5rem;
-  padding-right: 2.75rem;
-}
-.auth-modal-card .input--success { border-color: var(--color-green); }
-.auth-modal-card .input--success:focus { box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18); }
-.auth-modal-card .input--error   { border-color: #EF4444; }
-.auth-modal-card .input--error:focus   { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18); }
-
-/* ── Botón ojo ──────────────────────────────────────────────── */
-.input-eye {
-  position: absolute;
-  right: 0.75rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--color-text-muted);
-  font-size: 0.85rem;
-  padding: 0;
-  line-height: 1;
-  transition: color var(--transition);
-}
-.input-eye:hover { color: var(--color-blue); }
-
-/* ── Link olvidé contraseña ─────────────────────────────────── */
-.auth-forgot {
-  color: var(--color-text-muted);
-  text-decoration: none;
-  transition: color var(--transition);
-}
-.auth-forgot:hover { color: var(--color-blue); }
-
-/* ── Botón submit del modal ─────────────────────────────────── */
-.btn-auth {
+  width: 35px;
+  height: 35px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.65rem 1rem;
-  border-radius: var(--radius);
-  background-color: var(--color-blue);
-  color: #fff;
-  font-size: 0.9rem;
-  font-weight: 700;
-  border: none;
+  font-size: 1.2rem;
   cursor: pointer;
-  transition: background-color var(--transition), transform 0.15s ease;
-  margin-top: 0.25rem;
+  z-index: 10;
+  color: #000;
 }
-.btn-auth:hover  { background-color: var(--color-blue-hover); transform: translateY(-1px); }
-.btn-auth:active { transform: translateY(0); }
+
+/* ── Encabezado ─────────────────────────────────────────────── */
+.auth-head .auth-venue-main,
+.auth-head .auth-venue-sub {
+  font-family: 'IM Fell Great Primer SC', serif;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #000;
+}
+.auth-head .auth-venue-sub { letter-spacing: 0.02em; }
+.auth-title { color: #000; }
+
+/* ── Toggle tabs (Miguel) ───────────────────────────────────── */
+.auth-toggle-box {
+  background-color: #E6EBF1;
+  border-radius: 50px;
+  padding: 6px;
+  display: flex;
+  margin-bottom: 20px;
+}
+.auth-toggle-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  border-radius: 50px;
+  padding: 12px 10px;
+  font-weight: 800;
+  color: rgba(0,0,0,0.65);
+  transition: all 0.3s;
+}
+.auth-toggle-btn.active {
+  background-color: #fff;
+  border: 2px solid #000;
+  color: #000;
+  box-shadow: 0 2px 0 rgba(0,0,0,0.08);
+}
+
+/* ── Inputs y validaciones visuales ──────────────────────────── */
+.custom-input {
+  width: 100%;
+  border: 2px solid #000;
+  border-radius: 14px;
+  padding: 16px 18px;
+  font-size: 1rem;
+  box-shadow: none !important;
+  transition: 0.3s;
+  outline: none;
+}
+.custom-input:focus {
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.08) !important;
+}
+.is-invalid-custom {
+  border-color: #dc3545 !important;
+  background-color: #f8d7da;
+}
+.is-valid-custom {
+  border-color: #198754 !important;
+  background-color: #d1e7dd;
+}
+.feedback-msg {
+  font-size: 0.75rem;
+  margin-top: 5px;
+  color: #dc3545;
+  display: none;
+}
+.feedback-msg.show { display: block; }
+
+.password-wrapper { position: relative; }
+.password-toggle {
+  position: absolute;
+  top: 28px;
+  right: 15px;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #000;
+}
+
+/* ── Teléfono (prefijo + input) ─────────────────────────────── */
+.phone-container {
+  display: flex;
+  border: 2px solid #000;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+.phone-prefix {
+  background: #fff;
+  border: 0;
+  padding: 10px 12px;
+  border-right: 1px solid #ddd;
+  cursor: default;
+}
+.phone-input {
+  flex: 1;
+  border: 0;
+  padding: 12px 15px;
+  outline: none;
+}
+
+/* ── Botón principal ────────────────────────────────────────── */
+.btn-dark-action {
+  background-color: #1f2f45;
+  color: #fff;
+  border-radius: 14px;
+  padding: 16px 12px;
+  font-weight: 700;
+  width: 100%;
+  border: none;
+  transition: 0.3s;
+}
+.btn-dark-action:hover {
+  background-color: #172435;
+  color: #fff;
+}

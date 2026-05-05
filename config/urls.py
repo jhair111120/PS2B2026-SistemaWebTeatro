@@ -19,6 +19,7 @@ from apps.users.views import (
     admin_soporte_close,
     admin_config_general_save,
     admin_config_security_save,
+    admin_usuario_action,
 )
 from apps.events.views import admin_evento_create, admin_evento_delete, admin_evento_update
 from apps.support.views import (
@@ -52,6 +53,7 @@ urlpatterns = [
     path('admin-panel/soporte/close/', admin_soporte_close, name='admin_soporte_close'),
     path('admin-panel/config/general/', admin_config_general_save, name='admin_config_general_save'),
     path('admin-panel/config/security/', admin_config_security_save, name='admin_config_security_save'),
+    path('admin-panel/usuarios/action/', admin_usuario_action, name='admin_usuario_action'),
 
     # ================= RUTAS DE MÓDULOS (SEGÚN TU ESTRUCTURA DE CARPETAS) =================
     

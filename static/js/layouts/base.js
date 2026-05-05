@@ -7,6 +7,21 @@
 const $  = (id)  => document.getElementById(id);
 const $$ = (sel) => document.querySelectorAll(sel);
 
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
+}
+
+function ensureCsrfTokens() {
+  const token = getCookie('csrftoken');
+  if (!token) return;
+  document.querySelectorAll('#auth-modal form input[name="csrfmiddlewaretoken"]').forEach((el) => {
+    el.value = token;
+  });
+}
+
 
 // ═════════════════════════════════════════════════════════════════
 //  TOASTS
@@ -39,7 +54,8 @@ function openAuthModal(tab = 'login') {
   modal.classList.remove('hidden');
   modal.classList.add('flex');
   document.body.classList.add('overflow-hidden');
-  switchTab(tab);
+  switchAuthTab(tab);
+  ensureCsrfTokens();
 }
 
 /** Cierra el modal */
@@ -51,25 +67,98 @@ function closeAuthModal() {
 }
 
 /** Cambia entre pestañas sin cerrar el modal */
-function switchTab(tab) {
+function switchAuthTab(tab) {
   const isLogin = tab === 'login';
+  const btnLogin = $('tab-login');
+  const btnSignup = $('tab-signup');
+  const formLogin = $('form-login');
+  const formSignup = $('form-signup');
 
-  $('tab-login').classList.toggle('auth-tab--active',  isLogin);
-  $('tab-signup').classList.toggle('auth-tab--active', !isLogin);
+  if (!btnLogin || !btnSignup || !formLogin || !formSignup) return;
 
-  $('form-login').classList.toggle('hidden',  !isLogin);
-  $('form-signup').classList.toggle('hidden',  isLogin);
+  btnLogin.classList.toggle('active', isLogin);
+  btnSignup.classList.toggle('active', !isLogin);
+
+  // form-login visible by default
+  formLogin.classList.toggle('hidden', !isLogin);
+  formSignup.classList.toggle('hidden', isLogin);
 }
 
 /** Muestra / oculta la contraseña del input dentro del mismo .input-wrapper */
-function togglePassword(btn) {
-  const input    = btn.closest('.input-wrapper').querySelector('input');
-  const icon     = btn.querySelector('i');
-  const isHidden = input.type === 'password';
+function togglePassword(iconEl) {
+  const input = iconEl?.previousElementSibling;
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    iconEl.classList.remove('fa-eye-slash');
+    iconEl.classList.add('fa-eye');
+  } else {
+    input.type = 'password';
+    iconEl.classList.remove('fa-eye');
+    iconEl.classList.add('fa-eye-slash');
+  }
+}
 
-  input.type = isHidden ? 'text' : 'password';
-  icon.classList.toggle('fa-eye',       !isHidden);
-  icon.classList.toggle('fa-eye-slash',  isHidden);
+// ── Validaciones Visuales (Miguel) ───────────────────────────────
+function toggleVal(input, regex, feedId) {
+  const feed = document.getElementById(feedId);
+  if (!input || !feed) return;
+  if (regex.test(input.value)) {
+    input.classList.add('is-valid-custom');
+    input.classList.remove('is-invalid-custom');
+    feed.classList.remove('show');
+  } else {
+    input.classList.add('is-invalid-custom');
+    input.classList.remove('is-valid-custom');
+    feed.classList.add('show');
+  }
+}
+function valNombre(id) {
+  toggleVal(
+    document.getElementById(id),
+    /^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(\s[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*$/,
+    `${id}-feed`,
+  );
+}
+function valApellido(id) {
+  toggleVal(
+    document.getElementById(id),
+    /^[A-ZÁÉÍÓÚÑ][a-zA-ZáéíóúñÁÉÍÓÚÑ]*(\s[A-ZÁÉÍÓÚÑ][a-zA-ZáéíóúñÁÉÍÓÚÑ]*)*$/,
+    `${id}-feed`,
+  );
+}
+function valEmail() {
+  toggleVal(
+    document.getElementById('reg-correo'),
+    /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}$/,
+    'email-feed',
+  );
+}
+function valPwd() {
+  toggleVal(
+    document.getElementById('reg-pwd'),
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.-])[A-Za-z\d@$!%*?&.-]{8,}$/,
+    'pwd-feed',
+  );
+}
+function valTel() {
+  const input = document.getElementById('reg-tel');
+  const container = document.getElementById('phone-container');
+  const feed = document.getElementById('tel-feed');
+  if (!input || !container || !feed) return;
+
+  if (input.value === '') {
+    container.style.borderColor = '#000';
+    feed.classList.remove('show');
+    return;
+  }
+  if (/^[67][0-9]{7}$/.test(input.value)) {
+    container.style.borderColor = '#198754';
+    feed.classList.remove('show');
+  } else {
+    container.style.borderColor = '#dc3545';
+    feed.classList.add('show');
+  }
 }
 
 
@@ -99,9 +188,18 @@ function initSmoothScroll() {
 document.addEventListener('DOMContentLoaded', () => {
   initToasts();
   initSmoothScroll();
+  ensureCsrfTokens();
 
   // Cerrar modal con Escape
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeAuthModal();
   });
+
+  // Auto-abrir modal con ?action=login|signup (como Miguel)
+  const params = new URLSearchParams(window.location.search);
+  const action = params.get('action');
+  if (action === 'login' || action === 'signup') {
+    openAuthModal(action);
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
 });
