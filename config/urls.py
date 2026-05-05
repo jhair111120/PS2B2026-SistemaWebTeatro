@@ -13,6 +13,7 @@ from apps.users.views import (
     perfil_view,
     admin_panel,
 )
+from apps.events.views import admin_evento_create
 from apps.support.views import support_dashboard, ticket_messages_api, send_message_api, close_ticket_api
 
 urlpatterns = [
@@ -28,6 +29,7 @@ urlpatterns = [
     path('login/', login_view, name='login'),
     path('logout/', logout_view, name='logout'),
     path('admin-panel/', admin_panel, name='admin_panel'),
+    path('admin-panel/eventos/nuevo/', admin_evento_create, name='admin_evento_nuevo'),
 
     # ================= RUTAS DE MÓDULOS (SEGÚN TU ESTRUCTURA DE CARPETAS) =================
     

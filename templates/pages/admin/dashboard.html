@@ -9,6 +9,7 @@
 
 {% block admin_content %}
 <div class="admin-dashboard">
+{{ chart_payload|json_script:"admin-dash-charts-data" }}
 
 <!-- ========== DASHBOARD ========== -->
 <section id="panel-dashboard" class="admin-panel admin-section">
@@ -21,8 +22,8 @@
     <div class="admin-card">
       <div class="admin-kpi-card__row">
         <div>
-          <p class="admin-kpi-card__label">Total de ventas</p>
-          <p class="admin-kpi-card__value">Bs. 400.000</p>
+          <p class="admin-kpi-card__label">Total de ventas (emitidas)</p>
+          <p class="admin-kpi-card__value">Bs.&nbsp;{{ kpi_total_ventas|floatformat:0 }}</p>
         </div>
         <span class="admin-kpi-card__icon admin-kpi-card__icon--sky"><i class="fas fa-dollar-sign"></i></span>
       </div>
@@ -31,7 +32,7 @@
       <div class="admin-kpi-card__row">
         <div>
           <p class="admin-kpi-card__label">Reservas activas</p>
-          <p class="admin-kpi-card__value">650</p>
+          <p class="admin-kpi-card__value">{{ kpi_reservas_activas }}</p>
         </div>
         <span class="admin-kpi-card__icon admin-kpi-card__icon--emerald"><i class="fas fa-users"></i></span>
       </div>
@@ -39,8 +40,8 @@
     <div class="admin-card">
       <div class="admin-kpi-card__row">
         <div>
-          <p class="admin-kpi-card__label">Ocupación promedio</p>
-          <p class="admin-kpi-card__value">62 %</p>
+          <p class="admin-kpi-card__label">Ocupación próximos eventos</p>
+          <p class="admin-kpi-card__value">{{ kpi_ocupacion_pct }}&nbsp;%</p>
         </div>
         <span class="admin-kpi-card__icon admin-kpi-card__icon--violet"><i class="fas fa-arrow-trend-up"></i></span>
       </div>
@@ -48,8 +49,8 @@
     <div class="admin-card">
       <div class="admin-kpi-card__row">
         <div>
-          <p class="admin-kpi-card__label">Eventos activos</p>
-          <p class="admin-kpi-card__value">{{ eventos|length }}</p>
+          <p class="admin-kpi-card__label">Eventos activos próximos</p>
+          <p class="admin-kpi-card__value">{{ kpi_eventos_activos }}</p>
         </div>
         <span class="admin-kpi-card__icon admin-kpi-card__icon--amber"><i class="fas fa-calendar-check"></i></span>
       </div>
@@ -77,23 +78,30 @@
     <h3 class="admin-page-title" style="font-size: 1.125rem;">Próximos eventos</h3>
     <p class="admin-page-desc">Eventos activos ordenados por fecha</p>
     <div class="admin-event-grid" style="margin-top: 1rem;">
-      {% for evento in proximos_eventos %}
-        {% cycle '73' '49' '33' '95' as pct silent %}
-        {% cycle '1250' '890' '640' '1980' as vend silent %}
-        {% cycle '2000' '1500' '1200' '2100' as cap silent %}
+      {% for fila in proximos_filas %}
         <div class="admin-card">
-          <p class="cell-strong" style="margin:0;">{{ evento.nombre }}</p>
+          <p class="cell-strong" style="margin:0;">{{ fila.evento.nombre }}</p>
           <div class="admin-event-card__meta">
-            <span><i class="fas fa-calendar"></i>{{ evento.fecha_evento|date:"j M Y" }}</span>
-            <span><i class="fas fa-clock"></i>{{ evento.hora_evento|time:"H:i" }}</span>
+            <span><i class="fas fa-calendar"></i>{{ fila.evento.fecha_evento|date:"j M Y" }}</span>
+            <span><i class="fas fa-clock"></i>{{ fila.evento.hora_evento|time:"H:i" }}</span>
           </div>
           <div class="admin-event-card__footer">
-            <span class="admin-event-card__stats">Vendidos {{ vend }} / {{ cap }}</span>
-            <span class="admin-event-card__pct">{{ pct }}% ocupación</span>
+            <span class="admin-event-card__stats">
+              {% if fila.capacidad %}
+                Ocupados (no DISPONIBLE) {{ fila.vendidos }} / {{ fila.capacidad }}
+              {% else %}
+                Sin asientos en catálogo / capacidad configurada para este evento
+              {% endif %}
+            </span>
+            {% if fila.capacidad %}
+              <span class="admin-event-card__pct">{{ fila.pct }}% ocupación</span>
+            {% endif %}
           </div>
+          {% if fila.capacidad %}
           <div class="admin-progress">
-            <div class="admin-progress__bar" style="width: {{ pct }}%"></div>
+            <div class="admin-progress__bar" style="width: {{ fila.pct }}%"></div>
           </div>
+          {% endif %}
         </div>
       {% empty %}
         <p class="admin-empty">No hay eventos próximos registrados.</p>
@@ -117,7 +125,7 @@
       <h1 class="admin-page-title">Gestión de Eventos</h1>
       <p class="admin-page-desc">Crea, edita y administra eventos del teatro.</p>
     </div>
-    <button type="button" class="admin-btn-primary"><i class="fas fa-plus"></i> Nuevo Evento</button>
+    <button type="button" id="btn-open-modal-evento" class="admin-btn-primary"><i class="fas fa-plus"></i> Nuevo evento</button>
   </div>
 
   <div class="admin-table-shell">
@@ -130,6 +138,7 @@
           <tr>
             <th>Evento</th>
             <th>Fecha y Hora</th>
+            <th>Lugar</th>
             <th>Precios (Bs.)</th>
             <th>Ocupación</th>
             <th>Estado</th>
@@ -137,37 +146,44 @@
           </tr>
         </thead>
         <tbody>
-          {% for evento in eventos %}
-            {% cycle '73' '49' '33' '95' '62' as occ_pct silent %}
+          {% for fila in eventos_filas %}
             {% cycle '#f97316' '#0ea5e9' '#ef4444' '#22c55e' '#8b5cf6' as bar_hex silent %}
+            {% with ev=fila.evento %}
             <tr>
-              <td class="cell-strong">{{ evento.nombre }}</td>
+              <td class="cell-strong">{{ ev.nombre }}</td>
               <td class="cell-muted">
                 <div class="admin-stack" style="gap:0.25rem;">
-                  <span><i class="fas fa-calendar-day" style="color:#38bdf8;margin-right:0.35rem;"></i>{{ evento.fecha_evento|date:"d/m/Y" }}</span>
-                  <span><i class="fas fa-clock" style="color:#38bdf8;margin-right:0.35rem;"></i>{{ evento.hora_evento|time:"H:i" }}</span>
+                  <span><i class="fas fa-calendar-day" style="color:#38bdf8;margin-right:0.35rem;"></i>{{ ev.fecha_evento|date:"d/m/Y" }}</span>
+                  <span><i class="fas fa-clock" style="color:#38bdf8;margin-right:0.35rem;"></i>{{ ev.hora_evento|time:"H:i" }}</span>
                 </div>
               </td>
+              <td class="cell-muted cell-xs">{{ ev.lugar }}</td>
               <td class="cell-muted cell-xs">
-                {% for ez in evento.eventozona_set.all %}
+                {% for ez in ev.eventozona_set.all %}
                   <div>{{ ez.zona.nombre }}: {{ ez.precio_base }}</div>
                 {% empty %}
                   <span class="cell-muted">—</span>
                 {% endfor %}
               </td>
               <td>
+                {% if fila.capacidad %}
                 <div class="admin-mini-progress">
                   <div class="admin-mini-progress__track">
-                    <div class="admin-mini-progress__fill" style="width: {{ occ_pct }}%; background-color: {{ bar_hex }};"></div>
+                    <div class="admin-mini-progress__fill" style="width: {{ fila.pct }}%; background-color: {{ bar_hex }};"></div>
                   </div>
-                  <p class="cell-xs cell-muted" style="margin:0.35rem 0 0;">1450 / 2000 · {{ occ_pct }}%</p>
+                  <p class="cell-xs cell-muted" style="margin:0.35rem 0 0;">
+                    {{ fila.ocup }} / {{ fila.capacidad }} · {{ fila.pct }}%
+                  </p>
                 </div>
+                {% else %}
+                  <span class="cell-muted cell-xs">Sin asientos zona</span>
+                {% endif %}
               </td>
               <td>
-                {% if 'final' in evento.estado_evento.nombre|lower %}
-                  <span class="admin-badge admin-badge--neutral">finalizado</span>
+                {% if 'final' in ev.estado_evento.nombre|lower %}
+                  <span class="admin-badge admin-badge--neutral">{{ ev.estado_evento.nombre }}</span>
                 {% else %}
-                  <span class="admin-badge admin-badge--ok">activo</span>
+                  <span class="admin-badge admin-badge--ok">{{ ev.estado_evento.nombre }}</span>
                 {% endif %}
               </td>
               <td class="cell-right">
@@ -175,9 +191,10 @@
                 <button type="button" class="admin-icon-action admin-icon-action--del" title="Eliminar"><i class="fas fa-trash"></i></button>
               </td>
             </tr>
+            {% endwith %}
           {% empty %}
             <tr>
-              <td colspan="6" style="text-align:center;padding:2rem;color:#94a3b8;">No hay eventos registrados.</td>
+              <td colspan="7" style="text-align:center;padding:2rem;color:#94a3b8;">No hay eventos registrados.</td>
             </tr>
           {% endfor %}
         </tbody>
@@ -190,12 +207,50 @@
 <section id="panel-zonas" class="admin-panel admin-section hidden">
   <div class="admin-page-head">
     <h1 class="admin-page-title">Zonas y Asientos</h1>
-    <p class="admin-page-desc">Mapa de sala, zonas y configuración de asientos por evento.</p>
+    <p class="admin-page-desc">Catálogo de zonas físicas del teatro y número de filas/asientos registradas en cada zona.</p>
   </div>
-  <div class="admin-placeholder-box">
-    <i class="fas fa-vector-square"></i>
-    <p>Editor de plano y asientos (próximamente)</p>
+  <div class="admin-table-shell">
+    <div class="admin-table-shell__head">
+      <h2>Zonas y conteo de asientos</h2>
+    </div>
+    <div class="admin-table-scroll">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Nombre</th>
+            <th>Tipo zona</th>
+            <th>Asignación</th>
+            <th>Capacidad base</th>
+            <th>Color</th>
+            <th>Asientos</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for z in zonas_lista %}
+            <tr>
+              <td class="cell-muted">{{ z.orden_visual }}</td>
+              <td class="cell-strong">{{ z.nombre }}</td>
+              <td class="cell-muted cell-xs">{{ z.tipo_zona }}</td>
+              <td class="cell-muted cell-xs">{{ z.tipo_asignacion }}</td>
+              <td class="cell-muted">{{ z.capacidad_base|default:"—" }}</td>
+              <td class="cell-xs">
+                {% if z.codigo_color %}
+                  <span class="admin-badge admin-badge--neutral" style="font-family:monospace;">{{ z.codigo_color }}</span>
+                {% else %}—{% endif %}
+              </td>
+              <td class="cell-strong">{{ z.num_asientos }}</td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="7" style="text-align:center;padding:2rem;color:#94a3b8;">No hay zonas en la base de datos.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
+  <p class="admin-page-desc" style="margin-top: 1rem;">Los precios por función aparecen en la pestaña Eventos (por zona y función).</p>
 </section>
 
 <!-- ========== RESERVAS ========== -->
@@ -497,6 +552,67 @@
   </div>
 </section>
 
+<!-- Modal crear evento -->
+<div id="admin-modal-evento" class="admin-modal hidden" aria-hidden="true" role="dialog" aria-labelledby="admin-modal-evento-title" aria-modal="true">
+  <div class="admin-modal__backdrop" data-close-modal-evento tabindex="-1"></div>
+  <div class="admin-modal__dialog">
+    <div class="admin-modal__head">
+      <h2 id="admin-modal-evento-title">Crear nuevo evento</h2>
+      <button type="button" class="admin-modal__close" data-close-modal-evento aria-label="Cerrar"><i class="fas fa-times"></i></button>
+    </div>
+    <form method="post" action="{% url 'admin_evento_nuevo' %}">
+      {% csrf_token %}
+      <div class="admin-modal__body">
+        <div class="admin-modal__field">
+          <label for="modal-nombre-ev">Nombre del evento</label>
+          <input type="text" id="modal-nombre-ev" name="nombre" required minlength="3" maxlength="150" placeholder="Ej: Concierto folklórico nacional" autocomplete="off" />
+        </div>
+        <div class="admin-modal__grid admin-modal__grid--2" style="margin-top:1rem;">
+          <div class="admin-modal__field">
+            <label for="modal-fecha-ev">Fecha</label>
+            <input type="date" id="modal-fecha-ev" name="fecha_evento" required />
+          </div>
+          <div class="admin-modal__field">
+            <label for="modal-hora-ev">Hora</label>
+            <input type="time" id="modal-hora-ev" name="hora_evento" required />
+          </div>
+        </div>
+        <div class="admin-modal__grid admin-modal__grid--2" style="margin-top:1rem;">
+          <div class="admin-modal__field">
+            <label for="modal-pvip">Precio VIP (Bs.)</label>
+            <input type="number" step="0.01" min="0" id="modal-pvip" name="precio_vip" placeholder="150" />
+          </div>
+          <div class="admin-modal__field">
+            <label for="modal-pgrad">Precio gradería (Bs.)</label>
+            <input type="number" step="0.01" min="0" id="modal-pgrad" name="precio_graderia" placeholder="80" />
+          </div>
+        </div>
+        <div class="admin-modal__grid admin-modal__grid--2" style="margin-top:1rem;">
+          <div class="admin-modal__field">
+            <label for="modal-pgen">Precio general (Bs.)</label>
+            <input type="number" step="0.01" min="0" id="modal-pgen" name="precio_general" placeholder="50" />
+          </div>
+          <div class="admin-modal__field">
+            <label for="modal-cap">Capacidad total</label>
+            <input type="number" min="0" step="1" id="modal-cap" name="capacidad_total" placeholder="2000" />
+          </div>
+        </div>
+        <div class="admin-modal__row-toggle" style="margin-top:1.15rem;">
+          <label class="admin-switch">
+            <input type="checkbox" id="modal-activo-ev" name="evento_activo" checked />
+            <span class="admin-switch__track" aria-hidden="true"></span>
+          </label>
+          <span class="admin-switch__label" id="lbl-toggle-activo">Evento activo</span>
+        </div>
+      </div>
+      <div class="admin-modal__footer">
+        <button type="button" class="admin-btn-outline" data-close-modal-evento>Cancelar</button>
+        <button type="submit" class="admin-btn-primary">Crear evento</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 </div>
 {% endblock %}
 
@@ -529,6 +645,36 @@
       showTab(btn.getAttribute('data-admin-tab'));
     });
 
+    try {
+      var tab = new URLSearchParams(window.location.search).get('tab');
+      if (tab && document.getElementById('panel-' + tab)) showTab(tab);
+    } catch (e) { /* noop */ }
+
+    (function () {
+      var root = document.getElementById('admin-modal-evento');
+      if (!root) return;
+
+      function openModal() {
+        root.classList.remove('hidden');
+        root.setAttribute('aria-hidden', 'false');
+      }
+
+      function closeModal() {
+        root.classList.add('hidden');
+        root.setAttribute('aria-hidden', 'true');
+      }
+
+      document.getElementById('btn-open-modal-evento')?.addEventListener('click', openModal);
+
+      root.querySelectorAll('[data-close-modal-evento]').forEach(function (el) {
+        el.addEventListener('click', closeModal);
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && root && !root.classList.contains('hidden')) closeModal();
+      });
+    })();
+
     var dashboardChartsDone = false;
     var reportesChartsDone = false;
 
@@ -539,20 +685,50 @@
       return Chart;
     }
 
+    function readDashChartsPayload() {
+      var node = document.getElementById('admin-dash-charts-data');
+      if (!node || !node.textContent) return null;
+      try {
+        return JSON.parse(node.textContent);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function piePalette(len) {
+      var pal = ['#1e3a5f', '#ea580c', '#7c3aed', '#16a34a', '#0ea5e9', '#f97316', '#eab308', '#ec4899', '#14b8a6', '#64748b', '#84cc16', '#6366f1'];
+      var out = [];
+      for (var i = 0; i < len; i++) out.push(pal[i % pal.length]);
+      return out;
+    }
+
     function initDashboardCharts() {
       var C = chartDefaults();
       if (!C || dashboardChartsDone) return;
       dashboardChartsDone = true;
+
+      var P = readDashChartsPayload();
+      var barLabels = P && Array.isArray(P.ventas_semana_labels) ? P.ventas_semana_labels : [];
+      var barVals = P && Array.isArray(P.ventas_semana_vals) ? P.ventas_semana_vals : [];
+      var barYmax = P && typeof P.ventas_semana_ymax === 'number' ? P.ventas_semana_ymax : 1000;
+
+      var pieLabs = P && Array.isArray(P.zonas_labels) ? P.zonas_labels : [];
+      var pieDat = P && Array.isArray(P.zonas_data) ? P.zonas_data : [];
+
+      var lineLabs = P && Array.isArray(P.mensual_labels) ? P.mensual_labels : [];
+      var lineVals = P && Array.isArray(P.mensual_vals) ? P.mensual_vals : [];
+      var lineMax = Math.max.apply(null, lineVals.concat([1]));
+      var lineYmax = Math.max(1000, Math.ceil(lineMax * 1.1));
 
       var ctxBar = document.getElementById('chart-ventas-semana');
       if (ctxBar) {
         new Chart(ctxBar.getContext('2d'), {
           type: 'bar',
           data: {
-            labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+            labels: barLabels,
             datasets: [{
               label: 'Bs.',
-              data: [8200, 5400, 9100, 11200, 9800, 13500, 10200],
+              data: barVals,
               backgroundColor: 'rgba(14, 165, 233, 0.85)',
               borderRadius: 6,
             }],
@@ -562,7 +738,7 @@
             maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
-              y: { beginAtZero: true, max: 14000, grid: { color: 'rgba(148,163,184,0.1)' } },
+              y: { beginAtZero: true, suggestedMax: barYmax, grid: { color: 'rgba(148,163,184,0.1)' } },
               x: { grid: { display: false } },
             },
           },
@@ -574,17 +750,27 @@
         new Chart(ctxPie.getContext('2d'), {
           type: 'doughnut',
           data: {
-            labels: ['VIP', 'General', 'Gradería B', 'Gradería A'],
+            labels: pieLabs,
             datasets: [{
-              data: [85, 55, 68, 72],
-              backgroundColor: ['#1e3a5f', '#ea580c', '#7c3aed', '#16a34a'],
+              data: pieDat,
+              backgroundColor: piePalette(pieDat.length || 1),
               borderWidth: 0,
             }],
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } },
+            plugins: {
+              legend: { position: 'bottom', labels: { boxWidth: 12 } },
+              tooltip: {
+                callbacks: {
+                  label: function (ctx) {
+                    var v = ctx.parsed;
+                    return (ctx.label || '') + ': ' + v + '%';
+                  },
+                },
+              },
+            },
           },
         });
       }
@@ -594,10 +780,10 @@
         new Chart(ctxLine.getContext('2d'), {
           type: 'line',
           data: {
-            labels: ['Ene', 'Feb', 'Mar'],
+            labels: lineLabs,
             datasets: [{
               label: 'Ingresos',
-              data: [320000, 280000, 400000],
+              data: lineVals,
               borderColor: '#22c55e',
               backgroundColor: 'rgba(34, 197, 94, 0.1)',
               fill: true,
@@ -609,7 +795,7 @@
             maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
-              y: { beginAtZero: true, grid: { color: 'rgba(148,163,184,0.1)' } },
+              y: { beginAtZero: true, suggestedMax: lineYmax, grid: { color: 'rgba(148,163,184,0.1)' } },
               x: { grid: { display: false } },
             },
           },

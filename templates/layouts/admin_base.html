@@ -91,19 +91,51 @@
           </div>
 
           <div class="admin-topbar__actions">
-            <button type="button" class="admin-icon-btn" aria-label="Notificaciones">
+            <button type="button" class="admin-icon-btn admin-icon-btn--ghost" aria-label="Notificaciones" title="Sin notificaciones configuradas">
               <i class="fas fa-bell"></i>
-              <span class="admin-notify-dot" aria-hidden="true"></span>
             </button>
-            <div class="admin-user-pill">
-              <span class="admin-user-avatar">A</span>
-              <span class="admin-user-name">Admin</span>
-              <i class="fas fa-chevron-down" aria-hidden="true"></i>
+            {% with uname=request.session.usuario_nombre|default:'Admin' %}
+            <div class="admin-user-menu" id="admin-user-menu-wrap">
+              <button
+                type="button"
+                class="admin-user-pill admin-user-menu__trigger"
+                id="admin-user-menu-trigger"
+                aria-expanded="false"
+                aria-haspopup="true"
+                aria-controls="admin-user-dropdown"
+              >
+                <span class="admin-user-avatar">{{ uname|slice:':1'|upper }}</span>
+                <span class="admin-user-name">{{ uname }}</span>
+                <i class="fas fa-chevron-down" aria-hidden="true"></i>
+              </button>
+              <div class="admin-user-dropdown hidden" id="admin-user-dropdown" role="menu" aria-hidden="true">
+                <div class="admin-user-dropdown__head">
+                  <span class="admin-user-dropdown__role">{{ request.session.usuario_rol|default:'Usuario'|title }}</span>
+                  {% if request.session.usuario_correo %}
+                    <span class="admin-user-dropdown__email">{{ request.session.usuario_correo }}</span>
+                  {% endif %}
+                </div>
+                <hr class="admin-user-dropdown__sep" />
+                <a role="menuitem" class="admin-user-dropdown__item" href="{% url 'perfil' %}">Mi perfil</a>
+                <a role="menuitem" class="admin-user-dropdown__item" href="{% url 'admin_panel' %}?tab=configuracion">Configuración</a>
+                <hr class="admin-user-dropdown__sep" />
+                <a role="menuitem" class="admin-user-dropdown__item admin-user-dropdown__item--danger" href="{% url 'logout' %}">Cerrar sesión</a>
+              </div>
             </div>
+            {% endwith %}
           </div>
         </header>
 
-        <main class="admin-content">{% block admin_content %}{% endblock %}</main>
+        <main class="admin-content">
+          {% if messages %}
+            <div class="admin-flash-stack" role="status">
+              {% for message in messages %}
+                <div class="admin-flash {% if 'error' in message.tags %}admin-flash--error{% elif 'success' in message.tags %}admin-flash--success{% elif 'warning' in message.tags %}admin-flash--warn{% else %}admin-flash--info{% endif %}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+          {% block admin_content %}{% endblock %}
+        </main>
       </div>
     </div>
 
@@ -147,6 +179,44 @@
         document.getElementById('admin-mobile-menu')?.addEventListener('click', openDrawer);
         document.getElementById('admin-drawer-close')?.addEventListener('click', closeDrawer);
         overlay?.addEventListener('click', closeDrawer);
+
+        (function () {
+          var wrap = document.getElementById('admin-user-menu-wrap');
+          var trigger = document.getElementById('admin-user-menu-trigger');
+          var menu = document.getElementById('admin-user-dropdown');
+          if (!wrap || !trigger || !menu) return;
+
+          function closeMenu() {
+            menu.classList.add('hidden');
+            menu.setAttribute('aria-hidden', 'true');
+            trigger.setAttribute('aria-expanded', 'false');
+          }
+
+          function openMenu() {
+            menu.classList.remove('hidden');
+            menu.setAttribute('aria-hidden', 'false');
+            trigger.setAttribute('aria-expanded', 'true');
+          }
+
+          trigger.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var open = !menu.classList.contains('hidden');
+            if (open) closeMenu();
+            else openMenu();
+          });
+
+          document.addEventListener('click', function () {
+            closeMenu();
+          });
+
+          wrap.addEventListener('click', function (e) {
+            e.stopPropagation();
+          });
+
+          menu.querySelectorAll('a[role=\"menuitem\"]').forEach(function (link) {
+            link.addEventListener('click', closeMenu);
+          });
+        })();
       })();
     </script>
     {% block extra_js %}{% endblock %}
