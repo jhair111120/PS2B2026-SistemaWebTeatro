@@ -1,0 +1,87 @@
+{% extends "layouts/base.html" %} {% load static %} {% block title %}Compra Exitosa |
+Teatro Al Aire Libre{% endblock %} {% block content %}
+
+<link
+  rel="stylesheet"
+  href="{% static 'css/pages/users/comprar_entradas.css' %}"
+/>
+
+<div class="min-h-screen py-8 px-4" data-purchase-step="success">
+  <div class="max-w-3xl mx-auto">
+    <div class="success-header">
+      <div class="success-icon"><i class="fas fa-check"></i></div>
+      <h1 class="text-4xl font-extrabold mb-2">Compra Exitosa</h1>
+      <p class="text-gray-400">Tu entrada ha sido confirmada y enviada a tu correo</p>
+    </div>
+
+    <div class="voucher-card">
+      <div class="text-center mb-6">
+        <p class="text-xs text-gray-500 uppercase tracking-widest mb-1">Número de Confirmación</p>
+        <p class="text-2xl font-bold text-[#00AEEF]">P1774503804287</p>
+      </div>
+
+      <div class="qr-code-placeholder">
+        <img
+          src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=Ticket-P1774503804287"
+          class="w-full h-full"
+          alt="QR Code"
+        >
+      </div>
+
+      <div class="grid grid-cols-2 gap-8 text-center mb-8">
+        <div>
+          <p class="text-xs text-gray-500 uppercase">Total Pagado</p>
+          <p class="text-lg font-bold text-green-500" id="success-total">Bs. 0</p>
+        </div>
+        <div>
+          <p class="text-xs text-gray-500 uppercase">Método de Pago</p>
+          <p class="text-lg font-bold">Tarjeta de Crédito</p>
+        </div>
+      </div>
+
+      <div class="summary-card mb-6">
+        <h4 class="font-bold mb-4">Resumen de tu Compra</h4>
+        <div class="event-summary-box mb-4">
+          <img src="{% static 'img/rata-blanca.jpg' %}" class="summary-event-image" alt="Rata Blanca">
+          <h4 class="font-bold text-lg mt-3">Concierto de Rata Blanca</h4>
+          <p class="text-xs text-gray-500">21/04/2026 - 19:30</p>
+        </div>
+        <div id="success-cart-items">
+          <p class="text-center text-gray-500 py-4">No hay datos de compra</p>
+        </div>
+      </div>
+
+      <div class="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mb-6">
+        <div class="flex gap-3">
+          <i class="fas fa-envelope text-blue-500 mt-1"></i>
+          <div>
+            <p class="font-bold text-sm">Confirmación Enviada</p>
+            <p class="text-xs text-gray-400">Hemos enviado tu ticket digital y los detalles de la compra a tu correo electrónico.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-black/20 rounded-xl p-6 mb-8">
+        <h4 class="font-bold text-sm mb-4">Información Importante</h4>
+        <ul class="text-xs text-gray-400 flex flex-col gap-3">
+          <li class="flex items-start gap-2"><i class="fas fa-star text-yellow-500 mt-0.5"></i> Llega al menos 30 minutos antes del inicio del evento.</li>
+          <li class="flex items-start gap-2"><i class="fas fa-star text-yellow-500 mt-0.5"></i> Presenta tu código QR impreso o en tu teléfono en la entrada del teatro.</li>
+          <li class="flex items-start gap-2"><i class="fas fa-star text-yellow-500 mt-0.5"></i> Conserva tu comprobante hasta finalizar el evento.</li>
+        </ul>
+      </div>
+
+      <div class="flex gap-4">
+        <button type="button" class="flex-1 bg-[#00AEEF] py-3 rounded-lg font-bold flex items-center justify-center gap-2">
+          <i class="fas fa-download"></i> Descargar Ticket
+        </button>
+        <a href="{% url 'mis_tickets' %}" class="flex-1 bg-white/5 py-3 rounded-lg font-bold text-center">
+          Ver mis Entradas
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{% static 'js/pages/users/compra_flujo.js' %}"></script>
+
+{% endblock %}

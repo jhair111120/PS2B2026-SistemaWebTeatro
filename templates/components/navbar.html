@@ -2,35 +2,33 @@
 <link rel="stylesheet" href="{% static 'css/components/navbar.css' %}" />
 
 <!-- NAVBAR -->
-<nav class="text-white sticky top-0 z-50">
-  <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+<nav class="text-white sticky top-0 z-50 bg-[#0A0E14] border-b border-white/5">
+  <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
     <!-- Logo -->
-    <a href="/" class="flex flex-col leading-tight group">
-      <span
-        class="font-semibold text-lg tracking-wide group-hover:text-blue-400 transition"
-      >
+    <a href="{% url 'inicio' %}" class="flex flex-col leading-tight group" style="text-decoration: none;">
+      <span class="nav-logo-main group-hover:text-blue-400 transition" style="font-family: 'IM Fell Great Primer SC', serif !important;">
         TEATRO AL AIRE LIBRE
       </span>
-      <span class="text-xs text-gray-400"> "JAIME LAREDO" </span>
+      <span class="nav-logo-sub" style="font-family: 'IM Fell Great Primer SC', serif !important;"> "JAIME LAREDO" </span>
     </a>
 
     <!-- Menu Desktop -->
-    <div class="hidden md:flex items-center space-x-2">
+    <div class="flex items-center space-x-2">
       <a
-        href="/"
-        class="px-4 py-2 rounded-lg bg-white/10 text-white text-sm font-medium"
+        href="{% url 'inicio' %}"
+        class="nav-link {% if request.resolver_match.url_name == 'inicio' %}active{% endif %}"
       >
         Inicio
       </a>
       <a
-        href="#"
-        class="px-4 py-2 rounded-lg text-sm text-gray-300 hover:text-white hover:bg-white/5 transition"
+        href="{% url 'eventos' %}"
+        class="nav-link {% if request.resolver_match.url_name == 'eventos' %}active{% endif %}"
       >
         Eventos
       </a>
       <a
-        href="#"
-        class="px-4 py-2 rounded-lg text-sm text-gray-300 hover:text-white hover:bg-white/5 transition"
+        href="{% url 'mis_tickets' %}"
+        class="nav-link {% if request.resolver_match.url_name == 'mis_tickets' %}active{% endif %}"
       >
         Mis entradas
       </a>
@@ -42,7 +40,7 @@
       <div class="relative cursor-pointer group icon-hover">
         <i class="fas fa-shopping-cart text-lg text-gray-300"></i>
         <span
-          class="absolute -top-2 -right-2 bg-blue-500 text-[10px] font-semibold rounded-full px-1.5 py-0.5"
+          class="absolute -top-2 -right-2 bg-red-500 text-[10px] font-semibold rounded-full px-1.5 py-0.5"
         >
           2
         </span>
@@ -53,15 +51,15 @@
       <div class="relative">
         <button
           onclick="toggleDropdown()"
-          class="flex items-center space-x-2 hover:bg-white/5 px-3 py-2 rounded-lg transition"
+          class="flex items-center space-x-2 bg-[#1A1C1E] border border-gray-700 hover:bg-white/5 px-4 py-2 rounded-full transition"
         >
           <div
-            class="w-9 h-9 flex items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-purple-500 shadow-md"
+            class="w-6 h-6 flex items-center justify-center rounded-full bg-[#10B981] shadow-md"
           >
-            <i class="far fa-user text-sm"></i>
+            <i class="far fa-user text-[10px] text-white"></i>
           </div>
 
-          <span class="text-sm text-gray-300">Mi Cuenta</span>
+          <span class="text-sm text-gray-300">Mi Perfil</span>
         </button>
 
         <!-- Dropdown -->

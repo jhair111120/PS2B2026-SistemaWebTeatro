@@ -13,7 +13,31 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
+    <link href="https://fonts.googleapis.com/css2?family=IM+Fell+Great+Primer+SC&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/layouts/base.css' %}" />
+    <style>
+      :root {
+        --bg-navbar: #0A0E14;
+        --color-blue-action: #00AEEF;
+        --font-logo: 'IM Fell Great Primer SC', serif;
+      }
+      .nav-logo-main { font-family: var(--font-logo) !important; font-size: 1.5rem; letter-spacing: 0.05em; color: white; }
+      .nav-logo-sub { font-family: var(--font-logo) !important; font-size: 1.1rem; color: #E5E7EB; }
+      .nav-link { padding: 0.5rem 1.5rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 500; color: white; transition: all 0.3s ease; text-decoration: none; }
+      .nav-link:hover { color: var(--color-blue-action); }
+      .nav-link.active { background-color: var(--color-blue-action); color: white !important; }
+      .nav-btn-primary { background-color: var(--color-blue-action) !important; color: white !important; border-radius: 0.5rem !important; font-weight: 600 !important; padding: 0.5rem 1.25rem !important; border: none !important; font-size: 0.875rem !important; cursor: pointer !important; transition: all 0.3s ease !important; }
+      .nav-btn-primary:hover { background-color: #0099d1 !important; }
+      .nav-btn-outline { border: 1px solid rgba(255, 255, 255, 0.3) !important; background: transparent !important; color: white !important; border-radius: 0.5rem !important; font-weight: 600 !important; padding: 0.5rem 1.25rem !important; font-size: 0.875rem !important; cursor: pointer !important; transition: all 0.3s ease !important; }
+      .nav-btn-outline:hover { background-color: rgba(255, 255, 255, 0.1) !important; }
+
+      /* FOOTER CUSTOM STYLES */
+      .footer-logo-main { font-family: var(--font-logo) !important; font-size: 2.2rem !important; color: white !important; line-height: 1.1 !important; }
+      .footer-logo-sub { font-family: var(--font-logo) !important; font-size: 1.4rem !important; color: white !important; }
+      .footer-header { color: white !important; font-weight: 700 !important; font-size: 1.25rem !important; margin-bottom: 1.5rem !important; }
+      .footer-social-btn { width: 3.5rem !important; height: 3rem !important; border-radius: 2rem !important; border: 1px solid rgba(255,255,255,0.4) !important; font-size: 1.5rem !important; display: flex !important; align-items: center !important; justify-content: center !important; transition: all 0.3s !important; }
+      .footer-social-btn:hover { border-color: white !important; transform: scale(1.05) !important; }
+    </style>
   </head>
 
   <body class="flex flex-col min-h-screen">
@@ -21,12 +45,86 @@
     <!-- ═══════════════════════════════════════════
          NAVBAR
     ════════════════════════════════════════════ -->
-    <header>{% include "components/navbar.html" %}</header>
+    <header>
+      <nav class="text-white sticky top-0 z-50 bg-[#0A0E14] border-b border-white/5" style="height: 90px !important; min-height: 90px !important;">
+        <div class="max-w-7xl mx-auto px-6 h-full flex items-center justify-between" style="height: 90px !important;">
+          <!-- Logo -->
+          <a href="{% url 'inicio' %}" class="flex flex-col leading-tight group" style="text-decoration: none;">
+            <span class="nav-logo-main group-hover:text-blue-400 transition">
+              TEATRO AL AIRE LIBRE
+            </span>
+            <span class="nav-logo-sub"> "JAIME LAREDO" </span>
+          </a>
+
+          <!-- Menu Desktop -->
+          <div class="flex items-center space-x-2">
+            <a href="{% url 'inicio' %}" class="nav-link {% if request.resolver_match.url_name == 'inicio' %}active{% endif %}">Inicio</a>
+            <a href="{% url 'eventos' %}" class="nav-link {% if request.resolver_match.url_name == 'eventos' %}active{% endif %}">Eventos</a>
+            <a href="{% url 'mis_tickets' %}" class="nav-link {% if request.resolver_match.url_name == 'mis_tickets' %}active{% endif %}">Mis entradas</a>
+          </div>
+
+          <!-- Right Section -->
+          <div class="flex items-center" style="gap: 40px !important;">
+            <div class="relative cursor-pointer group" style="display: inline-block;">
+              <i class="fas fa-shopping-cart" style="font-size: 28px; color: #E5E7EB;"></i>
+              <span class="absolute" style="top: -8px; right: -8px; background-color: #BE123C; color: white; font-size: 12px; font-weight: 700; border-radius: 6px; padding: 1px 6px; min-width: 18px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3); line-height: 1.2;">
+                2
+              </span>
+            </div>
+            {% if request.session.usuario_id %}
+              <div class="relative">
+                <button onclick="toggleDropdown()" class="flex items-center transition" style="background-color: #0A0E14 !important; border: 1px solid #4B5563 !important; border-radius: 12px !important; padding: 4px 12px 4px 4px !important; gap: 12px !important; cursor: pointer !important;">
+                  <div style="width: 36px !important; height: 36px !important; display: flex !important; align-items: center !important; justify-content: center !important; border-radius: 50% !important; background-color: #00FFD1 !important; color: white !important;">
+                    <i class="fas fa-user" style="font-size: 16px !important; color: white !important;"></i>
+                  </div>
+                  <span style="color: white !important; font-weight: 700 !important; font-size: 14px !important; font-family: 'Inter', sans-serif !important;">Mi Perfil</span>
+                </button>
+
+                <!-- Dropdown de Usuario -->
+                <div id="dropdownMenu" class="hidden absolute right-0 mt-3 w-64 rounded-xl overflow-hidden shadow-2xl border border-white/10 bg-[#151920] z-[100]" style="background-color: #151920 !important;">
+                  <!-- Info Usuario -->
+                  <div class="px-4 py-3 border-b border-white/10" style="background-color: #1E293B !important;">
+                    <p class="text-sm font-semibold text-white">
+                      {{ request.session.usuario_nombre_completo }}
+                    </p>
+                    <p class="text-xs text-gray-400">
+                      {{ request.session.usuario_correo }}
+                    </p>
+                  </div>
+
+                  <!-- Opciones -->
+                  <div class="py-2 text-sm" style="background-color: #151920 !important;">
+                    <a href="{% url 'mis_tickets' %}" class="flex items-center px-4 py-2 text-gray-300 hover:bg-white/5 hover:text-white transition no-underline">
+                      <i class="fas fa-ticket-alt mr-3 text-xs text-[#00AEEF]"></i> Mis Entradas
+                    </a>
+
+                    <a href="{% url 'perfil' %}" class="flex items-center px-4 py-2 text-gray-300 hover:bg-white/5 hover:text-white transition no-underline">
+                      <i class="far fa-user mr-3 text-xs text-[#00AEEF]"></i> Ver Perfil
+                    </a>
+
+                    <div class="border-t border-white/5 my-2"></div>
+
+                    <a href="{% url 'logout' %}" class="flex items-center px-4 py-2 text-red-400 hover:bg-red-500/10 transition no-underline">
+                      <i class="fas fa-sign-out-alt mr-3 text-xs"></i> Cerrar Sesión
+                    </a>
+                  </div>
+                </div>
+              </div>
+            {% else %}
+              <div class="flex items-center" style="gap: 15px !important;">
+                <button onclick="openAuthModal('login')" class="nav-btn-outline">Iniciar Sesión</button>
+                <button onclick="openAuthModal('signup')" class="nav-btn-primary">Registrarse</button>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </nav>
+    </header>
 
     <!-- ═══════════════════════════════════════════
          TOASTS
     ════════════════════════════════════════════ -->
-    <div class="fixed top-20 right-5 z-50 flex flex-col gap-3">
+    <div class="fixed top-36 right-5 z-50 flex flex-col gap-3">
       {% if messages %}
         {% for message in messages %}
           <div class="toast flex items-center gap-3 px-4 py-3 rounded-lg
@@ -183,67 +281,76 @@
     <!-- ═══════════════════════════════════════════
          CONTENIDO DE LA PÁGINA
     ════════════════════════════════════════════ -->
-    <main class="flex-grow w-full max-w-7xl mx-auto px-4 py-6">
+    <main class="flex-grow w-full">
       {% block content %}{% endblock %}
     </main>
 
     <!-- ═══════════════════════════════════════════
          FOOTER
     ════════════════════════════════════════════ -->
-    <footer class="footer mt-10">
-      <div class="max-w-7xl mx-auto px-6 py-12 grid gap-8 md:grid-cols-4">
+    <footer style="background-color: #1E293B; color: white; border-top: 1px solid rgba(255,255,255,0.1); padding: 50px 0 30px 0; font-family: 'Inter', sans-serif;">
+      <div style="max-width: 1280px; margin: 0 auto; padding: 0 40px;">
+        
+        <div style="display: flex; flex-wrap: wrap; gap: 30px; justify-content: space-between; align-items: flex-start;">
+          
+          <!-- Columna 1: Logo e Info -->
+          <div style="flex: 1.5; min-width: 300px; margin-bottom: 20px;">
+            <div style="display: flex; flex-direction: column; margin-bottom: 20px;">
+              <span class="footer-logo-main" style="display: block;">TEATRO AL AIRE LIBRE</span>
+              <span class="footer-logo-sub" style="display: block;">"JAIME LAREDO"</span>
+            </div>
+            <p style="font-size: 14px; color: #D1D5DB; line-height: 1.5; max-width: 320px; font-weight: 600;">
+              El mejor espacio cultural de Bolivia para disfrutar de espectáculos únicos bajo las estrellas.
+            </p>
+          </div>
 
-        <!-- Info -->
-        <div>
-          <h4 class="footer__heading text-lg mb-3">
-            Teatro al Aire Libre<br />"Jaime Laredo"
-          </h4>
-          <p class="footer__text text-sm leading-relaxed">
-            El mejor espacio cultural de Bolivia para disfrutar espectáculos
-            únicos bajo las estrellas.
-          </p>
+          <!-- Columna 2: Enlaces Rápidos -->
+          <div style="width: 180px; margin-bottom: 20px;">
+            <h5 class="footer-header" style="margin-top: 0;">Enlaces Rapidos</h5>
+            <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px;">
+              <li><a href="{% url 'eventos' %}" style="color: #D1D5DB; text-decoration: none; font-size: 14px; font-weight: 600;">Ver Eventos</a></li>
+              <li><a href="{% url 'mis_tickets' %}" style="color: #D1D5DB; text-decoration: none; font-size: 14px; font-weight: 600;">Mis entradas</a></li>
+              <li><a href="#" style="color: #D1D5DB; text-decoration: none; font-size: 14px; font-weight: 600;">Sobre Nosotros</a></li>
+              <li><a href="#" style="color: #D1D5DB; text-decoration: none; font-size: 14px; font-weight: 600;">Contacto</a></li>
+            </ul>
+          </div>
+
+          <!-- Columna 3: Contacto -->
+          <div style="width: 230px; margin-bottom: 20px;">
+            <h5 class="footer-header" style="margin-top: 0;">Contacto</h5>
+            <div style="display: flex; flex-direction: column; gap: 18px;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <i class="fas fa-phone-alt" style="color: #00AEEF; font-size: 18px;"></i>
+                <span style="color: #FFFFFF; font-size: 14px; font-weight: 600;">+591 2 1234567</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <i class="fas fa-envelope" style="color: #00AEEF; font-size: 18px;"></i>
+                <span style="color: #FFFFFF; font-size: 14px; font-weight: 600;">info@teatrolapaz.bo</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Columna 4: Síguenos -->
+          <div style="width: 200px; margin-bottom: 20px;">
+            <h5 class="footer-header" style="margin-top: 0;">Síguenos</h5>
+            <div style="display: flex; gap: 12px;">
+              <a href="#" class="footer-social-btn" style="text-decoration: none; color: white;"><i class="fab fa-facebook-f"></i></a>
+              <a href="#" class="footer-social-btn" style="text-decoration: none; color: white;"><i class="fab fa-instagram"></i></a>
+              <a href="#" class="footer-social-btn" style="text-decoration: none; color: white;"><i class="fab fa-tiktok"></i></a>
+            </div>
+          </div>
+
         </div>
 
-        <!-- Links -->
-        <div>
-          <h5 class="footer__subheading mb-3">Enlaces</h5>
-          <ul class="flex flex-col gap-2 text-sm">
-            <li><a href="#" class="footer__link">Ver Eventos</a></li>
-            <li><a href="#" class="footer__link">Mis entradas</a></li>
-            <li><a href="#" class="footer__link">Sobre Nosotros</a></li>
-            <li><a href="#" class="footer__link">Contacto</a></li>
-          </ul>
-        </div>
-
-        <!-- Contact -->
-        <div>
-          <h5 class="footer__subheading mb-3">Contacto</h5>
-          <div class="flex flex-col gap-2 text-sm">
-            <p><i class="fas fa-phone mr-2 footer__icon"></i>+591 2 1234567</p>
-            <p><i class="fas fa-envelope mr-2 footer__icon"></i>info@teatrolapaz.bo</p>
+        <!-- Barra Inferior -->
+        <div style="margin-top: 40px; padding-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; color: #D1D5DB; font-size: 13px; font-weight: 600;">
+          <span>© 2026 Teatro al Aire Libre La Paz. Todos los derechos reservados.</span>
+          <div style="display: flex; gap: 25px;">
+            <a href="#" style="color: #D1D5DB; text-decoration: none;">Términos y Condiciones</a>
+            <a href="#" style="color: #D1D5DB; text-decoration: none;">Política de Privacidad</a>
           </div>
         </div>
 
-        <!-- Social -->
-        <div>
-          <h5 class="footer__subheading mb-3">Síguenos</h5>
-          <div class="flex gap-4 text-xl">
-            <a href="#" class="social-link social-link--facebook"><i class="fab fa-facebook"></i></a>
-            <a href="#" class="social-link social-link--instagram"><i class="fab fa-instagram"></i></a>
-            <a href="#" class="social-link social-link--tiktok"><i class="fab fa-tiktok"></i></a>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Bottom bar -->
-      <div class="footer__bottom py-4 px-6 flex flex-col md:flex-row justify-between
-                  items-center text-sm max-w-7xl mx-auto">
-        <span>© 2026 Teatro al Aire Libre La Paz</span>
-        <div class="flex gap-4 mt-2 md:mt-0">
-          <a href="#" class="footer__link">Términos</a>
-          <a href="#" class="footer__link">Privacidad</a>
-        </div>
       </div>
     </footer>
 
@@ -251,5 +358,6 @@
          SCRIPTS
     ════════════════════════════════════════════ -->
     <script src="{% static 'js/layouts/base.js' %}"></script>
+    <script src="{% static 'js/components/navbar.js' %}"></script>
   </body>
 </html>

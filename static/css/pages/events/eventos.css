@@ -1,0 +1,237 @@
+/* ══════════════════════════════
+   PÁGINA DE EVENTOS
+══════════════════════════════ */
+
+.events-hero {
+    background: linear-gradient(rgba(10, 14, 20, 0.7), rgba(10, 14, 20, 0.9)), url('https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&q=80&w=2000') center/cover no-repeat;
+    min-height: 450px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+}
+
+/* ══════════════════════════════
+   BARRA DE BÚSQUEDA
+══════════════════════════════ */
+.search-container-wrapper {
+    max-width: 1200px;
+    margin: -40px auto 0;
+    position: relative;
+    z-index: 20;
+}
+
+.search-container {
+    background: rgba(21, 25, 32, 0.95);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 1rem;
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.search-input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-input-group i {
+    position: absolute;
+    left: 1rem;
+    color: #9CA3AF;
+    z-index: 10;
+}
+
+.search-input {
+    width: 100%;
+    background: #0A0E14; /* Fondo negro como pidió el usuario */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.6rem;
+    padding: 0.8rem 1rem 0.8rem 2.8rem;
+    color: white;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    border-color: #00AEEF;
+    box-shadow: 0 0 0 2px rgba(0, 174, 239, 0.2);
+}
+
+.filter-select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239CA3AF'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.25rem;
+    padding-right: 2.5rem;
+}
+
+/* Estilo para las opciones del select en Chrome/Firefox */
+.filter-select option {
+    background-color: #0A0E14;
+    color: white;
+    padding: 10px;
+}
+
+/* Input de fecha personalizado */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+}
+
+/* ══════════════════════════════
+   CARDS DE EVENTOS
+══════════════════════════════ */
+.event-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2rem;
+    padding: 3rem 0;
+}
+
+.event-card-modern {
+    background: #151920;
+    border-radius: 1.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.event-card-modern:hover {
+    transform: translateY(-5px);
+    border-color: #00AEEF;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+}
+
+.card-image-wrapper {
+    position: relative;
+    padding: 1rem;
+}
+
+.card-image-wrapper img {
+    width: 100%;
+    height: 200px;
+    object-cover: cover;
+    border-radius: 1rem;
+}
+
+.card-content {
+    padding: 0 1.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.info-item {
+    display: flex;
+    items-center: center;
+    gap: 0.75rem;
+    color: #9CA3AF;
+    font-size: 0.9rem;
+}
+
+.info-item i {
+    width: 1rem;
+    color: white;
+}
+
+/* ══════════════════════════════
+   PROGRESS BAR (OCUPACIÓN)
+══════════════════════════════ */
+.occupancy-wrapper {
+    margin-bottom: 1.5rem;
+}
+
+.occupancy-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+    color: #9CA3AF;
+}
+
+.progress-bar-bg {
+    background: rgba(255, 255, 255, 0.1);
+    height: 4px;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+}
+
+.fill-red { background: #EF4444; }
+.fill-green { background: #10B981; }
+.fill-orange { background: #F59E0B; }
+
+/* ══════════════════════════════
+   CARD FOOTER
+══════════════════════════════ */
+.card-footer-modern {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 1rem;
+    margin-top: auto;
+}
+
+.price-box {
+    display: flex;
+    flex-direction: column;
+}
+
+.price-label {
+    font-size: 0.75rem;
+    color: #9CA3AF;
+}
+
+.price-value {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #00FFD1;
+}
+
+.btn-buy-modern {
+    background: #00AEEF;
+    color: white;
+    padding: 0.6rem 1.2rem;
+    border-radius: 0.6rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-buy-modern:hover {
+    background: #0099d1;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 174, 239, 0.4);
+    color: white;
+}
