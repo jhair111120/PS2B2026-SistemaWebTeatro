@@ -1,0 +1,383 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Eventos | Teatro Al Aire Libre{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/pages/events/eventos.css' %}" />
+
+<div class="w-full min-h-screen bg-[#0A0E14] pb-12">
+    <!-- ══════════════════════════════
+         HERO SECCIÓN EVENTOS
+    ══════════════════════════════ -->
+<section class="events-hero">
+    <div class="max-w-7xl mx-auto px-6 w-full">
+        <h1 class="text-5xl font-bold text-white mb-4">Eventos</h1>
+        <p class="text-xl text-gray-300">Descubre las mejores entradas para conciertos.</p>
+    </div>
+</section>
+
+<!-- ══════════════════════════════
+     BARRA DE BÚSQUEDA Y FILTROS
+══════════════════════════════ -->
+<div class="max-w-7xl mx-auto px-6">
+    <div class="search-container-wrapper">
+        <div class="search-container">
+            <!-- Buscar -->
+            <div class="search-input-group flex-grow-[2]">
+                <i class="fas fa-search"></i>
+                <input type="text" id="event-search" class="search-input" placeholder="Buscar por nombre de evento...">
+            </div>
+            
+            <!-- Rango de Fechas -->
+            <div class="search-input-group flex-grow">
+                <i class="far fa-calendar-alt"></i>
+                <input type="date" id="date-from" class="search-input" placeholder="Desde">
+            </div>
+
+            <div class="search-input-group flex-grow">
+                <i class="far fa-calendar-alt"></i>
+                <input type="date" id="date-to" class="search-input" placeholder="Hasta">
+            </div>
+
+            <!-- Categoría -->
+            <div class="search-input-group flex-grow">
+                <i class="fas fa-th-large"></i>
+                <select id="category-filter" class="search-input filter-select">
+                    <option value="todos">Todos los tipos</option>
+                    <option value="concierto">Conciertos</option>
+                    <option value="teatro">Teatro</option>
+                    <option value="cultura">Cultura</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════
+     LISTADO DE EVENTOS
+══════════════════════════════ -->
+<section class="max-w-7xl mx-auto px-6 py-12">
+    <h2 class="text-2xl font-bold text-white mb-8">Eventos Disponibles</h2>
+
+    <div class="event-grid" id="event-grid">
+        <!-- Evento 1 (Desde Inicio) -->
+        <div class="event-card-modern" data-title="Concierto Rata Blanca" data-category="concierto" data-date="2026-03-27">
+            <div class="card-image-wrapper">
+                <img src="{% static 'img/rata-blanca.jpg' %}" onerror="this.src='https://via.placeholder.com/400x250/151920/fff?text=Rata+Blanca'" alt="Rata Blanca">
+            </div>
+            <div class="card-content">
+                <h3 class="card-title">Concierto Rata Blanca</h3>
+                <div class="card-info">
+                    <div class="info-item">
+                        <i class="far fa-calendar-alt"></i>
+                        <span>vie, 27 mar 2026</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="far fa-clock"></i>
+                        <span>19:00 hrs</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Teatro Al Aire Libre</span>
+                    </div>
+                </div>
+
+                <div class="occupancy-wrapper">
+                    <div class="occupancy-labels">
+                        <span>Ocupación</span>
+                        <span>40%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill fill-green" style="width: 40%;"></div>
+                    </div>
+                </div>
+
+                <div class="card-footer-modern">
+                    <div class="price-box">
+                        <span class="price-label">Desde:</span>
+                        <span class="price-value">Bs. 150</span>
+                    </div>
+                    <a href="{% url 'comprar_entradas' %}" class="btn-buy-modern">
+                        Comprar Entradas!
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Evento 2 -->
+        <div class="event-card-modern" data-title="Concierto Wisin Y Yandel" data-category="concierto" data-date="2026-03-28">
+            <div class="card-image-wrapper">
+                <img src="{% static 'img/wisin-yandel.jpg' %}" onerror="this.src='https://via.placeholder.com/400x250/151920/fff?text=Wisin+y+Yandel'" alt="Wisin Y Yandel">
+            </div>
+            <div class="card-content">
+                <h3 class="card-title">Concierto Wisin Y Yandel</h3>
+                <div class="card-info">
+                    <div class="info-item">
+                        <i class="far fa-calendar-alt"></i>
+                        <span>sab, 28 mar 2026</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="far fa-clock"></i>
+                        <span>20:00 hrs</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Teatro Al Aire Libre</span>
+                    </div>
+                </div>
+
+                <div class="occupancy-wrapper">
+                    <div class="occupancy-labels">
+                        <span>Ocupación</span>
+                        <span>85%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill fill-orange" style="width: 85%;"></div>
+                    </div>
+                </div>
+
+                <div class="card-footer-modern">
+                    <div class="price-box">
+                        <span class="price-label">Desde:</span>
+                        <span class="price-value">Bs. 230</span>
+                    </div>
+                    <a href="{% url 'comprar_entradas' %}" class="btn-buy-modern">
+                        Comprar Entradas!
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Evento 3 (Desde Inicio) -->
+        <div class="event-card-modern" data-title="Concierto Slipknot" data-category="concierto" data-date="2026-04-10">
+            <div class="card-image-wrapper">
+                <img src="{% static 'img/slipknot.jpg' %}" onerror="this.src='https://via.placeholder.com/400x250/151920/fff?text=Slipknot'" alt="Slipknot">
+            </div>
+            <div class="card-content">
+                <h3 class="card-title">Concierto Slipknot</h3>
+                <div class="card-info">
+                    <div class="info-item">
+                        <i class="far fa-calendar-alt"></i>
+                        <span>vie, 10 abr 2026</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="far fa-clock"></i>
+                        <span>19:00 hrs</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Teatro Al Aire Libre</span>
+                    </div>
+                </div>
+
+                <div class="occupancy-wrapper">
+                    <div class="occupancy-labels">
+                        <span>Ocupación</span>
+                        <span>98%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill fill-red" style="width: 98%;"></div>
+                    </div>
+                </div>
+
+                <div class="card-footer-modern">
+                    <div class="price-box">
+                        <span class="price-label">Desde:</span>
+                        <span class="price-value">Bs. 500</span>
+                    </div>
+                    <a href="{% url 'comprar_entradas' %}" class="btn-buy-modern">
+                        Comprar Entradas!
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Evento 4 -->
+        <div class="event-card-modern" data-title="Mon Laferte - Autopoiética Tour" data-category="concierto" data-date="2026-03-20">
+            <div class="card-image-wrapper">
+                <img src="https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&q=80&w=800" alt="Mon Laferte">
+            </div>
+            <div class="card-content">
+                <h3 class="card-title">Mon Laferte - Autopoiética Tour</h3>
+                <div class="card-info">
+                    <div class="info-item">
+                        <i class="far fa-calendar-alt"></i>
+                        <span>vie, 20 mar 2026</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="far fa-clock"></i>
+                        <span>20:00 hrs</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Teatro Al Aire Libre</span>
+                    </div>
+                </div>
+
+                <div class="occupancy-wrapper">
+                    <div class="occupancy-labels">
+                        <span>Ocupación</span>
+                        <span>40%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill fill-green" style="width: 40%;"></div>
+                    </div>
+                </div>
+
+                <div class="card-footer-modern">
+                    <div class="price-box">
+                        <span class="price-label">Desde:</span>
+                        <span class="price-value">Bs. 250</span>
+                    </div>
+                    <a href="{% url 'comprar_entradas' %}" class="btn-buy-modern">
+                        Comprar Entradas!
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Evento 5 -->
+        <div class="event-card-modern" data-title="Bizarrap - Live Session" data-category="concierto" data-date="2026-04-05">
+            <div class="card-image-wrapper">
+                <img src="https://images.unsplash.com/photo-1514525253361-bee8718a7439?auto=format&fit=crop&q=80&w=800" alt="Bizarrap">
+            </div>
+            <div class="card-content">
+                <h3 class="card-title">Bizarrap - Live Session</h3>
+                <div class="card-info">
+                    <div class="info-item">
+                        <i class="far fa-calendar-alt"></i>
+                        <span>dom, 05 abr 2026</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="far fa-clock"></i>
+                        <span>21:00 hrs</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Teatro Al Aire Libre</span>
+                    </div>
+                </div>
+
+                <div class="occupancy-wrapper">
+                    <div class="occupancy-labels">
+                        <span>Ocupación</span>
+                        <span>75%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill fill-orange" style="width: 75%;"></div>
+                    </div>
+                </div>
+
+                <div class="card-footer-modern">
+                    <div class="price-box">
+                        <span class="price-label">Desde:</span>
+                        <span class="price-value">Bs. 350</span>
+                    </div>
+                    <a href="{% url 'comprar_entradas' %}" class="btn-buy-modern">
+                        Comprar Entradas!
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Evento 6 -->
+        <div class="event-card-modern" data-title="Luck Ra - Gira Latinoamerica" data-category="concierto" data-date="2026-03-11">
+            <div class="card-image-wrapper">
+                <img src="https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&q=80&w=800" alt="Luck Ra">
+            </div>
+            <div class="card-content">
+                <h3 class="card-title">Luck Ra - Gira Latinoamerica</h3>
+                <div class="card-info">
+                    <div class="info-item">
+                        <i class="far fa-calendar-alt"></i>
+                        <span>lun, 11 mar 2026</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="far fa-clock"></i>
+                        <span>19:00 hrs</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Teatro Al Aire Libre</span>
+                    </div>
+                </div>
+
+                <div class="occupancy-wrapper">
+                    <div class="occupancy-labels">
+                        <span>Ocupación</span>
+                        <span>55%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill fill-orange" style="width: 55%;"></div>
+                    </div>
+                </div>
+
+                <div class="card-footer-modern">
+                    <div class="price-box">
+                        <span class="price-label">Desde:</span>
+                        <span class="price-value">Bs. 250</span>
+                    </div>
+                    <a href="{% url 'comprar_entradas' %}" class="btn-buy-modern">
+                        Comprar Entradas!
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Evento 7 -->
+        <div class="event-card-modern" data-title="Hamlet - Obra de Teatro" data-category="teatro" data-date="2026-04-15">
+            <div class="card-image-wrapper">
+                <img src="https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?auto=format&fit=crop&q=80&w=800" alt="Hamlet">
+            </div>
+            <div class="card-content">
+                <h3 class="card-title">Hamlet - Obra de Teatro</h3>
+                <div class="card-info">
+                    <div class="info-item">
+                        <i class="far fa-calendar-alt"></i>
+                        <span>mie, 15 abr 2026</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="far fa-clock"></i>
+                        <span>18:30 hrs</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Teatro Al Aire Libre</span>
+                    </div>
+                </div>
+
+                <div class="occupancy-wrapper">
+                    <div class="occupancy-labels">
+                        <span>Ocupación</span>
+                        <span>30%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill fill-green" style="width: 30%;"></div>
+                    </div>
+                </div>
+
+                <div class="card-footer-modern">
+                    <div class="price-box">
+                        <span class="price-label">Desde:</span>
+                        <span class="price-value">Bs. 120</span>
+                    </div>
+                    <a href="{% url 'comprar_entradas' %}" class="btn-buy-modern">
+                        Comprar Entradas!
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- No resultados -->
+    <div id="no-results" class="hidden text-center py-20">
+        <i class="fas fa-search text-5xl text-gray-600 mb-4"></i>
+        <h3 class="text-xl text-white">No se encontraron eventos con los filtros seleccionados</h3>
+    </div>
+</section>
+
+<script src="{% static 'js/pages/events/eventos.js' %}"></script>
+</div>
+
+{% endblock %}

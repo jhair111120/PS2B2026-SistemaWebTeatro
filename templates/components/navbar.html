@@ -1,0 +1,128 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/components/navbar.css' %}" />
+
+<!-- NAVBAR -->
+<nav class="text-white sticky top-0 z-50 bg-[#0A0E14] border-b border-white/5">
+  <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+    <!-- Logo -->
+    <a href="{% url 'inicio' %}" class="flex flex-col leading-tight group" style="text-decoration: none;">
+      <span class="nav-logo-main group-hover:text-blue-400 transition" style="font-family: 'IM Fell Great Primer SC', serif !important;">
+        TEATRO AL AIRE LIBRE
+      </span>
+      <span class="nav-logo-sub" style="font-family: 'IM Fell Great Primer SC', serif !important;"> "JAIME LAREDO" </span>
+    </a>
+
+    <!-- Menu Desktop -->
+    <div class="flex items-center space-x-2">
+      <a
+        href="{% url 'inicio' %}"
+        class="nav-link {% if request.resolver_match.url_name == 'inicio' %}active{% endif %}"
+      >
+        Inicio
+      </a>
+      <a
+        href="{% url 'eventos' %}"
+        class="nav-link {% if request.resolver_match.url_name == 'eventos' %}active{% endif %}"
+      >
+        Eventos
+      </a>
+      <a
+        href="{% url 'mis_tickets' %}"
+        class="nav-link {% if request.resolver_match.url_name == 'mis_tickets' %}active{% endif %}"
+      >
+        Mis entradas
+      </a>
+    </div>
+
+    <!-- Right Section -->
+    <div class="flex items-center space-x-5">
+      <!-- Cart -->
+      <div class="relative cursor-pointer group icon-hover">
+        <i class="fas fa-shopping-cart text-lg text-gray-300"></i>
+        <span
+          class="absolute -top-2 -right-2 bg-red-500 text-[10px] font-semibold rounded-full px-1.5 py-0.5"
+        >
+          2
+        </span>
+      </div>
+
+      {% if request.session.usuario_id %}
+      <!-- User Dropdown -->
+      <div class="relative">
+        <button
+          onclick="toggleDropdown()"
+          class="flex items-center space-x-2 bg-[#1A1C1E] border border-gray-700 hover:bg-white/5 px-4 py-2 rounded-full transition"
+        >
+          <div
+            class="w-6 h-6 flex items-center justify-center rounded-full bg-[#10B981] shadow-md"
+          >
+            <i class="far fa-user text-[10px] text-white"></i>
+          </div>
+
+          <span class="text-sm text-gray-300">Mi Perfil</span>
+        </button>
+
+        <!-- Dropdown -->
+        <div
+          id="dropdownMenu"
+          class="hidden absolute right-0 mt-3 w-64 rounded-xl overflow-hidden"
+        >
+          <!-- User Info -->
+          <div class="px-4 py-3 border-b border-white/10">
+            <p class="text-sm font-semibold text-white">
+              {{ request.session.usuario_nombre_completo }}
+            </p>
+            <p class="text-xs text-gray-400">
+              {{ request.session.usuario_correo }}
+            </p>
+          </div>
+
+          <!-- Options -->
+          <div class="py-2 text-sm">
+            <a
+              href="#"
+              class="flex items-center px-4 py-2 text-gray-300 hover:bg-white/5 hover:text-white transition"
+            >
+              <i class="fas fa-ticket-alt mr-3 text-xs"></i> Mis Entradas
+            </a>
+
+            <a
+              href="{% url 'perfil' %}"
+              class="flex items-center px-4 py-2 text-gray-300 hover:bg-white/5 hover:text-white transition"
+            >
+              <i class="far fa-user mr-3 text-xs"></i> Mi Perfil
+            </a>
+
+            <a
+              href="{% url 'logout' %}"
+              class="flex items-center px-4 py-2 text-red-400 hover:bg-red-500/10 transition"
+            >
+              <i class="fas fa-sign-out-alt mr-3 text-xs"></i> Cerrar Sesión
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {% else %}
+      <!-- Auth Buttons -->
+      <div class="flex items-center space-x-2">
+        <button
+          onclick="openAuthModal('login')"
+          class="btn-outline px-4 py-2 text-sm rounded-lg"
+        >
+          Iniciar Sesión
+        </button>
+
+        <button
+          onclick="openAuthModal('signup')"
+          class="btn-primary px-4 py-2 text-sm rounded-lg shadow"
+        >
+          Registrarse
+        </button>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+<script src="{% static 'js/components/navbar.js' %}"></script>

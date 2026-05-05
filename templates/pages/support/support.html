@@ -1,0 +1,209 @@
+{% load static tailwind_tags %}
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Panel de Soporte | Teatro Al Aire Libre</title>
+
+    {% tailwind_css %}
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <!-- CSS propio -->
+    <link
+      rel="stylesheet"
+      href="{% static 'css/pages/support/support.css' %}"
+    />
+  </head>
+
+  <body class="flex h-screen overflow-hidden">
+    <!-- ══ SIDEBAR ══ -->
+    <aside class="sidebar w-64 flex flex-col p-4">
+      <div class="sidebar-brand mb-6">TEATRO AL AIRE LIBRE</div>
+
+      <nav class="flex flex-col gap-1">
+        <a href="#" class="nav-link flex items-center gap-2 px-3 py-2">
+          <i class="fas fa-border-all"></i> Dashboard
+        </a>
+        <a
+          href="#"
+          class="nav-link nav-link--active flex items-center gap-2 px-3 py-2"
+        >
+          <i class="fas fa-comment-dots"></i> Soporte
+        </a>
+        <a href="#" class="nav-link flex items-center gap-2 px-3 py-2">
+          <i class="fas fa-cog"></i> Configuración
+        </a>
+      </nav>
+    </aside>
+
+    <!-- ══ MAIN ══ -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- TOPBAR -->
+      <header class="topbar flex items-center justify-between px-6 py-3">
+        <div class="topbar-title">Bandeja de Entrada Soporte</div>
+
+        <div class="flex items-center gap-5">
+          <i class="fas fa-search topbar-icon cursor-pointer"></i>
+
+          <div class="relative cursor-pointer">
+            <i class="far fa-bell topbar-icon"></i>
+            <span class="notif-dot absolute -top-1 -right-1"></span>
+          </div>
+
+          <div class="flex items-center gap-2 cursor-pointer">
+            <div class="user-avatar flex items-center justify-center">S</div>
+            <span class="topbar-username">Soporte Admin</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- CONTENT -->
+      <main class="flex flex-1 overflow-hidden">
+        <!-- ── INBOX ── -->
+        <div class="inbox-panel w-80 flex flex-col">
+          <div class="inbox-header p-4">
+            <h4 class="inbox-title">Inbox ({{ tickets.count }})</h4>
+          </div>
+
+          <!-- Search -->
+          <div class="inbox-search p-3">
+            <div class="search-box flex items-center px-3 py-2">
+              <i class="fas fa-search search-icon mr-2"></i>
+              <input
+                type="text"
+                placeholder="Buscar..."
+                class="search-input bg-transparent outline-none w-full"
+              />
+            </div>
+          </div>
+
+          <!-- Ticket list -->
+          <div class="flex-1 overflow-y-auto" id="ticketList">
+            {% if not tickets %}
+            <div class="empty-inbox text-center px-4 mt-10">
+              No hay tickets abiertos actualmente.
+            </div>
+
+            {% else %} {% for ticket in tickets %}
+            <a
+              href="#"
+              class="ticket-item flex gap-3 p-3"
+              id="card-{{ ticket.id }}"
+              data-ticket-id="{{ ticket.id }}"
+              onclick="loadTicket(this.getAttribute('data-ticket-id'), event)"
+            >
+              <!-- Avatar -->
+              <div
+                class="ticket-avatar flex items-center justify-center flex-shrink-0"
+              >
+                {{ ticket.usuario.nombre|slice:":1" }}
+              </div>
+
+              <!-- Info -->
+              <div class="flex-1 overflow-hidden">
+                <div class="flex justify-between items-baseline">
+                  <span class="ticket-user truncate">
+                    {{ ticket.usuario.nombre }} {{ ticket.usuario.apellido }}
+                  </span>
+                  <span class="ticket-time flex-shrink-0 ml-2">
+                    {{ ticket.fecha_creacion|date:"g:i a" }}
+                  </span>
+                </div>
+
+                <div class="ticket-subject truncate">
+                  {{ ticket.asunto|truncatechars:35 }}
+                </div>
+
+                <div class="flex justify-between">
+                  <span class="ticket-number"
+                    >#{{ ticket.numero_reclamo }}</span
+                  >
+                  <span class="ticket-status"
+                    >{{ ticket.estado_soporte.nombre }}</span
+                  >
+                </div>
+              </div>
+            </a>
+            {% endfor %} {% endif %}
+          </div>
+        </div>
+
+        <!-- ── CHAT ── -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+          <!-- Empty state -->
+          <div
+            id="noTicketSelected"
+            class="flex flex-col items-center justify-center flex-1"
+          >
+            <i class="fas fa-comments empty-chat-icon mb-3"></i>
+            <h5 class="empty-chat-title">Selecciona una conversación</h5>
+            <p class="empty-chat-body">
+              Haz clic en un ticket para ver la conversación.
+            </p>
+          </div>
+
+          <!-- Chat header -->
+          <div
+            id="chatHeader"
+            class="hidden chat-header flex items-center justify-between px-6 py-3"
+          >
+            <div class="flex items-center gap-3">
+              <div class="chat-avatar flex items-center justify-center">L</div>
+
+              <div>
+                <div class="flex items-center gap-2">
+                  <span id="headerUserName" class="chat-user-name">---</span>
+                  <span id="headerTicketStatus" class="status-badge"
+                    >Abierto</span
+                  >
+                </div>
+                <div class="chat-user-meta">
+                  #<span id="headerTicketId">---</span> •
+                  <span id="headerUserEmail">---</span>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onclick="closeTicket(event)"
+              class="btn-close-ticket flex items-center gap-2 px-3 py-1"
+            >
+              <i class="fas fa-times"></i> Cerrar
+            </button>
+          </div>
+
+          <!-- Messages -->
+          <div
+            id="chatMessages"
+            class="flex-1 overflow-y-auto p-4 flex flex-col gap-3 hidden"
+          ></div>
+
+          <!-- Input -->
+          <div id="chatInputArea" class="hidden chat-input-area flex gap-2 p-3">
+            <input
+              type="text"
+              id="replyInput"
+              placeholder="Escribe tu respuesta..."
+              class="reply-input flex-1 px-3 py-2 outline-none"
+            />
+            <button
+              onclick="sendMessage()"
+              class="btn-send flex items-center justify-center px-4"
+            >
+              <i class="far fa-paper-plane"></i>
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- JS -->
+    <script src="{% static 'js/pages/support/support.js' %}"></script>
+  </body>
+</html>

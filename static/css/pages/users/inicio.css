@@ -1,0 +1,242 @@
+/* ══════════════════════════════
+   VARIABLES (PALETA)
+══════════════════════════════ */
+:root {
+  --color-primary: #00AEEF;   /* Azul logo */
+  --color-accent: #00FFD1;    /* Aquamarine/Cyan */
+  --bg-main: #0A0E14;
+  --bg-card: #151920;
+  --bg-soft: #1E293B;
+  --text-main: #E5E7EB;
+  --text-muted: #9CA3AF;
+}
+
+/* ══════════════════════════════
+   BASE
+══════════════════════════════ */
+body {
+  background: var(--bg-main);
+  color: var(--text-main);
+  font-family: 'Inter', sans-serif;
+}
+
+/* ══════════════════════════════
+   HERO
+══════════════════════════════ */
+.hero-section {
+  background: linear-gradient(rgba(10, 14, 20, 0.75), rgba(10, 14, 20, 0.85)), url('/static/img/hero-bg.jpg') center/cover no-repeat;
+  min-height: 95vh;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.hero-overlay {
+  display: none; /* Quitamos el overlay absoluto para usar el gradient en el background */
+}
+
+.hero-title {
+  font-size: 5rem;
+  font-weight: 800;
+  color: white;
+  line-height: 1.1;
+}
+
+.hero-title--accent {
+  color: var(--color-accent);
+}
+
+.hero-subtitle {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 600;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ══════════════════════════════
+   BOTONES
+══════════════════════════════ */
+.btn-primary {
+  background: var(--color-primary);
+  color: white;
+  padding: 0.6rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-buy {
+  background: #00AEEF;
+  color: white;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 700;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255,255,255,0.2);
+  width: 100%;
+}
+
+.btn-buy:hover {
+  background: #0099d1;
+  box-shadow: 0 5px 15px rgba(0, 174, 239, 0.4);
+}
+
+.btn-view-more {
+  background: #1A1C1E;
+  color: white;
+  padding: 0.75rem 2rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  border: 1px solid #374151;
+  transition: all 0.3s ease;
+}
+
+.btn-view-more:hover {
+  background: #2D2F31;
+  border-color: #4B5563;
+}
+
+.btn-outline {
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: white;
+  padding: 0.6rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.btn-outline:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: white;
+}
+
+/* ══════════════════════════════
+   SECCIONES
+══════════════════════════════ */
+.section-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: white;
+}
+
+.section-subtitle {
+  color: var(--text-muted);
+}
+
+/* ══════════════════════════════
+   CARDS DE EVENTOS
+══════════════════════════════ */
+.event-card {
+  background: var(--bg-card);
+  border-radius: 1rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+}
+
+.event-card:hover {
+  transform: translateY(-6px);
+  border-color: var(--color-primary);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.card-img {
+  transition: transform 0.4s ease;
+}
+
+.event-card:hover .card-img {
+  transform: scale(1.05);
+}
+
+/* ══════════════════════════════
+   BADGE FECHA
+══════════════════════════════ */
+.event-date-badge {
+  background: rgba(10, 14, 20, 0.9);
+  color: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.25rem;
+  font-size: 0.7rem;
+  text-align: center;
+  backdrop-filter: blur(5px);
+  font-weight: bold;
+}
+
+.badge-day {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  line-height: 1;
+}
+
+/* ══════════════════════════════
+   TEXTO EVENTO
+══════════════════════════════ */
+.event-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: white;
+}
+
+.event-meta {
+  color: var(--text-main);
+  font-size: 0.95rem;
+}
+
+.event-label {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.event-price {
+  color: white;
+  font-weight: 800;
+  font-size: 1.2rem;
+}
+
+/* ══════════════════════════════
+   MAPA
+══════════════════════════════ */
+.map-container {
+  border-radius: 1rem;
+  overflow: hidden;
+  border: 1px solid var(--bg-soft);
+  transition: all 0.3s ease;
+}
+
+.map-container:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 10px 30px rgba(14, 165, 233, 0.2);
+}
+
+/* ══════════════════════════════
+   ANIMACIONES
+══════════════════════════════ */
+.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInUp 0.8s ease forwards;
+}
+
+.fade-in:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.fade-in:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

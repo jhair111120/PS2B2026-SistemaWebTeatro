@@ -1,0 +1,199 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Mis Entradas | Teatro Al Aire Libre{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/pages/tickets/tickets.css' %}" />
+
+<div class="w-full min-h-screen bg-[#0A0E14] pb-12">
+    <div class="max-w-7xl mx-auto px-6 tickets-container">
+    <!-- Header -->
+    <div class="tickets-header">
+        <h1 class="tickets-title">Mis Entradas</h1>
+        <p class="tickets-subtitle">Administra tus tickets y accede a ellos cuando los necesites</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tickets-tabs">
+        <div class="tab-btn active" data-tab="upcoming">Proximos Eventos (3)</div>
+        <div class="tab-btn" data-tab="past">Eventos Pasados (1)</div>
+    </div>
+
+    <!-- Upcoming Events Grid -->
+    <div id="upcoming-events" class="ticket-grid">
+        <!-- Ticket 1 -->
+        <div class="ticket-card">
+            <img src="https://images.unsplash.com/photo-1493225255756-d9584f8606e9?auto=format&fit=crop&q=80&w=800" class="ticket-img" alt="Evento">
+            <div class="ticket-body">
+                <h3 class="ticket-event-name">Concierto Folklórico Nacional</h3>
+                <div class="ticket-info-list">
+                    <div class="ticket-info-item">
+                        <i class="far fa-calendar-alt"></i>
+                        <span>domingo, 15 de marzo</span>
+                    </div>
+                    <div class="ticket-info-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Teatro La Paz</span>
+                    </div>
+                    <div class="ticket-info-item">
+                        <i class="fas fa-couch"></i>
+                        <span>VIP - A-10, A-11</span>
+                    </div>
+                </div>
+                <div class="ticket-actions">
+                    <button class="btn-qr">
+                        <i class="fas fa-qrcode"></i> Ver QR
+                    </button>
+                    <button class="btn-download-small">
+                        <i class="fas fa-download"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ticket 2 -->
+        <div class="ticket-card">
+            <img src="https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&q=80&w=800" class="ticket-img" alt="Evento">
+            <div class="ticket-body">
+                <h3 class="ticket-event-name">El Rugido del Kraken</h3>
+                <div class="ticket-info-list">
+                    <div class="ticket-info-item">
+                        <i class="far fa-calendar-alt"></i>
+                        <span>viernes, 10 de mayo</span>
+                    </div>
+                    <div class="ticket-info-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Teatro La Paz</span>
+                    </div>
+                    <div class="ticket-info-item">
+                        <i class="fas fa-couch"></i>
+                        <span>Graderia A - B-15</span>
+                    </div>
+                </div>
+                <div class="ticket-actions">
+                    <button class="btn-qr">
+                        <i class="fas fa-qrcode"></i> Ver QR
+                    </button>
+                    <button class="btn-download-small">
+                        <i class="fas fa-download"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ticket 3 -->
+        <div class="ticket-card">
+            <img src="https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&q=80&w=800" class="ticket-img" alt="Evento">
+            <div class="ticket-body">
+                <h3 class="ticket-event-name">Los Iracundos</h3>
+                <div class="ticket-info-list">
+                    <div class="ticket-info-item">
+                        <i class="far fa-calendar-alt"></i>
+                        <span>sabado, 25 de mayo</span>
+                    </div>
+                    <div class="ticket-info-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Teatro La Paz</span>
+                    </div>
+                    <div class="ticket-info-item">
+                        <i class="fas fa-couch"></i>
+                        <span>VIP - A-9, A-10</span>
+                    </div>
+                </div>
+                <div class="ticket-actions">
+                    <button class="btn-qr">
+                        <i class="fas fa-qrcode"></i> Ver QR
+                    </button>
+                    <button class="btn-download-small">
+                        <i class="fas fa-download"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Past Events Grid (Hidden by default) -->
+    <div id="past-events" class="ticket-grid hidden">
+        <div class="ticket-card opacity-75">
+            <img src="https://images.unsplash.com/photo-1506157786151-b8491531f063?auto=format&fit=crop&q=80&w=800" class="ticket-img" alt="Evento">
+            <div class="ticket-body">
+                <h3 class="ticket-event-name">Precas de Colores</h3>
+                <div class="ticket-info-list">
+                    <div class="ticket-info-item">
+                        <i class="far fa-calendar-alt"></i>
+                        <span>sabado, 17 de enero 2026</span>
+                    </div>
+                    <div class="ticket-info-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Teatro La Paz</span>
+                    </div>
+                    <div class="ticket-info-item">
+                        <i class="fas fa-couch"></i>
+                        <span>VIP - A-10, A-11</span>
+                    </div>
+                </div>
+                <div class="ticket-actions">
+                    <button class="btn-qr" disabled style="background: #4B5563; cursor: not-allowed;">
+                        <i class="fas fa-check"></i> Evento Finalizado
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- QR Modal -->
+<div id="qr-modal" class="qr-modal">
+    <div class="qr-modal-content">
+        <i id="close-modal" class="fas fa-times btn-close-modal"></i>
+        
+        <div class="qr-code-box">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=QR-V001-ABC123" alt="QR Code">
+            <span class="ticket-id">QR-V001-ABC123</span>
+        </div>
+
+        <div class="qr-details">
+            <div class="detail-group col-span-2">
+                <span class="detail-label">Evento</span>
+                <span class="detail-value">Concierto Folklórico Nacional</span>
+            </div>
+            
+            <div class="detail-group">
+                <span class="detail-label">Fecha</span>
+                <span class="detail-value">15/3/2027</span>
+            </div>
+            
+            <div class="detail-group">
+                <span class="detail-label">Estado</span>
+                <span class="status-badge">completado</span>
+            </div>
+            
+            <div class="detail-group">
+                <span class="detail-label">Asientos</span>
+                <span class="detail-value">A-10, A-11</span>
+            </div>
+            
+            <div class="detail-group">
+                <span class="detail-label">Comprador</span>
+                <span class="detail-value">Ana Lopez</span>
+            </div>
+            
+            <div class="detail-group">
+                <span class="detail-label">Comprador</span>
+                <span class="detail-value text-[#00FFD1]">Bs. 340</span>
+            </div>
+        </div>
+
+        <div class="qr-actions">
+            <button class="btn-download-full">
+                Descargar <i class="fas fa-download"></i>
+            </button>
+        </div>
+    </div>
+</div>
+</div>
+
+<script src="{% static 'js/pages/tickets/tickets.js' %}"></script>
+{% endblock %}
+

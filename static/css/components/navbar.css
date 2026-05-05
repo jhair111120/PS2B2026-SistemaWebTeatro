@@ -1,0 +1,101 @@
+/* ================= VARIABLES ================= */
+:root {
+  --bg-navbar: #0A0E14;
+  --color-blue-action: #00AEEF;
+  --font-logo: 'IM Fell Great Primer SC', serif;
+}
+
+/* ================= NAVBAR ================= */
+nav {
+  background-color: var(--bg-navbar);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.nav-logo-main {
+  font-family: var(--font-logo);
+  font-size: 1.5rem;
+  letter-spacing: 0.05em;
+  color: white;
+}
+
+.nav-logo-sub {
+  font-family: var(--font-logo);
+  font-size: 1.1rem;
+  color: #E5E7EB;
+}
+
+/* ================= MENU LINKS ================= */
+.nav-link {
+  padding: 0.5rem 1.5rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+  color: var(--color-blue-action);
+}
+
+.nav-link.active {
+  background-color: var(--color-blue-action);
+  color: white !important;
+}
+
+/* ================= BOTONES ================= */
+.btn-primary {
+  background-color: var(--color-blue-action);
+  color: white;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background-color: #0099d1;
+}
+
+.btn-outline {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-outline:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ================= ICONOS / INTERACCIONES ================= */
+.icon-hover {
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.icon-hover:hover {
+  transform: scale(1.1);
+  color: white;
+}
+
+/* ================= DROPDOWN ================= */
+#dropdownMenu {
+  background-color: var(--bg-navbar);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  border-radius: 0.75rem;
+  animation: fadeIn 0.2s ease;
+}
+
+/* Animación suave */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
