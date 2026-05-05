@@ -1,7 +1,6 @@
 import re
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.contrib.auth.hashers import check_password
 from django.views.decorators.cache import never_cache
 from django.db import transaction
 from django.core.exceptions import ValidationError
@@ -21,9 +20,16 @@ def signup_view(request):
         password = request.POST.get('password', '')
         telefono = request.POST.get('telefono', '').strip() or None
 
-        # Validaciones básicas (las críticas ya están en el modelo)
-        if len(nombre) < 2 or len(apellido) < 2:
-            messages.error(request, "Nombre y apellido deben tener al menos 2 caracteres.")
+        if not re.match(r'^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(\s[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*$', nombre):
+            messages.error(request, "El nombre debe empezar con mayúscula y no tener mayúsculas dobles.")
+            return redirect('/?action=signup')
+
+        if not re.match(r'^[A-ZÁÉÍÓÚÑ][a-zA-ZáéíóúñÁÉÍÓÚÑ]*(\s[A-ZÁÉÍÓÚÑ][a-zA-ZáéíóúñÁÉÍÓÚÑ]*)*$', apellido):
+            messages.error(request, "El apellido debe tener la primera letra de cada palabra en mayúscula.")
+            return redirect('/?action=signup')
+
+        if telefono and not re.match(r'^[67]\d{7}$', telefono):
+            messages.error(request, "El celular en Bolivia debe empezar con 6 o 7 y tener 8 dígitos.")
             return redirect('/?action=signup')
 
         if Usuario.objects.filter(correo=correo).exists():
@@ -48,7 +54,7 @@ def signup_view(request):
                     rol=rol_cliente,
                     activo=True
                 )
-                usuario.set_password(password)  # 🔥 usa hashing seguro
+                usuario.set_password(password)
                 usuario.full_clean()
                 usuario.save()
 
@@ -81,8 +87,9 @@ def login_view(request):
                 messages.error(request, "Tu cuenta está desactivada.")
                 return redirect('/?action=login')
 
-            if usuario.check_password(password):  # 🔥 usar método del modelo
-                request.session.flush()  # limpia sesiones previas
+            # 🔥 Aquí Django automáticamente verifica "password" contra la columna "contrasena_hash"
+            if usuario.check_password(password):
+                request.session.flush()
 
                 request.session['usuario_id'] = usuario.id
                 request.session['usuario_nombre'] = usuario.nombre
@@ -90,7 +97,7 @@ def login_view(request):
                 request.session['usuario_correo'] = usuario.correo
                 request.session['usuario_rol'] = usuario.rol.nombre
 
-                request.session.set_expiry(60 * 60 * 4)  # 4 horas
+                request.session.set_expiry(60 * 60 * 4)
 
                 messages.success(request, f"Bienvenido {usuario.nombre}")
                 return redirect('/')
@@ -139,11 +146,32 @@ def perfil_view(request):
         # 🧾 ACTUALIZAR PERFIL
         # -------------------------
         if action == 'update_profile':
-            usuario.nombre = request.POST.get('nombre', '').strip()
-            usuario.apellido = request.POST.get('apellido', '').strip()
+            nombre = request.POST.get('nombre', '').strip()
+            apellido = request.POST.get('apellido', '').strip()
             nuevo_correo = request.POST.get('correo', '').strip().lower()
-            usuario.telefono = request.POST.get('telefono', '').strip() or None
-            usuario.dni = request.POST.get('dni', '').strip() or None
+            telefono = request.POST.get('telefono', '').strip() or None
+            dni = request.POST.get('dni', '').strip() or None
+
+            if not re.match(r'^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(\s[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*$', nombre):
+                messages.error(request, "El nombre debe empezar con mayúscula y no tener mayúsculas dobles.")
+                return redirect('perfil')
+
+            if not re.match(r'^[A-ZÁÉÍÓÚÑ][a-zA-ZáéíóúñÁÉÍÓÚÑ]*(\s[A-ZÁÉÍÓÚÑ][a-zA-ZáéíóúñÁÉÍÓÚÑ]*)*$', apellido):
+                messages.error(request, "El apellido debe tener la primera letra de cada palabra en mayúscula.")
+                return redirect('perfil')
+
+            if telefono and not re.match(r'^[67]\d{7}$', telefono):
+                messages.error(request, "El celular en Bolivia debe empezar con 6 o 7 y tener 8 dígitos.")
+                return redirect('perfil')
+
+            if dni and not re.match(r'^\d{7,8}(-[A-Z0-9]{1,3})?$', dni):
+                messages.error(request, "Formato de DNI inválido. Ej: 1234567 o 12345678-1B")
+                return redirect('perfil')
+
+            usuario.nombre = nombre
+            usuario.apellido = apellido
+            usuario.telefono = telefono
+            usuario.dni = dni
 
             if nuevo_correo != usuario.correo and Usuario.objects.filter(correo=nuevo_correo).exists():
                 messages.error(request, "Ese correo ya está en uso.")
@@ -167,6 +195,20 @@ def perfil_view(request):
             return redirect('perfil')
 
         # -------------------------
+        # 🔔 ACTUALIZAR NOTIFICACIONES
+        # -------------------------
+        elif action == 'update_notifications':
+            usuario.notif_eventos = request.POST.get('notif_eventos') == 'on'
+            usuario.notif_promociones = request.POST.get('notif_promociones') == 'on'
+            usuario.notif_recordatorios = request.POST.get('notif_recordatorios') == 'on'
+            usuario.notif_push = request.POST.get('notif_push') == 'on'
+            
+            usuario.save()
+            messages.success(request, "Preferencias de notificaciones actualizadas.")
+            
+            return redirect('perfil')
+
+        # -------------------------
         # 🔐 CAMBIAR PASSWORD
         # -------------------------
         elif action == 'update_password':
@@ -180,8 +222,8 @@ def perfil_view(request):
             elif new_password != confirm_password:
                 messages.error(request, "Las contraseñas no coinciden.")
 
-            elif len(new_password) < 8:
-                messages.error(request, "La contraseña debe tener al menos 8 caracteres.")
+            elif not re.match(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.-])[A-Za-z\d@$!%*?&.-]{8,}$', new_password):
+                messages.error(request, "La nueva contraseña no cumple con el formato seguro requerido.")
 
             else:
                 usuario.set_password(new_password)

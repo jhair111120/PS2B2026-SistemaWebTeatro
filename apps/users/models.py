@@ -3,7 +3,6 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
 
-
 class UsuarioManager(BaseUserManager):
     def create_user(self, correo, password=None, **extra):
         if not correo:
@@ -27,7 +26,6 @@ class UsuarioManager(BaseUserManager):
         if extra.get('is_superuser') is not True:
             raise ValueError('Superuser debe tener is_superuser=True')
 
-        # 🔥 AQUÍ ESTÁ LA CLAVE
         if not extra.get('rol'):
             from apps.users.models import Rol
             rol_admin, _ = Rol.objects.get_or_create(
@@ -56,13 +54,13 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     )
 
     telefono = models.CharField(
-        max_length=30,
+        max_length=8,
         blank=True,
         null=True,
         validators=[
             RegexValidator(
-                regex=r'^\+?\d{7,15}$',
-                message="Número de teléfono inválido"
+                regex=r'^[67]\d{7}$',
+                message="El celular debe tener 8 dígitos y comenzar con 6 o 7."
             )
         ]
     )
@@ -71,10 +69,15 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
         max_length=20,
         blank=True,
         null=True,
-        db_index=True
+        db_index=True,
+        validators=[
+            RegexValidator(
+                regex=r'^\d{7,8}(-[A-Z0-9]{1,3})?$',
+                message="Formato de DNI inválido. Ej: 1234567 o 12345678-1B"
+            )
+        ]
     )
 
-    # 🔥 CLAVE: usamos el mismo campo de DB
     password = models.CharField(
         max_length=255,
         db_column='contrasena_hash'
@@ -111,9 +114,6 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     def clean(self):
         if self.correo:
             self.correo = self.correo.lower()
-
-        if self.dni and len(self.dni) < 5:
-            raise ValidationError("El DNI es demasiado corto.")
 
 class Rol(models.Model):
     class Tipo(models.TextChoices):
