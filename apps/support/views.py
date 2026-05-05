@@ -25,13 +25,10 @@ def support_dashboard(request):
         messages.error(request, "Acceso denegado. Área exclusiva para personal.")
         return redirect('/?action=login')
 
-    # 🔥 CORRECCIÓN: Traemos TODOS los tickets para que los botones de filtro funcionen
     todos_los_tickets = Soporte.objects.select_related('usuario', 'estado_soporte', 'categoria_soporte').order_by('-fecha_creacion')
-    
-    # 🔥 CORRECCIÓN: Conteo exacto sin multiplicar por cantidad de mensajes
     total_tickets = todos_los_tickets.count()
-    tickets_no_leidos = todos_los_tickets.filter(fecha_cierre__isnull=True).count() # Abiertos (No leídos/Pendientes)
-    tickets_leidos = todos_los_tickets.filter(fecha_cierre__isnull=False).count() # Cerrados (Leídos/Resueltos)
+    tickets_no_leidos = todos_los_tickets.filter(fecha_cierre__isnull=True).count()
+    tickets_leidos = todos_los_tickets.filter(fecha_cierre__isnull=False).count()
 
     contexto = {
         'tickets': todos_los_tickets,
@@ -116,6 +113,28 @@ def close_ticket_api(request):
         except Exception as e: return JsonResponse({'error': f'Error: {str(e)}'}, status=500)
     return JsonResponse({'error': 'Método no permitido'}, status=405)
 
+# 🔥 NUEVO ENDPOINT PARA REFRESCAR LA BANDEJA EN VIVO
+def tickets_list_api(request):
+    if not es_personal_autorizado(request): return JsonResponse({'error': 'No autorizado'}, status=403)
+    
+    tickets_db = Soporte.objects.select_related('usuario').order_by('-fecha_creacion')
+    
+    tz_bolivia = ZoneInfo('America/La_Paz')
+    tickets_list = []
+    for t in tickets_db:
+        hora_local = t.fecha_creacion.astimezone(tz_bolivia)
+        tickets_list.append({
+            'id': t.id,
+            'inicial': t.usuario.nombre[0].upper() if t.usuario.nombre else 'U',
+            'nombre': f"{t.usuario.nombre} {t.usuario.apellido}",
+            'correo': t.usuario.correo,
+            'asunto': t.asunto,
+            'fecha_formateada': hora_local.strftime("%d %b %Y, %I:%M %p"),
+            'is_closed': t.fecha_cierre is not None
+        })
+        
+    return JsonResponse({'tickets': tickets_list})
+
 
 # ================= VISTAS DE SOPORTE (CLIENTE) =================
 
@@ -126,9 +145,7 @@ def cliente_soporte_view(request, ticket_id=None):
         return redirect('/?action=login')
 
     usuario_id = request.session['usuario_id']
-    
     mis_tickets = Soporte.objects.filter(usuario_id=usuario_id).order_by('-fecha_creacion')
-    
     ticket_seleccionado = None
     if ticket_id:
         ticket_seleccionado = get_object_or_404(Soporte, id=ticket_id, usuario_id=usuario_id)
@@ -141,14 +158,12 @@ def cliente_soporte_view(request, ticket_id=None):
         if asunto and categoria_id and descripcion:
             try:
                 estado_abierto, _ = EstadoSoporte.objects.get_or_create(nombre='Abierto')
-                
                 try:
                     categoria = CategoriaSoporte.objects.get(id=categoria_id)
                 except CategoriaSoporte.DoesNotExist:
                     categoria, _ = CategoriaSoporte.objects.get_or_create(nombre='Soporte General')
                 
                 usuario = Usuario.objects.get(id=usuario_id)
-                
                 nuevo_ticket = Soporte.objects.create(
                     numero_reclamo=f"TKT-{random.randint(100000, 999999)}",
                     usuario=usuario,
@@ -166,7 +181,6 @@ def cliente_soporte_view(request, ticket_id=None):
                 messages.success(request, "Ticket creado con éxito. Te responderemos pronto.")
                 return redirect('cliente_soporte_detalle', ticket_id=nuevo_ticket.id)
             except Exception as e:
-                print(f"\n--- ERROR AL CREAR TICKET ---\n{str(e)}\n-----------------------------\n")
                 messages.error(request, "Ocurrió un error al crear el ticket. Inténtalo de nuevo.")
 
     categorias = CategoriaSoporte.objects.all()
@@ -186,7 +200,6 @@ def cliente_mensajes_api(request, ticket_id):
     if not ticket: return JsonResponse({'error': 'Ticket no encontrado'}, status=404)
         
     mensajes_db = ticket.mensajes.select_related('remitente').all().order_by('fecha_envio')
-    
     tz_bolivia = ZoneInfo('America/La_Paz') 
     mensajes_list = []
     

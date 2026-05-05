@@ -18,25 +18,19 @@ from django.contrib import admin
 from django.urls import path
 from django.views.generic import TemplateView
 
-# Importamos las vistas
 from apps.users.views import signup_view, login_view, logout_view, perfil_view
 from apps.support.views import (
-    support_dashboard, ticket_messages_api, send_message_api, close_ticket_api,
+    support_dashboard, ticket_messages_api, send_message_api, close_ticket_api, tickets_list_api,
     cliente_soporte_view, cliente_mensajes_api, cliente_enviar_mensaje_api
 )
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     
-    # Rutas de las interfaces visuales públicas
     path('', TemplateView.as_view(template_name='pages/usuarios/inicio.html'), name='inicio'),
-    
-    # Rutas de Autenticación
     path('signup/', signup_view, name='signup'),
     path('login/', login_view, name='login'),
     path('logout/', logout_view, name='logout'),
-
-    # Ruta: Mi Perfil
     path('perfil/', perfil_view, name='perfil'),
     
     # ================= RUTAS DE SOPORTE (ADMIN) =================
@@ -44,6 +38,7 @@ urlpatterns = [
     path('soporte/api/mensajes/<int:ticket_id>/', ticket_messages_api, name='ticket_messages_api'),
     path('soporte/api/enviar-mensaje/', send_message_api, name='send_message_api'),
     path('soporte/api/cerrar-ticket/', close_ticket_api, name='close_ticket_api'),
+    path('soporte/api/tickets/', tickets_list_api, name='tickets_list_api'), # 🔥 NUEVO ENDPOINT
 
     # ================= RUTAS DE SOPORTE (CLIENTE) =================
     path('mi-soporte/', cliente_soporte_view, name='cliente_soporte'),

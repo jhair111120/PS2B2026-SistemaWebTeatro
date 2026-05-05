@@ -759,6 +759,65 @@
         let activeFilterStatus = 'all';
         let chatInterval = null;
 
+        // 🔥 POLLING PARA LA BANDEJA DE ENTRADA (Refresca cada 5 segundos)
+        setInterval(refreshInboxEnVivo, 5000);
+
+        function refreshInboxEnVivo() {
+            fetch('/soporte/api/tickets/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.tickets) {
+                        const listContainer = document.getElementById('ticketList');
+                        const currentCards = listContainer.querySelectorAll('.ticket-chat-card');
+                        const currentTotal = currentCards.length;
+
+                        let needsUpdate = false;
+
+                        // Si hay tickets nuevos o el primero en la lista cambió (alguien acaba de crear uno)
+                        if (currentTotal !== data.tickets.length) {
+                            needsUpdate = true;
+                        } else if (currentTotal > 0 && data.tickets.length > 0) {
+                            const firstCardId = currentCards[0].getAttribute('data-ticket-id');
+                            if (firstCardId != data.tickets[0].id) {
+                                needsUpdate = true;
+                            }
+                        }
+
+                        if (needsUpdate) {
+                            let htmlContenido = '';
+                            data.tickets.forEach(t => {
+                                const status = t.is_closed ? 'read' : 'unread';
+                                const activeClass = (currentTicketId == t.id) ? 'active' : '';
+                                const displayDot = (!t.is_closed) ? 'block' : 'none';
+
+                                htmlContenido += `
+                                <a href="#" class="ticket-chat-card ${activeClass}" id="card-${t.id}" data-ticket-id="${t.id}" data-status="${status}" onclick="loadTicket('${t.id}', event)">
+                                    <div class="user-initials">
+                                        ${t.inicial}
+                                        <span class="unread-dot" style="display: ${displayDot};"></span> 
+                                    </div>
+                                    <div class="w-100 overflow-hidden">
+                                        <div class="fw-bold text-white" style="font-size: 0.9rem;">${t.nombre}</div>
+                                        <div class="small text-gray-custom mb-1 text-truncate" style="font-size: 0.75rem;">${t.correo}</div>
+                                        <div class="small fw-bold text-white text-truncate mb-1" style="font-size: 0.8rem;">${t.asunto}</div>
+                                        <div class="small text-gray-custom" style="font-size: 0.7rem;">${t.fecha_formateada}</div>
+                                    </div>
+                                </a>
+                                `;
+                            });
+
+                            // Redibujamos la lista de manera invisible para el usuario
+                            listContainer.innerHTML = htmlContenido;
+
+                            // Reaplicamos contadores y filtros para que todo quede en su lugar
+                            updateCounters();
+                            applyCurrentFilter();
+                        }
+                    }
+                })
+                .catch(error => console.error('Error buscando nuevos tickets en vivo:', error));
+        }
+
         function updateCounters() {
             const allCards = document.querySelectorAll('.ticket-chat-card');
             let total = allCards.length;
@@ -779,6 +838,20 @@
             updateCounters();
         });
 
+        // Extraída para poder usarla al recargar tickets en vivo
+        function applyCurrentFilter() {
+            const cards = document.querySelectorAll('.ticket-chat-card');
+            cards.forEach(card => {
+                if (activeFilterStatus === 'all') {
+                    card.style.display = 'flex';
+                } else if (card.getAttribute('data-status') === activeFilterStatus) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
         function filterTickets(status, element) {
             activeFilterStatus = status;
             document.querySelectorAll('.stat-card').forEach(card => card.classList.remove('active-filter'));
@@ -787,16 +860,7 @@
             const labelMap = { 'all': 'Todas', 'unread': 'No Leídas', 'read': 'Leídas' };
             document.getElementById('currentFilterLabel').innerText = labelMap[status];
 
-            const cards = document.querySelectorAll('.ticket-chat-card');
-            cards.forEach(card => {
-                if (status === 'all') {
-                    card.style.display = 'flex';
-                } else if (card.getAttribute('data-status') === status) {
-                    card.style.display = 'flex';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
+            applyCurrentFilter();
         }
 
         function loadTicket(ticketId, event) {
