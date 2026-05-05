@@ -18,9 +18,10 @@ from django.views.decorators.http import require_GET, require_POST
 
 from .models import Usuario, Rol
 from apps.events.models import Evento, EventoAsiento, EventoZona, Zona
-from apps.payments.models import Pago
+from apps.payments.models import EstadoPago, MetodoPago, Pago
 from apps.reservations.models import DetalleReserva, EstadoReserva, Reserva
-from apps.tickets.models import Entrada, EstadoVenta, Venta
+from apps.support.models import EstadoSoporte, Soporte, SoporteMensaje
+from apps.tickets.models import CanalVenta, Entrada, EstadoVenta, Venta
 
 
 # =========================
@@ -424,6 +425,119 @@ def admin_venta_detalle(request, venta_id):
 
 
 @never_cache
+@require_POST
+def admin_soporte_reply(request):
+    gate = _admin_gate(request)
+    if gate:
+        return gate
+
+    ticket_id = request.POST.get('ticket_id')
+    texto = (request.POST.get('mensaje') or '').strip()
+    if not ticket_id or not texto:
+        messages.error(request, 'Debes seleccionar ticket y escribir un mensaje.')
+        return redirect(reverse('admin_panel') + '?tab=soporte')
+
+    ticket = get_object_or_404(Soporte, pk=ticket_id)
+    usuario = Usuario.objects.filter(pk=request.session.get('usuario_id')).first()
+    if not usuario:
+        messages.error(request, 'Sesión inválida.')
+        return redirect('login')
+
+    if ticket.fecha_cierre:
+        messages.error(request, 'El ticket está cerrado.')
+        return redirect(reverse('admin_panel') + f'?tab=soporte&sup_id={ticket.id}')
+
+    SoporteMensaje.objects.create(soporte=ticket, remitente=usuario, mensaje=texto)
+    messages.success(request, 'Mensaje enviado.')
+    return redirect(reverse('admin_panel') + f'?tab=soporte&sup_id={ticket.id}')
+
+
+@never_cache
+@require_POST
+def admin_soporte_close(request):
+    gate = _admin_gate(request)
+    if gate:
+        return gate
+
+    ticket_id = request.POST.get('ticket_id')
+    if not ticket_id:
+        messages.error(request, 'Ticket inválido.')
+        return redirect(reverse('admin_panel') + '?tab=soporte')
+
+    ticket = get_object_or_404(Soporte, pk=ticket_id)
+    estado_cerrado = EstadoSoporte.objects.filter(nombre__icontains='cerr').order_by('id').first()
+    if not estado_cerrado:
+        messages.error(request, 'No existe estado de soporte cerrado.')
+        return redirect(reverse('admin_panel') + f'?tab=soporte&sup_id={ticket.id}')
+
+    ticket.estado_soporte = estado_cerrado
+    ticket.fecha_cierre = timezone.now()
+    ticket.save(update_fields=['estado_soporte', 'fecha_cierre', 'actualizado_en'])
+    messages.success(request, 'Ticket cerrado.')
+    return redirect(reverse('admin_panel') + '?tab=soporte')
+
+
+@never_cache
+@require_POST
+def admin_config_general_save(request):
+    gate = _admin_gate(request)
+    if gate:
+        return gate
+
+    usuario = Usuario.objects.filter(pk=request.session.get('usuario_id')).first()
+    if not usuario:
+        return redirect('login')
+
+    usuario.nombre = (request.POST.get('nombre') or usuario.nombre).strip()[:100]
+    usuario.apellido = (request.POST.get('apellido') or usuario.apellido).strip()[:100]
+    nuevo_correo = (request.POST.get('correo') or usuario.correo).strip().lower()
+    telefono = (request.POST.get('telefono') or '').strip() or None
+
+    if Usuario.objects.exclude(pk=usuario.pk).filter(correo=nuevo_correo).exists():
+        messages.error(request, 'Ese correo ya está en uso.')
+        return redirect(reverse('admin_panel') + '?tab=configuracion&cfg_tab=general')
+
+    usuario.correo = nuevo_correo
+    usuario.telefono = telefono
+    usuario.save(update_fields=['nombre', 'apellido', 'correo', 'telefono', 'actualizado_en'])
+    request.session['usuario_nombre'] = usuario.nombre
+    request.session['usuario_correo'] = usuario.correo
+    messages.success(request, 'Datos generales actualizados.')
+    return redirect(reverse('admin_panel') + '?tab=configuracion&cfg_tab=general')
+
+
+@never_cache
+@require_POST
+def admin_config_security_save(request):
+    gate = _admin_gate(request)
+    if gate:
+        return gate
+
+    usuario = Usuario.objects.filter(pk=request.session.get('usuario_id')).first()
+    if not usuario:
+        return redirect('login')
+
+    current = request.POST.get('current_password') or ''
+    new_password = request.POST.get('new_password') or ''
+    repeat_password = request.POST.get('repeat_password') or ''
+
+    if not usuario.check_password(current):
+        messages.error(request, 'Contraseña actual incorrecta.')
+        return redirect(reverse('admin_panel') + '?tab=configuracion&cfg_tab=seguridad')
+    if len(new_password) < 8:
+        messages.error(request, 'La nueva contraseña debe tener al menos 8 caracteres.')
+        return redirect(reverse('admin_panel') + '?tab=configuracion&cfg_tab=seguridad')
+    if new_password != repeat_password:
+        messages.error(request, 'La confirmación de contraseña no coincide.')
+        return redirect(reverse('admin_panel') + '?tab=configuracion&cfg_tab=seguridad')
+
+    usuario.set_password(new_password)
+    usuario.save(update_fields=['password'])
+    messages.success(request, 'Contraseña actualizada.')
+    return redirect(reverse('admin_panel') + '?tab=configuracion&cfg_tab=seguridad')
+
+
+@never_cache
 def admin_panel(request):
     if not request.session.get('usuario_id'):
         return redirect('login')
@@ -815,6 +929,73 @@ def admin_panel(request):
         'zonas_data': rep_zonas_data,
     }
 
+    # ——— Soporte / Transacciones / Configuración (BD) ———
+    sup_q = (request.GET.get('sup_q') or '').strip()
+    sup_estado = (request.GET.get('sup_estado') or '').strip()
+    sup_id = request.GET.get('sup_id')
+
+    soporte_qs = (
+        Soporte.objects.select_related('usuario', 'estado_soporte', 'categoria_soporte', 'pago', 'entrada')
+        .prefetch_related(Prefetch('mensajes', queryset=SoporteMensaje.objects.select_related('remitente')))
+        .order_by('-fecha_creacion')
+    )
+    if sup_q:
+        soporte_qs = soporte_qs.filter(
+            Q(numero_reclamo__icontains=sup_q)
+            | Q(asunto__icontains=sup_q)
+            | Q(usuario__correo__icontains=sup_q)
+            | Q(usuario__nombre__icontains=sup_q)
+            | Q(usuario__apellido__icontains=sup_q)
+        )
+    if sup_estado:
+        soporte_qs = soporte_qs.filter(estado_soporte__nombre__iexact=sup_estado)
+    soporte_list = list(soporte_qs[:250])
+    estados_soporte = list(EstadoSoporte.objects.all().order_by('id'))
+    soporte_total = Soporte.objects.count()
+    soporte_pendientes = Soporte.objects.exclude(estado_soporte__nombre__icontains='cerr').count()
+    soporte_cerrados = Soporte.objects.filter(estado_soporte__nombre__icontains='cerr').count()
+
+    soporte_activo = None
+    if sup_id:
+        try:
+            sid = int(sup_id)
+            soporte_activo = next((s for s in soporte_list if s.id == sid), None)
+            if not soporte_activo:
+                soporte_activo = Soporte.objects.select_related(
+                    'usuario', 'estado_soporte', 'categoria_soporte'
+                ).prefetch_related(
+                    Prefetch('mensajes', queryset=SoporteMensaje.objects.select_related('remitente'))
+                ).filter(pk=sid).first()
+        except ValueError:
+            pass
+    if not soporte_activo and soporte_list:
+        soporte_activo = soporte_list[0]
+
+    trans_q = (request.GET.get('trans_q') or '').strip()
+    trans_estado = (request.GET.get('trans_estado') or '').strip()
+    trans_metodo = (request.GET.get('trans_metodo') or '').strip()
+    trans_qs = (
+        Pago.objects.select_related('reserva__evento', 'metodo_pago', 'estado_pago', 'confirmado_por_usuario')
+        .order_by('-fecha_creacion')
+    )
+    if trans_q:
+        tq = Q(referencia_externa__icontains=trans_q) | Q(reserva__codigo_reserva__icontains=trans_q)
+        if trans_q.isdigit():
+            tq |= Q(pk=int(trans_q))
+        trans_qs = trans_qs.filter(tq)
+    if trans_estado:
+        trans_qs = trans_qs.filter(estado_pago__nombre__iexact=trans_estado)
+    if trans_metodo:
+        trans_qs = trans_qs.filter(metodo_pago__nombre__iexact=trans_metodo)
+    transacciones_rows = list(trans_qs[:300])
+    estados_pago = list(EstadoPago.objects.all().order_by('nombre'))
+    metodos_pago = list(MetodoPago.objects.all().order_by('nombre'))
+
+    current_admin = Usuario.objects.select_related('rol').filter(pk=request.session.get('usuario_id')).first()
+    cfg_tab = (request.GET.get('cfg_tab') or 'general').strip().lower()
+    noti_unread = SoporteMensaje.objects.count()
+    canales_count = CanalVenta.objects.count()
+
     return render(
         request,
         'pages/admin/dashboard.html',
@@ -852,5 +1033,24 @@ def admin_panel(request):
             'rep_kpi_ocup': rep_kpi_ocup,
             'rep_kpi_eventos': rep_kpi_eventos,
             'reportes_chart_payload': reportes_chart_payload,
+            'sup_q': sup_q,
+            'sup_estado': sup_estado,
+            'sup_id': sup_id,
+            'soporte_list': soporte_list,
+            'soporte_activo': soporte_activo,
+            'estados_soporte': estados_soporte,
+            'soporte_total': soporte_total,
+            'soporte_pendientes': soporte_pendientes,
+            'soporte_cerrados': soporte_cerrados,
+            'trans_q': trans_q,
+            'trans_estado': trans_estado,
+            'trans_metodo': trans_metodo,
+            'transacciones_rows': transacciones_rows,
+            'estados_pago': estados_pago,
+            'metodos_pago': metodos_pago,
+            'current_admin': current_admin,
+            'cfg_tab': cfg_tab,
+            'noti_unread': noti_unread,
+            'canales_count': canales_count,
         },
     )

@@ -1069,7 +1069,8 @@
   padding-bottom: 0.25rem;
 }
 
-.admin-tabs-inline button {
+.admin-tabs-inline button,
+.admin-tabs-inline a {
   border: none;
   border-radius: 0.5rem;
   padding: 0.5rem 1rem;
@@ -1078,14 +1079,23 @@
   font-family: inherit;
   background: transparent;
   color: var(--admin-text-muted);
+  text-decoration: none;
+  display: inline-block;
 }
 
-.admin-tabs-inline button:first-child {
+.admin-tabs-inline button:first-child,
+.admin-tabs-inline a:first-child {
   background: #1e293b;
   color: #fff;
 }
 
-.admin-tabs-inline button:hover {
+.admin-tabs-inline .admin-tabs-inline__active {
+  background: #1e293b;
+  color: #fff;
+}
+
+.admin-tabs-inline button:hover,
+.admin-tabs-inline a:hover {
   background: rgba(30, 41, 59, 0.65);
 }
 

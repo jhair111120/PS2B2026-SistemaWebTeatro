@@ -521,62 +521,101 @@
 <section id="panel-soporte" class="admin-panel admin-section hidden">
   <div class="admin-page-head">
     <h1 class="admin-page-title">Soporte</h1>
-    <p class="admin-page-desc">Atiende consultas de usuarios en tiempo real</p>
+    <p class="admin-page-desc">Tickets reales de la tabla soporte y sus mensajes.</p>
   </div>
   <div class="admin-kpi-grid admin-kpi-grid--3">
     <div class="admin-card admin-flex-between">
-      <div><p class="admin-kpi-card__label">Conversaciones Totales</p><p class="admin-kpi-card__value">2</p></div>
+      <div><p class="admin-kpi-card__label">Tickets totales</p><p class="admin-kpi-card__value">{{ soporte_total }}</p></div>
       <span class="admin-kpi-card__icon admin-kpi-card__icon--sky"><i class="fas fa-comments"></i></span>
     </div>
     <div class="admin-card admin-flex-between">
-      <div><p class="admin-kpi-card__label">Pendientes</p><p class="admin-kpi-card__value">2</p></div>
+      <div><p class="admin-kpi-card__label">Pendientes</p><p class="admin-kpi-card__value">{{ soporte_pendientes }}</p></div>
       <span class="admin-kpi-card__icon admin-kpi-card__icon--amber"><i class="fas fa-clock"></i></span>
     </div>
     <div class="admin-card admin-flex-between">
-      <div><p class="admin-kpi-card__label">Respondidas</p><p class="admin-kpi-card__value">0</p></div>
+      <div><p class="admin-kpi-card__label">Cerrados</p><p class="admin-kpi-card__value">{{ soporte_cerrados }}</p></div>
       <span class="admin-kpi-card__icon admin-kpi-card__icon--emerald"><i class="fas fa-check"></i></span>
     </div>
   </div>
+  <form class="admin-filters" method="get" action="{% url 'admin_panel' %}">
+    <input type="hidden" name="tab" value="soporte" />
+    <div class="admin-input-wrap">
+      <i class="fas fa-magnifying-glass"></i>
+      <input class="admin-input" type="search" name="sup_q" value="{{ sup_q }}" placeholder="Buscar por reclamo, asunto, usuario..." />
+    </div>
+    <select class="admin-select" name="sup_estado">
+      <option value="">Todos los estados</option>
+      {% for es in estados_soporte %}
+        <option value="{{ es.nombre }}" {% if sup_estado == es.nombre %}selected{% endif %}>{{ es.nombre }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="admin-btn-primary" style="padding:0.5rem 1rem;font-size:0.8125rem;">Buscar</button>
+  </form>
   <div class="admin-split-chat">
     <div class="admin-chat-list">
-      <div class="admin-chat-list__head">Conversaciones</div>
+      <div class="admin-chat-list__head">Tickets</div>
       <div class="admin-chat-list__body">
-        <button type="button" class="admin-chat-item">
+        {% for t in soporte_list %}
+        <a href="{% url 'admin_panel' %}?tab=soporte&sup_id={{ t.id }}{% if sup_q %}&sup_q={{ sup_q|urlencode }}{% endif %}{% if sup_estado %}&sup_estado={{ sup_estado|urlencode }}{% endif %}" class="admin-chat-item {% if soporte_activo and soporte_activo.id != t.id %}admin-chat-item--dim{% endif %}" style="text-decoration:none;color:inherit;">
           <div class="admin-flex-between" style="align-items:center;">
-            <span class="cell-strong">Laura Pérez</span>
-            <span class="admin-badge admin-badge--warn" style="font-size:10px;padding:2px 6px;">nuevo</span>
+            <span class="cell-strong">{{ t.usuario.nombre }} {{ t.usuario.apellido }}</span>
+            {% if 'cerr' in t.estado_soporte.nombre|lower %}
+              <span class="admin-badge admin-badge--neutral" style="font-size:10px;padding:2px 6px;">{{ t.estado_soporte.nombre }}</span>
+            {% elif 'proceso' in t.estado_soporte.nombre|lower %}
+              <span class="admin-badge admin-badge--warn" style="font-size:10px;padding:2px 6px;">{{ t.estado_soporte.nombre }}</span>
+            {% else %}
+              <span class="admin-badge admin-badge--ok" style="font-size:10px;padding:2px 6px;">{{ t.estado_soporte.nombre }}</span>
+            {% endif %}
           </div>
-          <p class="cell-xs cell-muted">laura@mail.com</p>
-          <p class="cell-xs cell-muted" style="margin-top:0.35rem;">¿Puedo cambiar la fecha de mi entrada?</p>
-          <p style="font-size:10px;color:#475569;margin:0.35rem 0 0;">10:12</p>
-        </button>
-        <button type="button" class="admin-chat-item admin-chat-item--dim">
-          <div class="admin-flex-between" style="align-items:center;">
-            <span class="cell-strong">Roberto Silva</span>
-            <span class="admin-badge admin-badge--warn" style="font-size:10px;padding:2px 6px;">nuevo</span>
-          </div>
-          <p class="cell-xs cell-muted">roberto@mail.com</p>
-          <p class="cell-xs cell-muted" style="margin-top:0.35rem;">No recibí el correo de confirmación…</p>
-          <p style="font-size:10px;color:#475569;margin:0.35rem 0 0;">Ayer</p>
-        </button>
+          <p class="cell-xs cell-muted">{{ t.numero_reclamo }} · {{ t.usuario.correo }}</p>
+          <p class="cell-xs cell-muted" style="margin-top:0.35rem;">{{ t.asunto|truncatechars:55 }}</p>
+          <p style="font-size:10px;color:#475569;margin:0.35rem 0 0;">{{ t.fecha_creacion|date:"d/m/Y H:i" }}</p>
+        </a>
+        {% empty %}
+        <p class="cell-muted" style="padding:1rem;">Sin tickets.</p>
+        {% endfor %}
       </div>
     </div>
     <div class="admin-chat-window">
+      {% if soporte_activo %}
       <div style="border-bottom:1px solid rgba(51,65,85,0.75);padding:0.75rem 1rem;display:flex;justify-content:space-between;align-items:center;">
         <div>
-          <p class="cell-strong" style="margin:0;">Laura Pérez</p>
-          <p class="cell-xs cell-muted">laura@mail.com</p>
+          <p class="cell-strong" style="margin:0;">{{ soporte_activo.usuario.nombre }} {{ soporte_activo.usuario.apellido }}</p>
+          <p class="cell-xs cell-muted">{{ soporte_activo.numero_reclamo }} · {{ soporte_activo.usuario.correo }}</p>
         </div>
-        <span class="admin-badge admin-badge--ok">en línea</span>
+        <div class="admin-actions-gap">
+          <span class="admin-badge admin-badge--ok">{{ soporte_activo.estado_soporte.nombre }}</span>
+          {% if 'cerr' not in soporte_activo.estado_soporte.nombre|lower %}
+          <form method="post" action="{% url 'admin_soporte_close' %}">
+            {% csrf_token %}
+            <input type="hidden" name="ticket_id" value="{{ soporte_activo.id }}" />
+            <button type="submit" class="admin-btn-danger" style="padding:0.35rem 0.75rem;font-size:0.75rem;">Cerrar</button>
+          </form>
+          {% endif %}
+        </div>
       </div>
       <div class="admin-chat-bubbles">
-        <div class="admin-bubble-in">¿Puedo cambiar la fecha de mi entrada?<p style="margin:0.35rem 0 0;font-size:10px;color:#94a3b8;">Laura · 10:15</p></div>
-        <div class="admin-bubble-out">Hola Laura, revisa tu correo; enviamos un enlace para reprogramar.<p style="margin:0.35rem 0 0;font-size:10px;opacity:0.85;">Soporte · 10:17</p></div>
+        {% for m in soporte_activo.mensajes.all %}
+          {% if m.remitente.id == request.session.usuario_id %}
+          <div class="admin-bubble-out">{{ m.mensaje }}<p style="margin:0.35rem 0 0;font-size:10px;opacity:0.85;">{{ m.remitente.nombre }} · {{ m.fecha_envio|date:"d/m H:i" }}</p></div>
+          {% else %}
+          <div class="admin-bubble-in">{{ m.mensaje }}<p style="margin:0.35rem 0 0;font-size:10px;color:#94a3b8;">{{ m.remitente.nombre }} · {{ m.fecha_envio|date:"d/m H:i" }}</p></div>
+          {% endif %}
+        {% empty %}
+          <p class="cell-muted">Sin mensajes.</p>
+        {% endfor %}
       </div>
-      <div class="admin-chat-input-row">
-        <input type="text" placeholder="Escribe tu respuesta..." />
-        <button type="button"><i class="fas fa-paper-plane"></i></button>
-      </div>
+      {% if 'cerr' not in soporte_activo.estado_soporte.nombre|lower %}
+      <form class="admin-chat-input-row" method="post" action="{% url 'admin_soporte_reply' %}">
+        {% csrf_token %}
+        <input type="hidden" name="ticket_id" value="{{ soporte_activo.id }}" />
+        <input type="text" name="mensaje" placeholder="Escribe tu respuesta..." required />
+        <button type="submit"><i class="fas fa-paper-plane"></i></button>
+      </form>
+      {% endif %}
+      {% else %}
+      <div style="padding:1rem;" class="cell-muted">Selecciona un ticket para ver el detalle.</div>
+      {% endif %}
     </div>
   </div>
 </section>
@@ -588,33 +627,152 @@
     <p class="admin-page-desc">Administra las preferencias y configuración del sistema</p>
   </div>
   <div class="admin-tabs-inline">
-    <button type="button">General</button>
-    <button type="button">Notificaciones</button>
-    <button type="button">Seguridad</button>
-    <button type="button">Pagos</button>
-    <button type="button">Sistema</button>
+    <a class="{% if cfg_tab == 'general' %}admin-tabs-inline__active{% endif %}" href="{% url 'admin_panel' %}?tab=configuracion&cfg_tab=general">General</a>
+    <a class="{% if cfg_tab == 'notificaciones' %}admin-tabs-inline__active{% endif %}" href="{% url 'admin_panel' %}?tab=configuracion&cfg_tab=notificaciones">Notificaciones</a>
+    <a class="{% if cfg_tab == 'seguridad' %}admin-tabs-inline__active{% endif %}" href="{% url 'admin_panel' %}?tab=configuracion&cfg_tab=seguridad">Seguridad</a>
+    <a class="{% if cfg_tab == 'pagos' %}admin-tabs-inline__active{% endif %}" href="{% url 'admin_panel' %}?tab=configuracion&cfg_tab=pagos">Pagos</a>
+    <a class="{% if cfg_tab == 'sistema' %}admin-tabs-inline__active{% endif %}" href="{% url 'admin_panel' %}?tab=configuracion&cfg_tab=sistema">Sistema</a>
   </div>
-  <div class="admin-card">
+  {% if cfg_tab == 'general' %}
+  <form class="admin-card" method="post" action="{% url 'admin_config_general_save' %}">
+    {% csrf_token %}
     <h3 class="admin-card__title">Información General</h3>
     <p class="admin-card__subtitle">Actualiza la información del teatro y del administrador</p>
     <div class="admin-form-grid" style="margin-top:1.5rem;">
       <div class="admin-stack">
         <p class="admin-form-section-title">Información del Teatro</p>
-        <div class="admin-form-stack"><label>Nombre del Teatro</label><input type="text" value="Teatro al Aire Libre" /></div>
-        <div class="admin-form-stack"><label>Ubicación</label><input type="text" value="La Paz, Bolivia" /></div>
+        <div class="admin-form-stack"><label>Nombre Teatro</label><input type="text" value="Teatro al Aire Libre" /></div>
         <div class="admin-form-stack"><label>Capacidad Total</label><input type="text" value="2000" /></div>
-        <div class="admin-form-stack"><label>Teléfono</label><input type="text" value="+591 2 1234567" /></div>
       </div>
       <div class="admin-stack">
+        <p class="admin-form-section-title">&nbsp;</p>
+        <div class="admin-form-stack"><label>Ubicación</label><input type="text" value="La Paz, Bolivia" /></div>
+        <div class="admin-form-stack"><label>Teléfono</label><input type="text" name="telefono" value="{{ current_admin.telefono|default:'+591 2 1234567' }}" /></div>
+      </div>
+    </div>
+    <div class="admin-form-grid" style="margin-top:1rem;">
+      <div class="admin-stack">
         <p class="admin-form-section-title">Información del Administrador</p>
-        <div class="admin-form-stack"><label>Nombre Completo</label><input type="text" value="Administrador" /></div>
-        <div class="admin-form-stack"><label>Email</label><input type="email" value="admin@teatro.bo" /></div>
+        <div class="admin-form-stack"><label>Nombre Completo</label><input type="text" name="nombre" value="{{ current_admin.nombre }}" required /></div>
+      </div>
+      <div class="admin-stack">
+        <p class="admin-form-section-title">&nbsp;</p>
+        <div class="admin-form-stack"><label>Email</label><input type="email" name="correo" value="{{ current_admin.correo }}" required /></div>
       </div>
     </div>
     <div style="margin-top:2rem;display:flex;justify-content:flex-end;">
+      <button type="submit" class="admin-btn-primary"><i class="fas fa-floppy-disk"></i> Guardar Cambios</button>
+    </div>
+  </form>
+  {% elif cfg_tab == 'notificaciones' %}
+  <form class="admin-card">
+    <h3 class="admin-card__title">Preferencias de Notificaciones</h3>
+    <p class="admin-card__subtitle">Configura qué notificaciones deseas recibir</p>
+    <div class="admin-card" style="margin-top:1rem;padding:0.85rem 1rem;">
+      <div class="admin-flex-between"><div><p class="cell-strong" style="margin:0;">Nuevas Reservas</p><p class="cell-xs cell-muted" style="margin:0.15rem 0 0;">Recibe notificaciones cuando haya una nueva reserva</p></div><label class="admin-switch"><input type="checkbox" checked /><span class="admin-switch__track"></span></label></div>
+    </div>
+    <div class="admin-card" style="margin-top:0.75rem;padding:0.85rem 1rem;">
+      <div class="admin-flex-between"><div><p class="cell-strong" style="margin:0;">Nuevas Ventas</p><p class="cell-xs cell-muted" style="margin:0.15rem 0 0;">Recibe notificaciones cuando se complete una venta</p></div><label class="admin-switch"><input type="checkbox" checked /><span class="admin-switch__track"></span></label></div>
+    </div>
+    <div class="admin-card" style="margin-top:0.75rem;padding:0.85rem 1rem;">
+      <div class="admin-flex-between"><div><p class="cell-strong" style="margin:0;">Mensajes de Soporte</p><p class="cell-xs cell-muted" style="margin:0.15rem 0 0;">Recibe notificaciones de nuevas consultas de usuarios</p></div><label class="admin-switch"><input type="checkbox" checked /><span class="admin-switch__track"></span></label></div>
+    </div>
+    <div class="admin-card" style="margin-top:0.75rem;padding:0.85rem 1rem;">
+      <div class="admin-flex-between"><div><p class="cell-strong" style="margin:0;">Reportes Diarios</p><p class="cell-xs cell-muted" style="margin:0.15rem 0 0;">Recibe un resumen diario de ventas y ocupación</p></div><label class="admin-switch"><input type="checkbox" /><span class="admin-switch__track"></span></label></div>
+    </div>
+    <div style="margin-top:1rem;display:flex;justify-content:flex-end;">
+      <button type="button" class="admin-btn-primary"><i class="fas fa-floppy-disk"></i> Guardar Preferencias</button>
+    </div>
+  </form>
+  {% elif cfg_tab == 'seguridad' %}
+  <form class="admin-card" method="post" action="{% url 'admin_config_security_save' %}">
+    {% csrf_token %}
+    <h3 class="admin-card__title">Seguridad</h3>
+    <p class="admin-card__subtitle">Administra la seguridad de tu cuenta</p>
+    <h4 style="margin:1.25rem 0 0.75rem;">Cambiar Contraseña</h4>
+    <div class="admin-form-stack"><label>Contraseña Actual</label><input type="password" name="current_password" required /></div>
+    <div class="admin-form-stack" style="margin-top:0.75rem;"><label>Nueva Contraseña</label><input type="password" name="new_password" minlength="8" required /></div>
+    <div class="admin-form-stack" style="margin-top:0.75rem;"><label>Confirmar Nueva Contraseña</label><input type="password" name="repeat_password" minlength="8" required /></div>
+    <div style="margin-top:1rem;display:flex;justify-content:flex-start;">
+      <button type="submit" class="admin-btn-primary">Actualizar Contraseña</button>
+    </div>
+    <div class="admin-card" style="margin-top:1rem;padding:0.85rem 1rem;">
+      <div class="admin-flex-between"><div><p class="cell-strong" style="margin:0;">Autenticación de Dos Factores</p><p class="cell-xs cell-muted" style="margin:0.15rem 0 0;">Añade una capa extra de seguridad a tu cuenta</p></div><label class="admin-switch"><input type="checkbox" /><span class="admin-switch__track"></span></label></div>
+    </div>
+  </form>
+  {% elif cfg_tab == 'pagos' %}
+  <div class="admin-card">
+    <h3 class="admin-card__title">Métodos de Pago</h3>
+    <p class="admin-card__subtitle">Configura los métodos de pago aceptados</p>
+    <div class="admin-card" style="margin-top:1rem;padding:0.85rem 1rem;">
+      <div class="admin-flex-between"><div><p class="cell-strong" style="margin:0;">Tarjeta de Crédito/Débito</p><p class="cell-xs cell-muted" style="margin:0.15rem 0 0;">Visa, Mastercard, etc.</p></div><label class="admin-switch"><input type="checkbox" checked /><span class="admin-switch__track"></span></label></div>
+    </div>
+    <div class="admin-card" style="margin-top:0.75rem;padding:0.85rem 1rem;">
+      <div class="admin-flex-between"><div><p class="cell-strong" style="margin:0;">QR Bancario</p><p class="cell-xs cell-muted" style="margin:0.15rem 0 0;">Pagos mediante código QR</p></div><label class="admin-switch"><input type="checkbox" checked /><span class="admin-switch__track"></span></label></div>
+    </div>
+    <div class="admin-card" style="margin-top:0.75rem;padding:0.85rem 1rem;">
+      <div class="admin-flex-between"><div><p class="cell-strong" style="margin:0;">Transferencia Bancaria</p><p class="cell-xs cell-muted" style="margin:0.15rem 0 0;">Pagos por transferencia</p></div><label class="admin-switch"><input type="checkbox" checked /><span class="admin-switch__track"></span></label></div>
+    </div>
+    <div style="margin-top:1rem;display:flex;justify-content:flex-end;">
       <button type="button" class="admin-btn-primary"><i class="fas fa-floppy-disk"></i> Guardar Cambios</button>
     </div>
+    <hr style="border:none;border-top:1px solid rgba(51,65,85,0.6);margin:1.25rem 0;" />
+    <h3 class="admin-card__title">Transacciones (reales)</h3>
+    <p class="admin-card__subtitle">Consulta de tabla pago.</p>
+    <form class="admin-filters" method="get" action="{% url 'admin_panel' %}" style="margin-top:0.75rem;">
+      <input type="hidden" name="tab" value="configuracion" />
+      <input type="hidden" name="cfg_tab" value="pagos" />
+      <div class="admin-input-wrap"><i class="fas fa-magnifying-glass"></i><input class="admin-input" type="search" name="trans_q" value="{{ trans_q }}" placeholder="ID pago, referencia, código reserva..." /></div>
+      <select class="admin-select" name="trans_estado">
+        <option value="">Estado pago</option>
+        {% for e in estados_pago %}<option value="{{ e.nombre }}" {% if trans_estado == e.nombre %}selected{% endif %}>{{ e.nombre }}</option>{% endfor %}
+      </select>
+      <select class="admin-select" name="trans_metodo">
+        <option value="">Método pago</option>
+        {% for m in metodos_pago %}<option value="{{ m.nombre }}" {% if trans_metodo == m.nombre %}selected{% endif %}>{{ m.nombre }}</option>{% endfor %}
+      </select>
+      <button type="submit" class="admin-btn-primary" style="padding:0.5rem 1rem;font-size:0.8125rem;">Filtrar</button>
+    </form>
+    <div class="admin-table-scroll" style="margin-top:1rem;">
+      <table class="admin-table">
+        <thead><tr><th>ID</th><th>Reserva</th><th>Evento</th><th>Monto</th><th>Método</th><th>Estado</th><th>Fecha</th></tr></thead>
+        <tbody>
+          {% for p in transacciones_rows %}
+            <tr>
+              <td class="cell-xs">{{ p.id }}</td>
+              <td class="cell-xs">{{ p.reserva.codigo_reserva }}</td>
+              <td class="cell-xs">{{ p.reserva.evento.nombre }}</td>
+              <td>Bs.&nbsp;{{ p.monto|floatformat:2 }}</td>
+              <td class="cell-xs">{{ p.metodo_pago.nombre }}</td>
+              <td class="cell-xs">{{ p.estado_pago.nombre }}</td>
+              <td class="cell-xs cell-muted">{{ p.fecha_creacion|date:"d/m/Y H:i" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="7" style="text-align:center;padding:1rem;" class="cell-muted">Sin transacciones.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
+  {% else %}
+  <div class="admin-card">
+    <h3 class="admin-card__title">Configuración del Sistema</h3>
+    <p class="admin-card__subtitle">Ajustes generales del sistema</p>
+    <div class="admin-form-grid" style="margin-top:1rem;">
+      <div class="admin-form-stack"><label>Idioma</label><input type="text" value="Español" /></div>
+      <div class="admin-form-stack"><label>Zona Horaria</label><input type="text" value="America/La_Paz (BOT)" /></div>
+    </div>
+    <h4 style="margin:1.25rem 0 0.75rem;">Tiempo de Reserva</h4>
+    <div class="admin-form-stack">
+      <label>Duración de Bloqueo (minutos)</label>
+      <input type="number" value="15" />
+      <p class="cell-xs cell-muted" style="margin:0.35rem 0 0;">Tiempo que un asiento permanece reservado antes de liberarse</p>
+    </div>
+    <div style="margin-top:1rem;display:flex;justify-content:flex-end;">
+      <button type="button" class="admin-btn-primary"><i class="fas fa-floppy-disk"></i> Guardar Configuración</button>
+    </div>
+  </div>
+  {% endif %}
 </section>
 
 <!-- Modal crear evento -->

@@ -15,6 +15,10 @@ from apps.users.views import (
     admin_reserva_action,
     admin_report_export,
     admin_venta_detalle,
+    admin_soporte_reply,
+    admin_soporte_close,
+    admin_config_general_save,
+    admin_config_security_save,
 )
 from apps.events.views import admin_evento_create
 from apps.support.views import support_dashboard, ticket_messages_api, send_message_api, close_ticket_api
@@ -36,6 +40,10 @@ urlpatterns = [
     path('admin-panel/reserva-accion/', admin_reserva_action, name='admin_reserva_action'),
     path('admin-panel/reporte-export/', admin_report_export, name='admin_report_export'),
     path('admin-panel/ventas/<int:venta_id>/', admin_venta_detalle, name='admin_venta_detalle'),
+    path('admin-panel/soporte/reply/', admin_soporte_reply, name='admin_soporte_reply'),
+    path('admin-panel/soporte/close/', admin_soporte_close, name='admin_soporte_close'),
+    path('admin-panel/config/general/', admin_config_general_save, name='admin_config_general_save'),
+    path('admin-panel/config/security/', admin_config_security_save, name='admin_config_security_save'),
 
     # ================= RUTAS DE MÓDULOS (SEGÚN TU ESTRUCTURA DE CARPETAS) =================
     
