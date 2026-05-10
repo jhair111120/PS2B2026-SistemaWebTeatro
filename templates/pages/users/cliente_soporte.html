@@ -1,0 +1,135 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Soporte | Teatro Al Aire Libre{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/pages/users/cliente_soporte.css' %}">
+
+<div class="container support-container">
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="sidebar-tickets shadow-lg">
+                <a href="{% url 'cliente_soporte' %}" class="btn btn-blue w-100 py-2 mb-4 btn-animated fw-bold"
+                    style="border-radius: 8px;">
+                    <i class="fas fa-plus me-2"></i> Crear Nuevo Ticket
+                </a>
+
+                <h6 class="text-white fw-bold mb-3 small">MIS TICKETS</h6>
+
+                <div id="sidebarTicketList">
+                    {% for t in mis_tickets %}
+                    <a href="{% url 'cliente_soporte_detalle' t.id %}" id="side-ticket-{{ t.id }}"
+                        class="ticket-item {% if ticket_seleccionado and ticket_seleccionado.id == t.id %}active{% endif %}">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold fs-6 text-white">{{ t.numero_reclamo }}</span>
+                            <div class="status-container">
+                                {% if t.fecha_cierre %}
+                                <span class="status-badge status-closed">Cerrado</span>
+                                {% else %}
+                                <span class="status-badge status-open">Abierto</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="text-light small text-truncate opacity-75">{{ t.asunto }}</div>
+                        <div class="text-light mt-2 opacity-50" style="font-size: 0.75rem;">
+                            {{ t.fecha_creacion|date:"d M Y" }}</div>
+                    </a>
+                    {% empty %}
+                    <div class="text-center text-light opacity-50 mt-5 small">No tienes tickets de soporte en tu
+                        historial.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            {% if not ticket_seleccionado %}
+            <div class="ticket-form-card shadow-lg">
+                <h3 class="fw-bold text-white mb-2">¿En qué podemos ayudarte?</h3>
+                <p class="text-light opacity-75 mb-4">Abre un nuevo ticket de soporte y nuestro equipo te atenderá a la
+                    brevedad.</p>
+                <form action="{% url 'cliente_soporte' %}" method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="text-white fw-bold small mb-2">Asunto del Problema</label>
+                        <input type="text" name="asunto" class="input-dark text-white" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-white fw-bold small mb-2">Categoría</label>
+                        <select name="categoria" class="input-dark text-white" required>
+                            <option value="" disabled selected>Seleccionar...</option>
+                            {% for cat in categorias %}<option value="{{ cat.id }}">{{ cat.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="text-white fw-bold small mb-2">Descripción detallada</label>
+                        <textarea name="descripcion" class="input-dark text-white" rows="5" required></textarea>
+                    </div>
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-blue px-5 py-2 fw-bold btn-animated">Enviar y Abrir
+                            Chat</button>
+                    </div>
+                </form>
+            </div>
+            {% else %}
+            <div class="client-chat-box shadow-lg">
+                <div class="chat-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="support-avatar shadow"><i class="fas fa-headset"></i></div>
+                        <div id="statusIndicatorContainer">
+                            <div class="fw-bold text-white fs-5">Soporte Teatro La Paz</div>
+                            {% if ticket_seleccionado.fecha_cierre %}
+                            <div class="small text-danger fw-bold">Ticket Cerrado</div>
+                            {% else %}
+                            <div class="small fw-bold text-success" id="statusIndicator">
+                                <span class="online-indicator"></span>Asistente en línea
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <div class="small fw-bold" style="color: #00AEEF;">{{ ticket_seleccionado.numero_reclamo }}
+                        </div>
+                        <div class="text-light opacity-75 small">{{ ticket_seleccionado.categoria_soporte.nombre }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-messages" id="clientChatMessages">
+                    <div class="text-center text-light opacity-50 mt-5"><i class="fas fa-spinner fa-spin fs-2"></i>
+                        Cargando historial...</div>
+                </div>
+
+                <div id="chatBottomSection">
+                    {% if ticket_seleccionado.fecha_cierre %}
+                    <div class="banner-cerrado">
+                        <i class="fas fa-lock me-2"></i> Este ticket ha sido cerrado. Si tienes otra duda, crea uno
+                        nuevo.
+                    </div>
+                    {% else %}
+                    <div class="chat-input-area" id="chatInputSection">
+                        <div class="chat-input-wrapper">
+                            <input type="text" id="clientReplyInput" placeholder="Escribe tu mensaje aquí..."
+                                autocomplete="off">
+                            <button class="btn-send-client" onclick="sendClientMessage()"><i
+                                    class="fas fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <script>
+                const TICKET_ID = "{{ ticket_seleccionado.id }}";
+                const URL_MENSAJES_API = "{% url 'cliente_mensajes_api' ticket_seleccionado.id %}";
+                const URL_ENVIAR_MENSAJE_API = "{% url 'cliente_enviar_mensaje_api' ticket_seleccionado.id %}";
+                let ES_TICKET_CERRADO = {% if ticket_seleccionado.fecha_cierre %}true{% else %} false{% endif %};
+            </script>
+            <script src="{% static 'js/pages/users/cliente_soporte.js' %}"></script>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

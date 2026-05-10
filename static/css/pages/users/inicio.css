@@ -1,240 +1,152 @@
-/* ══════════════════════════════
-   VARIABLES (PALETA)
-══════════════════════════════ */
 :root {
-  --color-primary: #00AEEF;   /* Azul logo */
-  --color-accent: #00FFD1;    /* Aquamarine/Cyan */
-  --bg-main: #0A0E14;
-  --bg-card: #151920;
-  --bg-soft: #1E293B;
-  --text-main: #E5E7EB;
-  --text-muted: #9CA3AF;
+  --color-primary: #00AEEF;
+  --color-accent: #00FFD1;
+  --bg-dark-card: #151920;
 }
 
-/* ══════════════════════════════
-   BASE
-══════════════════════════════ */
-body {
-  background: var(--bg-main);
-  color: var(--text-main);
-  font-family: 'Inter', sans-serif;
+.bg-dark-card {
+  background-color: var(--bg-dark-card) !important;
 }
 
-/* ══════════════════════════════
-   HERO
-══════════════════════════════ */
 .hero-section {
-  background: linear-gradient(rgba(10, 14, 20, 0.75), rgba(10, 14, 20, 0.85)), url('/static/img/hero-bg.jpg') center/cover no-repeat;
-  min-height: 95vh;
-  display: flex;
-  align-items: center;
-  position: relative;
-}
-
-.hero-overlay {
-  display: none; /* Quitamos el overlay absoluto para usar el gradient en el background */
+  background: linear-gradient(rgba(10, 14, 20, 0.75), rgba(10, 14, 20, 0.85)),
+    url('../../../img/hero-bg.jpg') center/cover no-repeat;
 }
 
 .hero-title {
-  font-size: 5rem;
+  font-size: clamp(2.5rem, 6vw, 5.5rem);
   font-weight: 800;
-  color: white;
   line-height: 1.1;
+  margin-bottom: 0.2em;
+  font-family: 'Inter', sans-serif;
 }
 
-.hero-title--accent {
-  color: var(--color-accent);
+.hero-title-accent {
+  color: var(--color-accent) !important;
 }
 
 .hero-subtitle {
-  color: white;
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-size: 1.3rem;
+  font-weight: 500;
   max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
 }
 
-/* ══════════════════════════════
-   BOTONES
-══════════════════════════════ */
-.btn-primary {
-  background: var(--color-primary);
-  color: white;
-  padding: 0.6rem 1.5rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  border: none;
-  cursor: pointer;
-}
-
-.btn-buy {
-  background: #00AEEF;
-  color: white;
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  font-weight: 700;
-  font-size: 1.1rem;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(255,255,255,0.2);
-  width: 100%;
-}
-
-.btn-buy:hover {
-  background: #0099d1;
-  box-shadow: 0 5px 15px rgba(0, 174, 239, 0.4);
-}
-
-.btn-view-more {
-  background: #1A1C1E;
-  color: white;
-  padding: 0.75rem 2rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  border: 1px solid #374151;
+.btn-primary-custom {
+  background-color: var(--color-primary) !important;
+  color: #ffffff !important;
+  border: none !important;
   transition: all 0.3s ease;
 }
 
-.btn-view-more:hover {
-  background: #2D2F31;
-  border-color: #4B5563;
+.btn-primary-custom:hover {
+  background-color: #0099d1 !important;
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(0, 174, 239, 0.4);
 }
 
-.btn-outline {
-  background: rgba(30, 41, 59, 0.5);
-  border: 1px solid rgba(255,255,255,0.3);
-  color: white;
-  padding: 0.6rem 1.5rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  font-size: 1rem;
+.btn-outline-custom {
+  background-color: rgba(30, 41, 59, 0.5) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
   transition: all 0.3s ease;
 }
 
-.btn-outline:hover {
-  background: rgba(255,255,255,0.1);
-  border-color: white;
+.btn-outline-custom:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: #ffffff !important;
+  transform: translateY(-4px);
 }
 
-/* ══════════════════════════════
-   SECCIONES
-══════════════════════════════ */
-.section-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: white;
+.btn-buy-custom {
+  background-color: var(--color-primary) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  transition: all 0.3s ease;
 }
 
-.section-subtitle {
-  color: var(--text-muted);
+.btn-buy-custom:hover {
+  background-color: #0099d1 !important;
+  box-shadow: 0 5px 15px rgba(0, 174, 239, 0.5);
+  transform: translateY(-4px);
 }
 
-/* ══════════════════════════════
-   CARDS DE EVENTOS
-══════════════════════════════ */
+.btn-outline-view-more {
+  background-color: transparent !important;
+  color: #ffffff !important;
+  border: 1px solid #333 !important;
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+.btn-outline-view-more:hover {
+  background-color: var(--bg-dark-card) !important;
+  border-color: #555 !important;
+  transform: translateY(-4px);
+}
+
+.icon-primary {
+  color: var(--color-primary) !important;
+}
+
 .event-card {
-  background: var(--bg-card);
-  border-radius: 1rem;
-  overflow: hidden;
-  transition: all 0.3s ease;
+  transition: all 0.4s ease;
   border: 1px solid transparent;
 }
 
 .event-card:hover {
-  transform: translateY(-6px);
-  border-color: var(--color-primary);
+  transform: translateY(-8px);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
 }
 
-.card-img {
-  transition: transform 0.4s ease;
+.custom-card-img {
+  height: 250px;
+  object-fit: cover;
+  transition: transform 0.5s ease;
 }
 
-.event-card:hover .card-img {
+.event-card:hover .custom-card-img {
   transform: scale(1.05);
 }
 
-/* ══════════════════════════════
-   BADGE FECHA
-══════════════════════════════ */
 .event-date-badge {
-  background: rgba(10, 14, 20, 0.9);
-  color: white;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.25rem;
-  font-size: 0.7rem;
-  text-align: center;
-  backdrop-filter: blur(5px);
-  font-weight: bold;
+  background: #0A0E14;
+  width: 85px;
+  border-bottom-left-radius: 8px;
+  line-height: 1.2;
 }
 
 .badge-day {
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   font-weight: 800;
   color: var(--color-primary);
-  line-height: 1;
 }
 
-/* ══════════════════════════════
-   TEXTO EVENTO
-══════════════════════════════ */
-.event-title {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: white;
-}
-
-.event-meta {
-  color: var(--text-main);
-  font-size: 0.95rem;
-}
-
-.event-label {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-}
-
-.event-price {
-  color: white;
-  font-weight: 800;
-  font-size: 1.2rem;
-}
-
-/* ══════════════════════════════
-   MAPA
-══════════════════════════════ */
 .map-container {
-  border-radius: 1rem;
+  border: 1px solid #1E293B;
   overflow: hidden;
-  border: 1px solid var(--bg-soft);
-  transition: all 0.3s ease;
+  transition: all 0.4s ease;
 }
 
-.map-container:hover {
+.border-map-glow:hover {
   border-color: var(--color-primary);
-  box-shadow: 0 10px 30px rgba(14, 165, 233, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 174, 239, 0.2) !important;
 }
 
-/* ══════════════════════════════
-   ANIMACIONES
-══════════════════════════════ */
-.fade-in {
+.map-img {
+  transition: transform 0.4s ease;
+}
+
+.map-container:hover .map-img {
+  transform: scale(1.02);
+}
+
+.fade-in-up {
   opacity: 0;
   transform: translateY(20px);
-  animation: fadeInUp 0.8s ease forwards;
+  animation: fadeInUpAnimation 0.8s ease forwards;
 }
 
-.fade-in:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.fade-in:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-@keyframes fadeInUp {
+@keyframes fadeInUpAnimation {
   to {
     opacity: 1;
     transform: translateY(0);

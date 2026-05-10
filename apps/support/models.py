@@ -82,7 +82,6 @@ class Soporte(models.Model):
 
     fecha_cierre = models.DateTimeField(blank=True, null=True)
 
-    # 🔹 NUEVO
     actualizado_en = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -97,11 +96,9 @@ class Soporte(models.Model):
         return f"{self.numero_reclamo} - {self.asunto}"
 
     def clean(self):
-        """Validaciones de flujo de soporte"""
         if self.fecha_cierre and self.fecha_cierre < self.fecha_creacion:
             raise ValidationError("La fecha de cierre no puede ser anterior a la creación.")
 
-        # Validación lógica de estado
         if self.estado_soporte and self.estado_soporte.nombre == 'cerrado':
             if not self.fecha_cierre:
                 raise ValidationError("Un ticket cerrado debe tener fecha de cierre.")

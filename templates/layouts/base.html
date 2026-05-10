@@ -1,417 +1,216 @@
 {% load static tailwind_tags %}
-
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>
-      {% block title %}Teatro Al Aire Libre - Jaime Laredo{% endblock %}
-    </title>
-    {% tailwind_css %}
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
-    <link href="https://fonts.googleapis.com/css2?family=IM+Fell+Great+Primer+SC&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/layouts/base.css' %}" />
-    <style>
-      :root {
-        --bg-navbar: #0A0E14;
-        --color-blue-action: #00AEEF;
-        --font-logo: 'IM Fell Great Primer SC', serif;
-      }
-      .nav-logo-main { font-family: var(--font-logo) !important; font-size: 1.5rem; letter-spacing: 0.05em; color: white; }
-      .nav-logo-sub { font-family: var(--font-logo) !important; font-size: 1.1rem; color: #E5E7EB; }
-      .nav-link { padding: 0.5rem 1.5rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 500; color: white; transition: all 0.3s ease; text-decoration: none; }
-      .nav-link:hover { color: var(--color-blue-action); }
-      .nav-link.active { background-color: var(--color-blue-action); color: white !important; }
-      .nav-btn-primary { background-color: var(--color-blue-action) !important; color: white !important; border-radius: 0.5rem !important; font-weight: 600 !important; padding: 0.5rem 1.25rem !important; border: none !important; font-size: 0.875rem !important; cursor: pointer !important; transition: all 0.3s ease !important; }
-      .nav-btn-primary:hover { background-color: #0099d1 !important; }
-      .nav-btn-outline { border: 1px solid rgba(255, 255, 255, 0.3) !important; background: transparent !important; color: white !important; border-radius: 0.5rem !important; font-weight: 600 !important; padding: 0.5rem 1.25rem !important; font-size: 0.875rem !important; cursor: pointer !important; transition: all 0.3s ease !important; }
-      .nav-btn-outline:hover { background-color: rgba(255, 255, 255, 0.1) !important; }
 
-      /* FOOTER CUSTOM STYLES */
-      .footer-logo-main { font-family: var(--font-logo) !important; font-size: 2.2rem !important; color: white !important; line-height: 1.1 !important; }
-      .footer-logo-sub { font-family: var(--font-logo) !important; font-size: 1.4rem !important; color: white !important; }
-      .footer-header { color: white !important; font-weight: 700 !important; font-size: 1.25rem !important; margin-bottom: 1.5rem !important; }
-      .footer-social-btn { width: 3.5rem !important; height: 3rem !important; border-radius: 2rem !important; border: 1px solid rgba(255,255,255,0.4) !important; font-size: 1.5rem !important; display: flex !important; align-items: center !important; justify-content: center !important; transition: all 0.3s !important; }
-      .footer-social-btn:hover { border-color: white !important; transform: scale(1.05) !important; }
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Teatro Al Aire Libre - Jaime Laredo{% endblock %}</title>
 
-      /* Botón flotante de soporte (Miguel) */
-      .floating-chat-btn {
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        width: 65px;
-        height: 65px;
-        background: linear-gradient(135deg, #00AEEF, #10B981);
-        color: white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.8rem;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-        z-index: 1000;
-        transition: 0.3s;
-        text-decoration: none;
-        border: none;
-      }
-      .floating-chat-btn:hover {
-        transform: scale(1.1);
-        color: white;
-        box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
-      }
-      .chat-badge {
-        position: absolute;
-        top: 0;
-        right: 0;
-        background-color: #ef4444;
-        color: white;
-        font-size: 0.8rem;
-        font-weight: bold;
-        width: 22px;
-        height: 22px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 2px solid #0b0e14;
-      }
-    </style>
-  </head>
+  {% tailwind_css %}
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link
+    href="https://fonts.googleapis.com/css2?family=IM+Fell+Great+Primer+SC&family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/layouts/base.css' %}">
+</head>
 
-  <body class="flex flex-col min-h-screen">
+<body class="d-flex flex-column min-vh-screen">
 
-    <!-- ═══════════════════════════════════════════
-         NAVBAR
-    ════════════════════════════════════════════ -->
-    <header>
-      <nav class="text-white sticky top-0 z-50 bg-[#0A0E14] border-b border-white/5" style="height: 90px !important; min-height: 90px !important;">
-        <div class="max-w-7xl mx-auto px-6 h-full flex items-center justify-between" style="height: 90px !important;">
-          <!-- Logo -->
-          <a href="{% url 'inicio' %}" class="flex flex-col leading-tight group" style="text-decoration: none;">
-            <span class="nav-logo-main group-hover:text-blue-400 transition">
-              TEATRO AL AIRE LIBRE
-            </span>
-            <span class="nav-logo-sub"> "JAIME LAREDO" </span>
-          </a>
+  {% include 'components/navbar.html' %}
 
-          <!-- Menu Desktop -->
-          <div class="flex items-center space-x-2">
-            <a href="{% url 'inicio' %}" class="nav-link {% if request.resolver_match.url_name == 'inicio' %}active{% endif %}">Inicio</a>
-            <a href="{% url 'eventos' %}" class="nav-link {% if request.resolver_match.url_name == 'eventos' %}active{% endif %}">Eventos</a>
-            <a href="{% url 'mis_tickets' %}" class="nav-link {% if request.resolver_match.url_name == 'mis_tickets' %}active{% endif %}">Mis entradas</a>
+  <main class="flex-grow-1">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer
+    style="background-color: #151920; color: white; border-top: 1px solid rgba(255,255,255,0.05); padding: 50px 0 30px 0; font-family: 'Inter', sans-serif;">
+    <div style="max-width: 1280px; margin: 0 auto; padding: 0 40px;">
+      <div style="display: flex; flex-wrap: wrap; gap: 30px; justify-content: space-between; align-items: flex-start;">
+
+        <div style="flex: 1.5; min-width: 300px; margin-bottom: 20px;">
+          <div style="display: flex; flex-direction: column; margin-bottom: 20px;">
+            <span
+              style="font-family: 'IM Fell Great Primer SC', serif; font-size: 1.8rem; letter-spacing: 0.05em; color: white; line-height: 1.2;">TEATRO
+              AL AIRE LIBRE</span>
+            <span
+              style="font-family: 'IM Fell Great Primer SC', serif; font-size: 1.2rem; color: #E5E7EB; letter-spacing: 0.05em;">"JAIME
+              LAREDO"</span>
+          </div>
+          <p style="font-size: 14px; color: #D1D5DB; line-height: 1.6; max-width: 320px; font-weight: 500;">
+            El mejor espacio cultural de Bolivia para disfrutar de espectáculos únicos bajo las estrellas.
+          </p>
+        </div>
+
+        <div style="width: 180px; margin-bottom: 20px;">
+          <h5 style="margin-top: 0; font-weight: bold; color: white; font-size: 1.1rem; margin-bottom: 20px;">Enlaces
+            Rápidos</h5>
+          <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px;">
+            <li><a href="{% url 'eventos' %}"
+                style="color: #D1D5DB; text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.3s;"
+                onmouseover="this.style.color='white'" onmouseout="this.style.color='#D1D5DB'">Ver Eventos</a></li>
+            <li><a href="{% url 'mis_tickets' %}"
+                style="color: #D1D5DB; text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.3s;"
+                onmouseover="this.style.color='white'" onmouseout="this.style.color='#D1D5DB'">Mis entradas</a></li>
+            <li><a href="#"
+                style="color: #D1D5DB; text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.3s;"
+                onmouseover="this.style.color='white'" onmouseout="this.style.color='#D1D5DB'">Sobre Nosotros</a></li>
+            <li><a href="#"
+                style="color: #D1D5DB; text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.3s;"
+                onmouseover="this.style.color='white'" onmouseout="this.style.color='#D1D5DB'">Contacto</a></li>
+          </ul>
+        </div>
+
+        <div style="width: 230px; margin-bottom: 20px;">
+          <h5 style="margin-top: 0; font-weight: bold; color: white; font-size: 1.1rem; margin-bottom: 20px;">Contacto
+          </h5>
+          <div style="display: flex; flex-direction: column; gap: 18px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <i class="fas fa-phone-alt" style="color: var(--color-blue, #0EA5E9); font-size: 18px;"></i>
+              <span style="color: #D1D5DB; font-size: 14px; font-weight: 500;">+591 2 1234567</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <i class="fas fa-envelope" style="color: var(--color-blue, #0EA5E9); font-size: 18px;"></i>
+              <span style="color: #D1D5DB; font-size: 14px; font-weight: 500;">info@teatrolapaz.bo</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="width: 200px; margin-bottom: 20px;">
+          <h5 style="margin-top: 0; font-weight: bold; color: white; font-size: 1.1rem; margin-bottom: 20px;">Síguenos
+          </h5>
+          <div style="display: flex; gap: 20px;">
+            <a href="#" style="text-decoration: none; color: white; font-size: 1.4rem; transition: transform 0.3s;"
+              onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"><i
+                class="fab fa-facebook-f"></i></a>
+            <a href="#" style="text-decoration: none; color: white; font-size: 1.4rem; transition: transform 0.3s;"
+              onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"><i
+                class="fab fa-instagram"></i></a>
+            <a href="#" style="text-decoration: none; color: white; font-size: 1.4rem; transition: transform 0.3s;"
+              onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"><i
+                class="fab fa-tiktok"></i></a>
+          </div>
+        </div>
+
+      </div>
+
+      <div
+        style="margin-top: 40px; padding-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; color: #D1D5DB; font-size: 13px; font-weight: 500;">
+        <span>© 2026 Teatro al Aire Libre La Paz. Todos los derechos reservados.</span>
+        <div style="display: flex; gap: 25px;">
+          <a href="#" style="color: #D1D5DB; text-decoration: none; transition: color 0.3s;"
+            onmouseover="this.style.color='white'" onmouseout="this.style.color='#D1D5DB'">Términos y Condiciones</a>
+          <a href="#" style="color: #D1D5DB; text-decoration: none; transition: color 0.3s;"
+            onmouseover="this.style.color='white'" onmouseout="this.style.color='#D1D5DB'">Política de Privacidad</a>
+        </div>
+      </div>
+
+    </div>
+  </footer>
+
+  {% if request.session.usuario_id %}
+  <a href="{% url 'cliente_soporte' %}" class="floating-chat-btn">
+    <i class="far fa-comment-dots"></i>
+    <span class="chat-badge">!</span>
+  </a>
+  {% else %}
+  <a href="#" class="floating-chat-btn" data-bs-toggle="modal" data-bs-target="#authModal"
+    onclick="switchAuthTab('login')">
+    <i class="far fa-comment-dots"></i>
+    <span class="chat-badge">!</span>
+  </a>
+  {% endif %}
+
+  <div class="modal fade" id="authModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 450px;">
+      <div class="modal-content position-relative">
+        <button type="button" class="btn-close-custom" data-bs-dismiss="modal" aria-label="Cerrar"><i
+            class="fas fa-times"></i></button>
+        <div class="modal-body p-4">
+          <div class="modal-brand mt-2">TEATRO AL AIRE LIBRE<br>"JAIME LAREDO"</div>
+          <h3 class="text-center fw-bold mb-4" style="color: black;">Iniciar Sesión o Registrarse</h3>
+
+          <div class="auth-toggle-box">
+            <button class="auth-toggle-btn active" id="tab-login" onclick="switchAuthTab('login')">Iniciar
+              Sesión</button>
+            <button class="auth-toggle-btn" id="tab-signup" onclick="switchAuthTab('signup')">Registrarse</button>
           </div>
 
-          <!-- Right Section -->
-          <div class="flex items-center" style="gap: 40px !important;">
-            <div class="relative cursor-pointer group" style="display: inline-block;">
-              <i class="fas fa-shopping-cart" style="font-size: 28px; color: #E5E7EB;"></i>
-              <span class="absolute" style="top: -8px; right: -8px; background-color: #BE123C; color: white; font-size: 12px; font-weight: 700; border-radius: 6px; padding: 1px 6px; min-width: 18px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3); line-height: 1.2;">
-                2
-              </span>
-            </div>
-            {% if request.session.usuario_id %}
-              <div class="relative">
-                <button onclick="toggleDropdown()" class="flex items-center transition" style="background-color: #0A0E14 !important; border: 1px solid #4B5563 !important; border-radius: 12px !important; padding: 4px 12px 4px 4px !important; gap: 12px !important; cursor: pointer !important;">
-                  <div style="width: 36px !important; height: 36px !important; display: flex !important; align-items: center !important; justify-content: center !important; border-radius: 50% !important; background-color: #00FFD1 !important; color: white !important;">
-                    <i class="fas fa-user" style="font-size: 16px !important; color: white !important;"></i>
-                  </div>
-                  <span style="color: white !important; font-weight: 700 !important; font-size: 14px !important; font-family: 'Inter', sans-serif !important;">Mi Perfil</span>
-                </button>
+          <div id="form-login">
+            <form action="{% url 'login' %}" method="POST">
+              {% csrf_token %}
+              <div class="mb-3">
+                <input type="email" name="correo" class="form-control custom-input" placeholder="Correo Electrónico"
+                  required oninput="this.value = this.value.replace(/^\s+/, '')">
+              </div>
+              <div class="mb-4 password-wrapper">
+                <input type="password" name="password" class="form-control custom-input pwd-input"
+                  placeholder="Contraseña" required oninput="this.value = this.value.replace(/^\s+/, '')">
+                <i class="fas fa-eye-slash password-toggle" onclick="togglePassword(this)"></i>
+              </div>
+              <button type="submit" class="btn btn-dark-action mb-3">Acceder</button>
+              <div class="text-start"><a href="#" class="text-muted text-decoration-none small">Olvidé mi Contraseña</a>
+              </div>
+            </form>
+          </div>
 
-                <!-- Dropdown de Usuario -->
-                <div id="dropdownMenu" class="hidden absolute right-0 mt-3 w-64 rounded-xl overflow-hidden shadow-2xl border border-white/10 bg-[#151920] z-[100]" style="background-color: #151920 !important;">
-                  <!-- Info Usuario -->
-                  <div class="px-4 py-3 border-b border-white/10" style="background-color: #1E293B !important;">
-                    <p class="text-sm font-semibold text-white">
-                      {{ request.session.usuario_nombre_completo }}
-                    </p>
-                    <p class="text-xs text-gray-400">
-                      {{ request.session.usuario_correo }}
-                    </p>
-                  </div>
-
-                  <!-- Opciones -->
-                  <div class="py-2 text-sm" style="background-color: #151920 !important;">
-                    <a href="{% url 'mis_tickets' %}" class="flex items-center px-4 py-2 text-gray-300 hover:bg-white/5 hover:text-white transition no-underline">
-                      <i class="fas fa-ticket-alt mr-3 text-xs text-[#00AEEF]"></i> Mis Entradas
-                    </a>
-
-                    <a href="{% url 'perfil' %}" class="flex items-center px-4 py-2 text-gray-300 hover:bg-white/5 hover:text-white transition no-underline">
-                      <i class="far fa-user mr-3 text-xs text-[#00AEEF]"></i> Ver Perfil
-                    </a>
-
-                    <div class="border-t border-white/5 my-2"></div>
-
-                    <a href="{% url 'logout' %}" class="flex items-center px-4 py-2 text-red-400 hover:bg-red-500/10 transition no-underline">
-                      <i class="fas fa-sign-out-alt mr-3 text-xs"></i> Cerrar Sesión
-                    </a>
-                  </div>
+          <div id="form-signup" class="d-none">
+            <form action="{% url 'signup' %}" method="POST" id="signupForm">
+              {% csrf_token %}
+              <div class="mb-3">
+                <input type="email" name="correo" id="reg-correo" class="form-control custom-input"
+                  placeholder="Ej. usuario123@dominio.bo" required onkeyup="valEmail()"
+                  oninput="this.value = this.value.replace(/^\s+/, '')">
+                <div id="email-feed" class="feedback-msg">Debe ser un correo válido con su dominio.</div>
+              </div>
+              <div class="row g-2 mb-3">
+                <div class="col-6">
+                  <input type="text" name="nombre" id="reg-nombre" class="form-control custom-input"
+                    placeholder="Nombre" required onkeyup="valNombre('reg-nombre')"
+                    oninput="this.value = this.value.replace(/^\s+/, '').replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')">
+                  <div id="reg-nombre-feed" class="feedback-msg">Inicie con mayúscula, mínimo 2 letras.</div>
+                </div>
+                <div class="col-6">
+                  <input type="text" name="apellido" id="reg-apellido" class="form-control custom-input"
+                    placeholder="Apellido" required onkeyup="valApellido('reg-apellido')"
+                    oninput="this.value = this.value.replace(/^\s+/, '').replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')">
+                  <div id="reg-apellido-feed" class="feedback-msg">Cada palabra debe iniciar con mayúscula y tener
+                    mínimo 2 letras.</div>
                 </div>
               </div>
-            {% else %}
-              <div class="flex items-center" style="gap: 15px !important;">
-                <button onclick="openAuthModal('login')" class="nav-btn-outline">Iniciar Sesión</button>
-                <button onclick="openAuthModal('signup')" class="nav-btn-primary">Registrarse</button>
+
+              <div class="mb-3">
+                <div class="password-wrapper">
+                  <input type="password" name="password" id="reg-pwd" class="form-control custom-input pwd-input"
+                    placeholder="Contraseña" required onkeyup="valPwd()"
+                    oninput="this.value = this.value.replace(/^\s+/, '')">
+                  <i class="fas fa-eye-slash password-toggle" onclick="togglePassword(this)"></i>
+                </div>
+                <div id="pwd-feed" class="feedback-msg">Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1
+                  especial (@$!%*?&.-).</div>
               </div>
-            {% endif %}
+
+              <div class="input-group mb-1 phone-container-box" id="phone-container"
+                style="border: 2px solid black; border-radius: 10px; overflow: hidden;">
+                <button class="btn btn-light dropdown-toggle bg-white border-0" type="button"
+                  style="border-right: 1px solid #ddd !important;" disabled>🇧🇴</button>
+                <input type="tel" name="telefono" id="reg-tel" class="form-control border-0 shadow-none"
+                  placeholder="Celular (8 dígitos)" maxlength="8" onkeyup="valTel()"
+                  oninput="this.value = this.value.replace(/^\s+/, '').replace(/[^0-9]/g, '')">
+              </div>
+              <div id="tel-feed" class="feedback-msg mb-3">Debe tener exactamente 8 dígitos y comenzar con 6 o 7.</div>
+
+              <button type="submit" class="btn btn-dark-action mb-3 mt-3">Registrarse</button>
+            </form>
           </div>
         </div>
-      </nav>
-    </header>
-
-    <!-- ═══════════════════════════════════════════
-         TOASTS
-    ════════════════════════════════════════════ -->
-    <div class="fixed top-36 right-5 z-50 flex flex-col gap-3">
-      {% if messages %}
-        {% for message in messages %}
-          <div class="toast flex items-center gap-3 px-4 py-3 rounded-lg
-                      {% if message.tags == 'error' %}toast--error{% else %}toast--success{% endif %}">
-            <i class="fas {% if message.tags == 'error' %}fa-exclamation-circle{% else %}fa-check-circle{% endif %}"></i>
-            <span class="text-sm font-medium">{{ message }}</span>
-          </div>
-        {% endfor %}
-      {% endif %}
+      </div>
     </div>
+  </div>
 
-    <!-- ═══════════════════════════════════════════
-         MODAL DE AUTENTICACIÓN (Login / Signup)
-         —————————————————————————————————————————
-         • Se abre llamando: openAuthModal('login')
-           o openAuthModal('signup') desde cualquier
-           parte del sitio (navbar, botones CTA, etc.)
-         • El overlay oscuro cierra el modal al hacer clic.
-         • Toda la apariencia va en auth-modal.css.
-    ════════════════════════════════════════════ -->
-    <div id="auth-modal"
-         class="fixed inset-0 z-[100] hidden items-center justify-center px-4">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{% static 'js/layouts/base.js' %}"></script>
+</body>
 
-      <!-- Overlay / fondo oscuro -->
-      <div id="auth-modal-overlay"
-           class="absolute inset-0"
-           onclick="closeAuthModal()">
-      </div>
-
-      <!-- Tarjeta del modal -->
-      <div class="auth-modal-card relative w-full max-w-md rounded-2xl p-8 z-10">
-
-        <!-- Botón cerrar (×) -->
-        <button class="auth-modal-close absolute top-4 right-4"
-                onclick="closeAuthModal()"
-                aria-label="Cerrar">
-          <i class="fas fa-times"></i>
-        </button>
-
-        <!-- ── Logo / Título ───────────────────── -->
-        <div class="flex flex-col items-center mb-8 gap-2">
-          <span class="auth-logo"><i class="fas fa-ticket-alt"></i></span>
-          <h2 class="auth-title text-2xl font-bold">Teatro Jaime Laredo</h2>
-          <p class="auth-subtitle text-sm">Accede o crea tu cuenta para continuar</p>
-        </div>
-
-        <!-- ── Tabs Login / Registro ───────────── -->
-        <div class="auth-tabs flex rounded-lg overflow-hidden mb-6">
-          <button id="tab-login"
-                  class="auth-tab auth-tab--active w-1/2 py-2 text-sm font-semibold"
-                  onclick="switchTab('login')">
-            Iniciar sesión
-          </button>
-          <button id="tab-signup"
-                  class="auth-tab w-1/2 py-2 text-sm font-semibold"
-                  onclick="switchTab('signup')">
-            Registrarse
-          </button>
-        </div>
-
-        <!-- ── FORMULARIO: Iniciar sesión ─────── -->
-        <div id="form-login" class="flex flex-col gap-4">
-          <form method="POST" action="{% url 'login' %}" class="flex flex-col gap-4">
-            {% csrf_token %}
-
-            <div class="input-group">
-              <label class="input-label" for="login-correo">Correo electrónico</label>
-              <div class="input-wrapper">
-                <i class="fas fa-envelope input-icon"></i>
-                <input id="login-correo" type="email" name="correo"
-                       class="input input--icon" placeholder="tu@correo.com" />
-              </div>
-            </div>
-
-            <div class="input-group">
-              <label class="input-label" for="login-password">Contraseña</label>
-              <div class="input-wrapper">
-                <i class="fas fa-lock input-icon"></i>
-                <input id="login-password" type="password" name="password"
-                       class="input input--icon" placeholder="••••••••" />
-                <button type="button" class="input-eye" onclick="togglePassword(this)">
-                  <i class="fas fa-eye"></i>
-                </button>
-              </div>
-            </div>
-
-            <div class="flex justify-end">
-              <a href="#" class="auth-forgot text-sm">¿Olvidaste tu contraseña?</a>
-            </div>
-
-            <button type="submit" class="btn-auth">
-              <i class="fas fa-sign-in-alt"></i> Acceder
-            </button>
-          </form>
-        </div>
-
-        <!-- ── FORMULARIO: Registrarse ─────────── -->
-        <div id="form-signup" class="hidden flex flex-col gap-4">
-          <form method="POST" action="{% url 'signup' %}" class="flex flex-col gap-4">
-            {% csrf_token %}
-
-            <div class="input-group">
-              <label class="input-label" for="signup-correo">Correo electrónico</label>
-              <div class="input-wrapper">
-                <i class="fas fa-envelope input-icon"></i>
-                <input id="signup-correo" type="email" name="correo"
-                       class="input input--icon" placeholder="tu@correo.com" />
-              </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-              <div class="input-group">
-                <label class="input-label" for="signup-nombre">Nombre</label>
-                <input id="signup-nombre" type="text" name="nombre"
-                       class="input" placeholder="Juan" />
-              </div>
-              <div class="input-group">
-                <label class="input-label" for="signup-apellido">Apellido</label>
-                <input id="signup-apellido" type="text" name="apellido"
-                       class="input" placeholder="Pérez" />
-              </div>
-            </div>
-
-            <div class="input-group">
-              <label class="input-label" for="signup-password">Contraseña</label>
-              <div class="input-wrapper">
-                <i class="fas fa-lock input-icon"></i>
-                <input id="signup-password" type="password" name="password"
-                       class="input input--icon" placeholder="••••••••" />
-                <button type="button" class="input-eye" onclick="togglePassword(this)">
-                  <i class="fas fa-eye"></i>
-                </button>
-              </div>
-            </div>
-
-            <div class="input-group">
-              <label class="input-label" for="signup-telefono">Teléfono</label>
-              <div class="input-wrapper">
-                <i class="fas fa-phone input-icon"></i>
-                <input id="signup-telefono" type="tel" name="telefono"
-                       class="input input--icon" placeholder="70012345" />
-              </div>
-            </div>
-
-            <button type="submit" class="btn-auth">
-              <i class="fas fa-user-plus"></i> Registrarse
-            </button>
-          </form>
-        </div>
-
-      </div>{# /auth-modal-card #}
-    </div>{# /auth-modal #}
-
-    <!-- ═══════════════════════════════════════════
-         CONTENIDO DE LA PÁGINA
-    ════════════════════════════════════════════ -->
-    <main class="flex-grow w-full">
-      {% block content %}{% endblock %}
-    </main>
-
-    <!-- ═══════════════════════════════════════════
-         FOOTER
-    ════════════════════════════════════════════ -->
-    <footer style="background-color: #1E293B; color: white; border-top: 1px solid rgba(255,255,255,0.1); padding: 50px 0 30px 0; font-family: 'Inter', sans-serif;">
-      <div style="max-width: 1280px; margin: 0 auto; padding: 0 40px;">
-        
-        <div style="display: flex; flex-wrap: wrap; gap: 30px; justify-content: space-between; align-items: flex-start;">
-          
-          <!-- Columna 1: Logo e Info -->
-          <div style="flex: 1.5; min-width: 300px; margin-bottom: 20px;">
-            <div style="display: flex; flex-direction: column; margin-bottom: 20px;">
-              <span class="footer-logo-main" style="display: block;">TEATRO AL AIRE LIBRE</span>
-              <span class="footer-logo-sub" style="display: block;">"JAIME LAREDO"</span>
-            </div>
-            <p style="font-size: 14px; color: #D1D5DB; line-height: 1.5; max-width: 320px; font-weight: 600;">
-              El mejor espacio cultural de Bolivia para disfrutar de espectáculos únicos bajo las estrellas.
-            </p>
-          </div>
-
-          <!-- Columna 2: Enlaces Rápidos -->
-          <div style="width: 180px; margin-bottom: 20px;">
-            <h5 class="footer-header" style="margin-top: 0;">Enlaces Rapidos</h5>
-            <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px;">
-              <li><a href="{% url 'eventos' %}" style="color: #D1D5DB; text-decoration: none; font-size: 14px; font-weight: 600;">Ver Eventos</a></li>
-              <li><a href="{% url 'mis_tickets' %}" style="color: #D1D5DB; text-decoration: none; font-size: 14px; font-weight: 600;">Mis entradas</a></li>
-              <li><a href="#" style="color: #D1D5DB; text-decoration: none; font-size: 14px; font-weight: 600;">Sobre Nosotros</a></li>
-              <li><a href="#" style="color: #D1D5DB; text-decoration: none; font-size: 14px; font-weight: 600;">Contacto</a></li>
-            </ul>
-          </div>
-
-          <!-- Columna 3: Contacto -->
-          <div style="width: 230px; margin-bottom: 20px;">
-            <h5 class="footer-header" style="margin-top: 0;">Contacto</h5>
-            <div style="display: flex; flex-direction: column; gap: 18px;">
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <i class="fas fa-phone-alt" style="color: #00AEEF; font-size: 18px;"></i>
-                <span style="color: #FFFFFF; font-size: 14px; font-weight: 600;">+591 2 1234567</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <i class="fas fa-envelope" style="color: #00AEEF; font-size: 18px;"></i>
-                <span style="color: #FFFFFF; font-size: 14px; font-weight: 600;">info@teatrolapaz.bo</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Columna 4: Síguenos -->
-          <div style="width: 200px; margin-bottom: 20px;">
-            <h5 class="footer-header" style="margin-top: 0;">Síguenos</h5>
-            <div style="display: flex; gap: 12px;">
-              <a href="#" class="footer-social-btn" style="text-decoration: none; color: white;"><i class="fab fa-facebook-f"></i></a>
-              <a href="#" class="footer-social-btn" style="text-decoration: none; color: white;"><i class="fab fa-instagram"></i></a>
-              <a href="#" class="footer-social-btn" style="text-decoration: none; color: white;"><i class="fab fa-tiktok"></i></a>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- Barra Inferior -->
-        <div style="margin-top: 40px; padding-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; color: #D1D5DB; font-size: 13px; font-weight: 600;">
-          <span>© 2026 Teatro al Aire Libre La Paz. Todos los derechos reservados.</span>
-          <div style="display: flex; gap: 25px;">
-            <a href="#" style="color: #D1D5DB; text-decoration: none;">Términos y Condiciones</a>
-            <a href="#" style="color: #D1D5DB; text-decoration: none;">Política de Privacidad</a>
-          </div>
-        </div>
-
-      </div>
-    </footer>
-
-    {% if request.session.usuario_id %}
-    <a href="{% url 'cliente_soporte' %}" class="floating-chat-btn" aria-label="Soporte">
-      <i class="far fa-comment-dots"></i>
-      <span class="chat-badge">!</span>
-    </a>
-    {% else %}
-    <a href="#" class="floating-chat-btn" onclick="openAuthModal('login'); return false;" aria-label="Iniciar sesión">
-      <i class="far fa-comment-dots"></i>
-      <span class="chat-badge">!</span>
-    </a>
-    {% endif %}
-
-    <!-- ═══════════════════════════════════════════
-         SCRIPTS
-    ════════════════════════════════════════════ -->
-    <script src="{% static 'js/layouts/base.js' %}"></script>
-    <script src="{% static 'js/components/navbar.js' %}"></script>
-  </body>
 </html>

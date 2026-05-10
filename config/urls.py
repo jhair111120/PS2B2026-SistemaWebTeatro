@@ -7,23 +7,14 @@ from django.views.generic import TemplateView
 
 # Importación de vistas de aplicaciones
 from apps.users.views import (
-    signup_view,
-    login_view,
-    logout_view,
-    perfil_view,
-    admin_panel,
-    admin_reserva_action,
-    admin_report_export,
-    admin_venta_detalle,
-    admin_soporte_reply,
-    admin_soporte_close,
-    admin_config_general_save,
-    admin_config_security_save,
-    admin_usuario_action,
+    signup_view, login_view, logout_view, perfil_view, admin_panel,
+    admin_reserva_action, admin_report_export, admin_venta_detalle,
+    admin_soporte_reply, admin_soporte_close, admin_config_general_save,
+    admin_config_security_save, admin_usuario_action,
 )
 from apps.events.views import admin_evento_create, admin_evento_delete, admin_evento_update
 from apps.support.views import (
-    support_dashboard, ticket_messages_api, send_message_api, close_ticket_api,
+    support_dashboard, ticket_messages_api, send_message_api, close_ticket_api, tickets_list_api,
     cliente_soporte_view, cliente_mensajes_api, cliente_enviar_mensaje_api
 )
 
@@ -42,6 +33,8 @@ urlpatterns = [
     path('signup/', signup_view, name='signup'),
     path('login/', login_view, name='login'),
     path('logout/', logout_view, name='logout'),
+    
+    # ================= RUTAS DE ADMINISTRACIÓN =================
     path('admin-panel/', admin_panel, name='admin_panel'),
     path('admin-panel/eventos/nuevo/', admin_evento_create, name='admin_evento_nuevo'),
     path('admin-panel/eventos/<int:evento_id>/editar/', admin_evento_update, name='admin_evento_editar'),
@@ -55,18 +48,10 @@ urlpatterns = [
     path('admin-panel/config/security/', admin_config_security_save, name='admin_config_security_save'),
     path('admin-panel/usuarios/action/', admin_usuario_action, name='admin_usuario_action'),
 
-    # ================= RUTAS DE MÓDULOS (SEGÚN TU ESTRUCTURA DE CARPETAS) =================
-    
-    # Eventos
+    # ================= RUTAS DE MÓDULOS =================
     path('eventos/', TemplateView.as_view(template_name='pages/events/eventos.html'), name='eventos'),
-    
-    # Reservas
     path('reservas/', TemplateView.as_view(template_name='pages/reservations/reservas.html'), name='reservas'),
-    
-    # Pagos
     path('pagos/', TemplateView.as_view(template_name='pages/payments/pagos.html'), name='pagos'),
-    
-    # Mis Tickets (Entradas compradas)
     path('mis-tickets/', TemplateView.as_view(template_name='pages/tickets/tickets.html'), name='mis_tickets'),
 
     # ================= RUTAS DE SOPORTE (ADMIN) =================
@@ -74,6 +59,7 @@ urlpatterns = [
     path('soporte/api/mensajes/<int:ticket_id>/', ticket_messages_api, name='ticket_messages_api'),
     path('soporte/api/enviar-mensaje/', send_message_api, name='send_message_api'),
     path('soporte/api/cerrar-ticket/', close_ticket_api, name='close_ticket_api'),
+    path('soporte/api/tickets/', tickets_list_api, name='tickets_list_api'), # 🔥 RESTAURADO
 
     # ================= RUTAS DE SOPORTE (CLIENTE) =================
     path('mi-soporte/', cliente_soporte_view, name='cliente_soporte'),

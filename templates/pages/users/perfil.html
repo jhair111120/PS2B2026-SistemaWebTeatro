@@ -1,263 +1,259 @@
-{% extends "layouts/base.html" %} {% load static %} {% block title %}Mi Perfil |
-Teatro Al Aire Libre{% endblock %} {% block content %}
+{% extends "layouts/base.html" %}
+{% load static %}
 
-<link
-  rel="stylesheet"
-  href="{% static 'css/pages/users/perfil.css' %}"
-/>
+{% block title %}Mi Perfil | Teatro Al Aire Libre{% endblock %}
 
-<div class="max-w-6xl mx-auto px-4 py-8">
-  <!-- Botón Volver -->
-  <div class="mb-4">
-    <a href="{% url 'inicio' %}" class="back-link flex items-center gap-2">
-      <i class="fas fa-arrow-left"></i>
-      <span>Volver al Inicio</span>
-    </a>
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/pages/users/perfil.css' %}">
+
+<div class="container pb-5">
+  <div class="profile-header">
+    <h2 class="fw-bold text-white mb-1">Mi Perfil</h2>
+    <p class="text-light-gray">Administra tu información personal y preferencias</p>
   </div>
 
-  <!-- Header -->
-  <div class="mb-6">
-    <h2 class="page-title">Mi Perfil</h2>
-    <p class="page-subtitle">
-      Administra tu información personal y preferencias
-    </p>
-  </div>
+  <ul class="nav nav-pills profile-tabs-container" id="profileTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#personal" type="button">
+        <i class="far fa-user"></i> Información Personal
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" data-bs-toggle="pill" data-bs-target="#notificaciones" type="button">
+        <i class="far fa-bell"></i> Notificaciones
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" data-bs-toggle="pill" data-bs-target="#seguridad" type="button">
+        <i class="fas fa-shield-alt"></i> Seguridad
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" data-bs-toggle="pill" data-bs-target="#compras" type="button">
+        <i class="fas fa-ticket-alt"></i> Mis Compras
+      </button>
+    </li>
+  </ul>
 
-  <!-- Tabs -->
-  <div class="flex flex-wrap gap-2 border-b tabs-border mb-6">
-    <button class="tab-btn tab-btn--active" data-tab="personal">
-      Información Personal
-    </button>
-    <button class="tab-btn" data-tab="notificaciones">Notificaciones</button>
-    <button class="tab-btn" data-tab="seguridad">Seguridad</button>
-    <button class="tab-btn" data-tab="compras">Mis Compras</button>
-  </div>
+  <div class="tab-content" id="profileTabsContent">
 
-  <!-- ══ PERSONAL ══ -->
-  <div class="tab-content fade-in" id="personal">
-    <div class="profile-card p-6">
-      <h5 class="card-title mb-6">Datos Personales</h5>
+    <div class="tab-pane fade show active" id="personal" role="tabpanel">
+      <div class="profile-content-box">
+        <h5 class="fw-bold text-white mb-4">Datos Personales</h5>
 
-      <!-- Avatar -->
-      <div class="flex items-center gap-4 mb-6">
-        <div class="avatar flex items-center justify-center">
-          <i class="far fa-user"></i>
-        </div>
-        <div>
-          <h5 class="avatar-name">
-            {{ usuario.nombre }} {{ usuario.apellido }}
-          </h5>
-          <p class="avatar-email">{{ usuario.correo }}</p>
-        </div>
-      </div>
-
-      <form action="{% url 'perfil' %}" method="POST">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="update_profile" />
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="d-flex align-items-center gap-3 mb-5">
+          <div class="profile-avatar-lg"><i class="far fa-user"></i></div>
           <div>
-            <label class="form-label mb-1">Nombre</label>
-            <input
-              type="text"
-              name="nombre"
-              class="form-input w-full"
-              value="{{ usuario.nombre }}"
-              required
-              oninput="
-                this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')
-              "
-            />
-          </div>
-
-          <div>
-            <label class="form-label mb-1">Apellido</label>
-            <input
-              type="text"
-              name="apellido"
-              class="form-input w-full"
-              value="{{ usuario.apellido }}"
-              required
-              oninput="
-                this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')
-              "
-            />
-          </div>
-
-          <div>
-            <label class="form-label mb-1">Correo Electrónico</label>
-            <input
-              type="email"
-              name="correo"
-              class="form-input w-full"
-              value="{{ usuario.correo }}"
-              required
-            />
-          </div>
-
-          <div>
-            <label class="form-label mb-1">Teléfono</label>
-            <input
-              type="tel"
-              name="telefono"
-              class="form-input w-full"
-              value="{{ usuario.telefono|default:'' }}"
-              oninput="this.value = this.value.replace(/[^0-9]/g, '')"
-            />
-          </div>
-
-          <div>
-            <label class="form-label mb-1">DNI</label>
-            <input
-              type="text"
-              name="dni"
-              class="form-input w-full"
-              value="{{ usuario.dni|default:'' }}"
-            />
+            <h5 class="text-white fw-bold mb-0">{{ usuario.nombre }} {{ usuario.apellido }}</h5>
+            <div class="text-light-gray small">{{ usuario.correo }}</div>
           </div>
         </div>
 
-        <div class="text-right mt-6">
-          <button class="btn-primary">Guardar Cambios</button>
-        </div>
-      </form>
-    </div>
-  </div>
+        <form action="{% url 'perfil' %}" method="POST" id="profileForm">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="update_profile">
 
-  <!-- ══ NOTIFICACIONES ══ -->
-  <div class="tab-content hidden" id="notificaciones">
-    <div class="profile-card p-6">
-      <h5 class="card-title mb-1">Preferencias de Notificaciones</h5>
-      <p class="notif-description mb-6">Configura qué notificaciones deseas recibir</p>
+          <div class="row g-4">
+            <div class="col-md-6">
+              <label class="form-label">Nombre</label>
+              <input type="text" name="nombre" id="perf-nombre" class="form-control input-dark"
+                value="{{ usuario.nombre }}" required onkeyup="valPerfNombre()"
+                oninput="this.value = this.value.replace(/^\s+/, '').replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')">
+              <div id="perf-nombre-feed" class="feedback-msg">Inicie con mayúscula, sin mayúsculas dobles (Ej: Juan
+                Pablo).</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Apellido</label>
+              <input type="text" name="apellido" id="perf-apellido" class="form-control input-dark"
+                value="{{ usuario.apellido }}" required onkeyup="valPerfApellido()"
+                oninput="this.value = this.value.replace(/^\s+/, '').replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')">
+              <div id="perf-apellido-feed" class="feedback-msg">Cada palabra debe iniciar con mayúscula. (Ej: Mendoza
+                Gomez).</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Correo Electrónico</label>
+              <input type="email" name="correo" id="perf-correo" class="form-control input-dark"
+                value="{{ usuario.correo }}" required onkeyup="valPerfEmail()"
+                oninput="this.value = this.value.replace(/^\s+/, '')">
+              <div id="perf-email-feed" class="feedback-msg">Debe ser un correo válido con su dominio.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Número de Teléfono</label>
+              <input type="tel" name="telefono" id="perf-tel" class="form-control input-dark"
+                value="{{ usuario.telefono|default:'' }}" placeholder="Ej. 61234567" maxlength="8"
+                onkeyup="valPerfTel()" oninput="this.value = this.value.replace(/^\s+/, '').replace(/[^0-9]/g, '')">
+              <div id="perf-tel-feed" class="feedback-msg">Debe tener exactamente 8 dígitos y comenzar con 6 o 7.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Carnet de Identidad (DNI)</label>
+              <input type="text" name="dni" id="perf-dni" class="form-control input-dark"
+                value="{{ usuario.dni|default:'' }}" placeholder="Ej. 12345678 o 12345678-1B" onkeyup="valPerfDni()"
+                oninput="this.value = this.value.replace(/^\s+/, '').replace(/[^0-9A-Za-z\-]/g, '').toUpperCase()">
+              <div id="perf-dni-feed" class="feedback-msg">Debe ser 7-8 números, y opcional un guion y código (Ej: -1B).
+              </div>
+            </div>
+          </div>
 
-      <!-- Opción 1 -->
-      <div class="notif-row flex justify-between items-center p-4 mb-3">
-        <div>
-          <h6 class="notif-label font-semibold mb-0">Notificaciones de eventos</h6>
-          <p class="notif-description mb-0">Recibe emails sobre nuevos eventos y actualizaciones</p>
-        </div>
-        <label class="switch">
-          <input type="checkbox" checked>
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <!-- Opción 2 -->
-      <div class="notif-row flex justify-between items-center p-4 mb-3">
-        <div>
-          <h6 class="notif-label font-semibold mb-0">Promociones y ofertas</h6>
-          <p class="notif-description mb-0">Recibe emails sobre descuentos y promociones especiales</p>
-        </div>
-        <label class="switch">
-          <input type="checkbox" checked>
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <!-- Opción 3 -->
-      <div class="notif-row flex justify-between items-center p-4 mb-3">
-        <div>
-          <h6 class="notif-label font-semibold mb-0">Recordatorios por email</h6>
-          <p class="notif-description mb-0">Recibe email recordatorios antes de tus eventos</p>
-        </div>
-        <label class="switch">
-          <input type="checkbox">
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <!-- Opción 4 -->
-      <div class="notif-row flex justify-between items-center p-4 mb-3">
-        <div>
-          <h6 class="notif-label font-semibold mb-0">Notificaciones push</h6>
-          <p class="notif-description mb-0">Recibe notificaciones en tu dispositivo</p>
-        </div>
-        <label class="switch">
-          <input type="checkbox" checked>
-          <span class="slider"></span>
-        </label>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══ SEGURIDAD ══ -->
-  <div class="tab-content hidden" id="seguridad">
-    <div class="profile-card p-6 mb-6">
-      <h5 class="card-title mb-4">Cambiar Contraseña</h5>
-
-      <form action="{% url 'perfil' %}" method="POST" class="max-w-md">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="update_password" />
-
-        <div class="flex flex-col gap-3">
-          <input
-            type="password"
-            name="current_password"
-            placeholder="Contraseña actual"
-            class="form-input w-full"
-          />
-          <input
-            type="password"
-            name="new_password"
-            placeholder="Nueva contraseña"
-            class="form-input w-full"
-          />
-          <input
-            type="password"
-            name="confirm_password"
-            placeholder="Confirmar contraseña"
-            class="form-input w-full"
-          />
-        </div>
-
-        <button class="btn-primary mt-4">Actualizar</button>
-      </form>
-    </div>
-
-    <div class="profile-card p-6">
-      <h6 class="card-title mb-3">Sesiones activas</h6>
-
-      <div class="flex justify-between items-center session-row pb-3 mb-3">
-        <div>
-          <p class="session-device">Windows • Chrome</p>
-          <p class="session-time">Activo ahora</p>
-        </div>
-        <span class="badge-active">Actual</span>
-      </div>
-
-      <div class="flex justify-between items-center">
-        <div>
-          <p class="session-device">iPhone • Safari</p>
-          <p class="session-time">Hace 2 días</p>
-        </div>
-        <a href="#" class="link-danger">Cerrar sesión</a>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══ COMPRAS ══ -->
-  <div class="tab-content hidden" id="compras">
-    <div class="profile-card p-6 mb-6">
-      <h6 class="card-title mb-4">Historial</h6>
-
-      <div class="flex justify-between items-center purchase-row pb-3 mb-3">
-        <div>
-          <p class="purchase-name">Concierto</p>
-          <p class="purchase-date">14 abril</p>
-        </div>
-        <span class="purchase-price">Bs. 250</span>
+          <div class="text-end mt-4">
+            <button type="submit" class="btn btn-blue px-4 py-2"><i class="fas fa-save me-2"></i> Guardar
+              Cambios</button>
+          </div>
+        </form>
       </div>
     </div>
 
-    <div class="profile-card p-6">
-      <h6 class="card-title mb-4">Métodos de pago</h6>
+    <div class="tab-pane fade" id="notificaciones" role="tabpanel">
+      <div class="profile-content-box">
+        <h5 class="fw-bold text-white mb-1">Preferencias de Notificaciones</h5>
+        <p class="text-light-gray small mb-4">Configura qué notificaciones deseas recibir</p>
 
-      <div class="payment-row flex justify-between items-center p-4">
-        <span class="payment-number">•••• 4242</span>
-        <a href="#" class="link-danger">Eliminar</a>
+        <div class="input-dark d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <div class="fw-bold text-white">Notificaciones de eventos</div>
+            <div class="small text-muted">Recibe emails sobre nuevos eventos y actualizaciones</div>
+          </div>
+          <div class="form-check form-switch"><input class="form-check-input" type="checkbox" checked></div>
+        </div>
+        <div class="input-dark d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <div class="fw-bold text-white">Promociones y ofertas</div>
+            <div class="small text-muted">Recibe emails sobre descuentos y promociones especiales</div>
+          </div>
+          <div class="form-check form-switch"><input class="form-check-input" type="checkbox" checked></div>
+        </div>
+        <div class="input-dark d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <div class="fw-bold text-white">Recordatorios por email</div>
+            <div class="small text-muted">Recibe email recordatorios antes de tus eventos</div>
+          </div>
+          <div class="form-check form-switch"><input class="form-check-input" type="checkbox"></div>
+        </div>
+        <div class="input-dark d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <div class="fw-bold text-white">Notificaciones push</div>
+            <div class="small text-muted">Recibe notificaciones en tu dispositivo</div>
+          </div>
+          <div class="form-check form-switch"><input class="form-check-input" type="checkbox" checked></div>
+        </div>
       </div>
     </div>
+
+    <div class="tab-pane fade" id="seguridad" role="tabpanel">
+      <div class="profile-content-box mb-4">
+        <h5 class="fw-bold text-white mb-1">Seguridad</h5>
+        <p class="text-light-gray small mb-4">Administra la seguridad de tu cuenta</p>
+
+        <h6 class="fw-bold text-white mb-3 mt-4">Cambiar Contraseña</h6>
+
+        <form action="{% url 'perfil' %}" method="POST" class="mb-5" style="max-width: 400px;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="update_password">
+
+          <div class="mb-3 position-relative">
+            <label class="form-label">Contraseña Actual</label>
+            <input type="password" name="current_password" class="form-control input-dark" required
+              oninput="this.value = this.value.replace(/^\s+/, '')">
+            <i class="fas fa-eye-slash pwd-icon-profile" onclick="togglePassword(this)"></i>
+          </div>
+          <div class="mb-3 position-relative">
+            <label class="form-label">Nueva Contraseña</label>
+            <input type="password" name="new_password" id="perf-pwd-new" class="form-control input-dark" required
+              onkeyup="valPerfPwd()" oninput="this.value = this.value.replace(/^\s+/, '')">
+            <i class="fas fa-eye-slash pwd-icon-profile" onclick="togglePassword(this)"></i>
+            <div id="perf-pwd-feed" class="feedback-msg">Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1
+              especial (@$!%*?&.-).</div>
+          </div>
+          <div class="mb-4 position-relative">
+            <label class="form-label">Confirmar Contraseña</label>
+            <input type="password" name="confirm_password" id="perf-pwd-conf" class="form-control input-dark" required
+              onkeyup="valPerfPwdMatch()" oninput="this.value = this.value.replace(/^\s+/, '')">
+            <i class="fas fa-eye-slash pwd-icon-profile" onclick="togglePassword(this)"></i>
+            <div id="perf-pwd-match-feed" class="feedback-msg">Las contraseñas no coinciden.</div>
+          </div>
+          <button type="submit" class="btn btn-blue px-4"><i class="fas fa-save me-2"></i> Actualizar
+            Contraseña</button>
+        </form>
+
+        <hr style="border-color: #333;">
+
+        <div class="input-dark d-flex justify-content-between align-items-center mt-4">
+          <div>
+            <div class="fw-bold text-white">Autenticación de Dos Factores</div>
+            <div class="small text-muted">Añade una capa extra de seguridad a tu cuenta</div>
+          </div>
+          <div class="form-check form-switch"><input class="form-check-input" type="checkbox" checked></div>
+        </div>
+      </div>
+
+      <div class="profile-content-box">
+        <h6 class="fw-bold text-white mb-3">Sesiones activas</h6>
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3"
+          style="border-color: #333 !important;">
+          <div>
+            <div class="fw-bold text-white small">Windows • Chrome</div>
+            <div class="small text-muted" style="font-size: 0.8rem;">La Paz, Bolivia • Activo ahora</div>
+          </div>
+          <span class="status-badge">Actual</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="fw-bold text-white small">iPhone • Safari</div>
+            <div class="small text-muted" style="font-size: 0.8rem;">La Paz, Bolivia • Hace 2 días</div>
+          </div>
+          <a href="#" class="text-danger small fw-bold text-decoration-none">Cerrar sesión</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="compras" role="tabpanel">
+      <div class="profile-content-box mb-4">
+        <h6 class="fw-bold text-white mb-4">Historial de compras</h6>
+
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3"
+          style="border-color: #333 !important;">
+          <div>
+            <div class="fw-bold text-white small">Concierto de Rock Nacional</div>
+            <div class="small text-muted mb-1" style="font-size: 0.8rem;">14 de abril de 2026 &nbsp;&nbsp; 2 entradas
+            </div>
+            <div class="text-muted" style="font-size: 0.75rem;">ID: P1234567890</div>
+          </div>
+          <div class="text-end">
+            <span class="status-badge mb-2 d-inline-block">Confirmado</span>
+            <div class="fw-bold text-info">Bs. 250</div>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="fw-bold text-white small">Festival de Jazz</div>
+            <div class="small text-muted mb-1" style="font-size: 0.8rem;">19 de marzo de 2026 &nbsp;&nbsp; 1 entrada
+            </div>
+            <div class="text-muted" style="font-size: 0.75rem;">ID: P1234567891</div>
+          </div>
+          <div class="text-end">
+            <span class="status-badge mb-2 d-inline-block">Confirmado</span>
+            <div class="fw-bold text-info">Bs. 405</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-content-box">
+        <h6 class="fw-bold text-white mb-4">Métodos de pago guardados</h6>
+        <div class="list-box d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center gap-3">
+            <i class="far fa-credit-card fs-3" style="color: #a855f7;"></i>
+            <div>
+              <div class="fw-bold text-white small">•••• •••• •••• 4242</div>
+              <div class="small text-muted" style="font-size: 0.8rem;">Vence 12/2028</div>
+            </div>
+          </div>
+          <a href="#" class="text-danger small fw-bold text-decoration-none">Eliminar</a>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
+
 <script src="{% static 'js/pages/users/perfil.js' %}"></script>
 {% endblock %}

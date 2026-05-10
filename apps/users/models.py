@@ -53,6 +53,7 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
         db_index=True
     )
 
+    # 🔥 RESTAURADO: Tu validación estricta del celular boliviano
     telefono = models.CharField(
         max_length=8,
         blank=True,
@@ -65,6 +66,7 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
         ]
     )
 
+    # 🔥 RESTAURADO: Tu validación estricta del formato de DNI
     dni = models.CharField(
         max_length=20,
         blank=True,
@@ -84,11 +86,15 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     )
 
     activo = models.BooleanField(default=True)
-
     is_staff = models.BooleanField(default=False)
+    
+    # 🔥 RESTAURADO: Los campos para tu vista de Preferencias de Notificaciones
+    notif_eventos = models.BooleanField(default=True)
+    notif_promociones = models.BooleanField(default=True)
+    notif_recordatorios = models.BooleanField(default=False)
+    notif_push = models.BooleanField(default=True)
 
     fecha_creacion = models.DateTimeField(auto_now_add=True)
-
     actualizado_en = models.DateTimeField(auto_now=True)
 
     objects = UsuarioManager()
@@ -114,6 +120,10 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     def clean(self):
         if self.correo:
             self.correo = self.correo.lower()
+
+        # 🔥 MANTENIDO: La validación extra que pusieron tus compañeros para no romper su lógica
+        if self.dni and len(self.dni) < 5:
+            raise ValidationError("El DNI es demasiado corto.")
 
 class Rol(models.Model):
     class Tipo(models.TextChoices):

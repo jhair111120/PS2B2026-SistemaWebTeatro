@@ -1,31 +1,27 @@
-// ================= DROPDOWN NAVBAR =================
+document.addEventListener("DOMContentLoaded", function () {
+  // 1. Efecto de sombreado y cambio de fondo al hacer scroll
+  const navbar = document.querySelector('.navbar');
 
-const dropdown = document.getElementById("dropdownMenu");
-
-// Botón específico del dropdown
-const dropdownButton = document.querySelector("[onclick='toggleDropdown()']");
-
-function toggleDropdown() {
-  if (!dropdown) return;
-
-  dropdown.classList.toggle("hidden");
-}
-
-// Cerrar al hacer click fuera
-document.addEventListener("click", function (e) {
-  if (!dropdown || !dropdownButton) return;
-
-  const isClickInsideDropdown = dropdown.contains(e.target);
-  const isClickOnButton = dropdownButton.contains(e.target);
-
-  if (!isClickInsideDropdown && !isClickOnButton) {
-    dropdown.classList.add("hidden");
+  if (navbar) {
+    window.addEventListener('scroll', function () {
+      if (window.scrollY > 50) {
+        navbar.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.5)';
+        navbar.style.backgroundColor = '#070a0f';
+      } else {
+        navbar.style.boxShadow = 'none';
+        navbar.style.backgroundColor = 'var(--bg-navbar)';
+      }
+    });
   }
-});
 
-// Opcional: cerrar con ESC (pro UX)
-document.addEventListener("keydown", function (e) {
-  if (e.key === "Escape" && dropdown) {
-    dropdown.classList.add("hidden");
-  }
+  // 2. Asignación dinámica de la clase 'active' según la URL actual
+  const currentLocation = location.href;
+  const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+
+  navLinks.forEach(link => {
+    if (link.href === currentLocation) {
+      navLinks.forEach(l => l.classList.remove('active'));
+      link.classList.add('active');
+    }
+  });
 });
