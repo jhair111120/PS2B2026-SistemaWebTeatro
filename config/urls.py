@@ -12,6 +12,7 @@ from apps.users.views import (
     admin_soporte_reply, admin_soporte_close,
     admin_config_general_save, admin_config_security_save,
     admin_usuario_action,
+    admin_usuario_create,
 )
 
 # Eventos (públicas + admin CRUD)
@@ -82,6 +83,7 @@ urlpatterns = [
     path('admin-panel/config/general/', admin_config_general_save, name='admin_config_general_save'),
     path('admin-panel/config/security/', admin_config_security_save, name='admin_config_security_save'),
     path('admin-panel/usuarios/action/', admin_usuario_action, name='admin_usuario_action'),
+    path('admin-panel/usuarios/nuevo/', admin_usuario_create, name='admin_usuario_create'),
 
     # ── SOPORTE (STAFF) ───────────────────────────────────────────────
     path('soporte/', support_dashboard, name='support_dashboard'),

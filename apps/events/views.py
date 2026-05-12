@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_time
 from django.core.exceptions import ValidationError
+from django.core.validators import URLValidator
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
 
@@ -148,6 +149,13 @@ def _payload_errors(request):
     activo = request.POST.get('evento_activo') == 'on'
     estado_pick = estado_activo_obj if activo else (estado_inactivo_obj or estado_activo_obj)
 
+    imagen_url_raw = (request.POST.get('imagen_url') or '').strip() or None
+    if imagen_url_raw:
+        try:
+            URLValidator()(imagen_url_raw)
+        except ValidationError:
+            errs.append('La URL de imagen no es válida (usa http:// o https://).')
+
     if errs:
         return errs, None
 
@@ -157,7 +165,7 @@ def _payload_errors(request):
         'fecha_evento': fecha,
         'hora_evento': hora,
         'lugar': lugar,
-        'imagen_url': (request.POST.get('imagen_url') or '').strip() or None,
+        'imagen_url': imagen_url_raw,
         'estado_evento': estado_pick,
         'precio_specs': precio_specs,
         'capacidad_total': capacidad_total if capacidad_total is not None else 0,

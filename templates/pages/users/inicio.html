@@ -54,6 +54,9 @@
           </div>
           <div class="card-body p-4 bg-dark-card d-flex flex-column text-white">
             <h5 class="card-title fw-bold mb-3 fs-5">{{ ev.nombre }}</h5>
+            {% if ev.descripcion %}
+            <p class="card-text text-light small opacity-75 mb-3" style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">{{ ev.descripcion|truncatechars:160 }}</p>
+            {% endif %}
             <p class="card-text mb-1 text-light opacity-75">
               <i class="far fa-calendar-alt me-2 icon-primary"></i>{{ ev.fecha_evento|date:"l, d \d\e F, Y" }}
             </p>

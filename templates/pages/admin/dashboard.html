@@ -137,6 +137,7 @@
       <table class="admin-table">
         <thead>
           <tr>
+            <th style="width:56px;">Img</th>
             <th>Evento</th>
             <th>Fecha y Hora</th>
             <th>Lugar</th>
@@ -151,6 +152,13 @@
             {% cycle '#f97316' '#0ea5e9' '#ef4444' '#22c55e' '#8b5cf6' as bar_hex silent %}
             {% with ev=fila.evento %}
             <tr>
+              <td class="cell-muted" style="vertical-align:middle;">
+                {% if ev.imagen_url %}
+                  <img src="{{ ev.imagen_url }}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:8px;border:1px solid rgba(148,163,184,0.35);" loading="lazy" onerror="this.style.display='none'" />
+                {% else %}
+                  <span class="cell-xs">—</span>
+                {% endif %}
+              </td>
               <td class="cell-strong">{{ ev.nombre }}</td>
               <td class="cell-muted">
                 <div class="admin-stack" style="gap:0.25rem;">
@@ -201,6 +209,8 @@
                   data-pgen="{% if fila.precio_gen != None %}{{ fila.precio_gen }}{% endif %}"
                   data-cap="{% if fila.cap_total %}{{ fila.cap_total }}{% endif %}"
                   data-activo="{% if fila.es_activo %}1{% else %}0{% endif %}"
+                  data-descripcion="{{ ev.descripcion|default_if_none:''|escapejs }}"
+                  data-imagen-url="{{ ev.imagen_url|default_if_none:''|escapejs }}"
                 ><i class="fas fa-pen"></i></button>
                 <form method="post" action="{% url 'admin_evento_eliminar' ev.id %}" style="display:inline;" onsubmit="return confirm('¿Eliminar este evento?');">
                   {% csrf_token %}
@@ -211,7 +221,7 @@
             {% endwith %}
           {% empty %}
             <tr>
-              <td colspan="7" style="text-align:center;padding:2rem;color:#94a3b8;">No hay eventos registrados.</td>
+              <td colspan="8" style="text-align:center;padding:2rem;color:#94a3b8;">No hay eventos registrados.</td>
             </tr>
           {% endfor %}
         </tbody>
@@ -537,7 +547,64 @@
 <section id="panel-cuentas" class="admin-panel admin-section hidden">
   <div class="admin-page-head">
     <h1 class="admin-page-title">Cuentas</h1>
-    <p class="admin-page-desc">Gestiona usuarios: activar/desactivar, rol y eliminación.</p>
+    <p class="admin-page-desc">Crea usuarios (cliente, empleado, soporte, administrador), activa o desactiva cuentas y asigna roles.</p>
+  </div>
+
+  <div class="admin-card" style="margin-bottom:1.25rem;">
+    <div class="admin-table-shell__head">
+      <h2 style="margin:0;">Nuevo usuario</h2>
+    </div>
+    <form method="post" action="{% url 'admin_usuario_create' %}" class="admin-modal__body" style="padding-top:1rem;">
+      {% csrf_token %}
+      <div class="admin-modal__grid admin-modal__grid--2">
+        <div class="admin-modal__field">
+          <label for="nu-nombre">Nombre</label>
+          <input type="text" id="nu-nombre" name="nombre" required maxlength="100" placeholder="Ej: Juan" autocomplete="off" />
+        </div>
+        <div class="admin-modal__field">
+          <label for="nu-apellido">Apellido</label>
+          <input type="text" id="nu-apellido" name="apellido" required maxlength="100" placeholder="Ej: Pérez" autocomplete="off" />
+        </div>
+      </div>
+      <div class="admin-modal__field" style="margin-top:1rem;">
+        <label for="nu-correo">Correo</label>
+        <input type="email" id="nu-correo" name="correo" required maxlength="254" placeholder="correo@dominio.bo" autocomplete="off" />
+      </div>
+      <div class="admin-modal__grid admin-modal__grid--2" style="margin-top:1rem;">
+        <div class="admin-modal__field">
+          <label for="nu-pass">Contraseña</label>
+          <input type="password" id="nu-pass" name="password" required minlength="8" autocomplete="new-password" />
+        </div>
+        <div class="admin-modal__field">
+          <label for="nu-pass2">Confirmar contraseña</label>
+          <input type="password" id="nu-pass2" name="password_confirm" required minlength="8" autocomplete="new-password" />
+        </div>
+      </div>
+      <div class="admin-modal__grid admin-modal__grid--2" style="margin-top:1rem;">
+        <div class="admin-modal__field">
+          <label for="nu-tel">Teléfono (opcional)</label>
+          <input type="text" id="nu-tel" name="telefono" maxlength="8" placeholder="6xxxxxxx o 7xxxxxxx" inputmode="numeric" />
+        </div>
+        <div class="admin-modal__field">
+          <label for="nu-rol">Rol</label>
+          <select id="nu-rol" name="rol_id" class="admin-select" required>
+            {% for r in roles_list %}
+              <option value="{{ r.id }}" {% if r.nombre|lower == 'cliente' %}selected{% endif %}>{{ r.nombre|title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="admin-modal__row-toggle" style="margin-top:1rem;">
+        <label class="admin-switch">
+          <input type="checkbox" id="nu-activo" name="activo" checked />
+          <span class="admin-switch__track" aria-hidden="true"></span>
+        </label>
+        <span class="admin-switch__label">Cuenta activa</span>
+      </div>
+      <div style="margin-top:1rem;display:flex;justify-content:flex-end;">
+        <button type="submit" class="admin-btn-primary"><i class="fas fa-user-plus"></i> Crear usuario</button>
+      </div>
+    </form>
   </div>
 
   <div class="admin-card">
@@ -930,6 +997,15 @@
           <label for="modal-nombre-ev">Nombre del evento</label>
           <input type="text" id="modal-nombre-ev" name="nombre" required minlength="3" maxlength="150" placeholder="Ej: Concierto folklórico nacional" autocomplete="off" />
         </div>
+        <div class="admin-modal__field" style="margin-top:1rem;">
+          <label for="modal-desc-ev">Descripción</label>
+          <textarea id="modal-desc-ev" name="descripcion" rows="4" maxlength="5000" placeholder="Texto que verán los visitantes en la ficha del evento…"></textarea>
+        </div>
+        <div class="admin-modal__field" style="margin-top:1rem;">
+          <label for="modal-img-ev">URL de imagen</label>
+          <input type="url" id="modal-img-ev" name="imagen_url" maxlength="200" placeholder="https://…" autocomplete="off" />
+          <p class="cell-xs cell-muted" style="margin:0.35rem 0 0;">Se muestra en inicio, listado de eventos y compra.</p>
+        </div>
         <div class="admin-modal__grid admin-modal__grid--2" style="margin-top:1rem;">
           <div class="admin-modal__field">
             <label for="modal-fecha-ev">Fecha</label>
@@ -1023,6 +1099,8 @@
       var inputGen = document.getElementById('modal-pgen');
       var inputCap = document.getElementById('modal-cap');
       var inputActivo = document.getElementById('modal-activo-ev');
+      var inputDesc = document.getElementById('modal-desc-ev');
+      var inputImg = document.getElementById('modal-img-ev');
 
       function toCreateMode() {
         if (!form) return;
@@ -1038,6 +1116,8 @@
         if (inputGen) inputGen.value = '';
         if (inputCap) inputCap.value = '';
         if (inputActivo) inputActivo.checked = true;
+        if (inputDesc) inputDesc.value = '';
+        if (inputImg) inputImg.value = '';
       }
 
       function toEditMode(btn) {
@@ -1056,6 +1136,8 @@
         if (inputGen) inputGen.value = btn.getAttribute('data-pgen') || '';
         if (inputCap) inputCap.value = btn.getAttribute('data-cap') || '';
         if (inputActivo) inputActivo.checked = (btn.getAttribute('data-activo') || '0') === '1';
+        if (inputDesc) inputDesc.value = btn.getAttribute('data-descripcion') || '';
+        if (inputImg) inputImg.value = btn.getAttribute('data-imagen-url') || '';
       }
 
       function openModal() {

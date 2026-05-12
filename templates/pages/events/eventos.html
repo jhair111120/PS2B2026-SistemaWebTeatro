@@ -62,6 +62,9 @@
         </div>
         <div class="card-content">
           <h3 class="card-title">{{ ev.nombre }}</h3>
+          {% if ev.descripcion %}
+          <p class="text-gray-400 text-sm mb-2" style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">{{ ev.descripcion|truncatechars:180 }}</p>
+          {% endif %}
           <div class="card-info">
             <div class="info-item">
               <i class="far fa-calendar-alt"></i>

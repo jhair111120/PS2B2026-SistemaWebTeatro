@@ -426,6 +426,97 @@ def admin_usuario_action(request):
     return redirect(reverse('admin_panel') + f'?tab={next_tab}')
 
 
+@never_cache
+@require_POST
+def admin_usuario_create(request):
+    gate = _admin_gate(request)
+    if gate:
+        return gate
+
+    back = reverse('admin_panel') + '?tab=cuentas'
+
+    nombre = request.POST.get('nombre', '').strip()
+    apellido = request.POST.get('apellido', '').strip()
+    correo = request.POST.get('correo', '').strip().lower()
+    password = request.POST.get('password', '')
+    password2 = request.POST.get('password_confirm', '')
+    telefono = request.POST.get('telefono', '').strip() or None
+    rol_id = request.POST.get('rol_id')
+    activo = request.POST.get('activo') == 'on'
+
+    if not nombre or not apellido or not correo or not password:
+        messages.error(request, 'Completa nombre, apellido, correo y contraseña.')
+        return redirect(back)
+
+    if not re.match(r'^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(\s[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*$', nombre):
+        messages.error(request, 'El nombre debe empezar con mayúscula y no tener mayúsculas dobles.')
+        return redirect(back)
+
+    if not re.match(r'^[A-ZÁÉÍÓÚÑ][a-zA-ZáéíóúñÁÉÍÓÚÑ]*(\s[A-ZÁÉÍÓÚÑ][a-zA-ZáéíóúñÁÉÍÓÚÑ]*)*$', apellido):
+        messages.error(request, 'El apellido debe tener la primera letra de cada palabra en mayúscula.')
+        return redirect(back)
+
+    if not re.match(r'^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}$', correo):
+        messages.error(request, 'Correo electrónico no válido.')
+        return redirect(back)
+
+    if password != password2:
+        messages.error(request, 'Las contraseñas no coinciden.')
+        return redirect(back)
+
+    if not re.match(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.-])[A-Za-z\d@$!%*?&.-]{8,}$', password):
+        messages.error(request, 'La contraseña debe tener mín. 8 caracteres, mayúscula, minúscula, número y un especial (@$!%*?&.-).')
+        return redirect(back)
+
+    if telefono and not re.match(r'^[67]\d{7}$', telefono):
+        messages.error(request, 'El celular en Bolivia debe empezar con 6 o 7 y tener 8 dígitos.')
+        return redirect(back)
+
+    if Usuario.objects.filter(correo=correo).exists():
+        messages.error(request, 'Este correo ya está registrado.')
+        return redirect(back)
+
+    if telefono and Usuario.objects.filter(telefono=telefono).exists():
+        messages.error(request, 'Este teléfono ya está en uso.')
+        return redirect(back)
+
+    try:
+        rol_id_int = int(rol_id)
+    except (TypeError, ValueError):
+        messages.error(request, 'Selecciona un rol válido.')
+        return redirect(back)
+
+    rol = Rol.objects.filter(pk=rol_id_int).first()
+    if not rol:
+        messages.error(request, 'Rol no encontrado.')
+        return redirect(back)
+
+    rol_nombre = (rol.nombre or '').strip().lower()
+    is_staff = rol_nombre == 'administrador'
+
+    try:
+        with transaction.atomic():
+            usuario = Usuario(
+                nombre=nombre,
+                apellido=apellido,
+                correo=correo,
+                telefono=telefono,
+                rol=rol,
+                activo=activo,
+                is_staff=is_staff,
+            )
+            usuario.set_password(password)
+            usuario.full_clean()
+            usuario.save()
+        messages.success(request, f'Usuario «{nombre} {apellido}» creado correctamente.')
+    except ValidationError as e:
+        messages.error(request, e.messages[0] if e.messages else str(e))
+    except Exception:
+        messages.error(request, 'No se pudo crear el usuario.')
+
+    return redirect(back)
+
+
 def _parse_date_get(val, default):
     if not val:
         return default
