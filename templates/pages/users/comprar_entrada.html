@@ -1,0 +1,143 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}{{ evento.nombre }} | Teatro Al Aire Libre{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/pages/users/comprar_entradas.css' %}" />
+
+<div class="min-h-screen py-8 px-4">
+  <div class="max-w-6xl mx-auto">
+
+    <div class="mb-6">
+      <a href="{% url 'eventos' %}" class="back-link flex items-center gap-2">
+        <i class="fas fa-arrow-left"></i>
+        <span>Volver a Eventos</span>
+      </a>
+    </div>
+
+    <div class="main-event-grid">
+      <!-- Columna izquierda: imagen + detalles -->
+      <div class="event-details-column">
+        <div class="event-banner-wrapper mb-6">
+          {% if evento.imagen_url %}
+          <img src="{{ evento.imagen_url }}"
+            onerror="this.src='https://via.placeholder.com/800x500/151920/fff?text={{ evento.nombre|urlencode }}'"
+            alt="{{ evento.nombre }}" class="banner-img-v2" />
+          {% else %}
+          <img src="https://via.placeholder.com/800x500/151920/fff?text={{ evento.nombre|urlencode }}"
+            alt="{{ evento.nombre }}" class="banner-img-v2" />
+          {% endif %}
+        </div>
+
+        <div class="info-card-v2 p-8">
+          <h2 class="event-title-v2 mb-2">{{ evento.nombre }}</h2>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+            <div class="flex items-center gap-4">
+              <div class="icon-box"><i class="far fa-calendar-alt"></i></div>
+              <div>
+                <p class="detail-label">Fecha</p>
+                <p class="detail-value">{{ evento.fecha_evento|date:"l, d \d\e F \d\e Y" }}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-4">
+              <div class="icon-box"><i class="far fa-clock"></i></div>
+              <div>
+                <p class="detail-label">Hora</p>
+                <p class="detail-value">{{ evento.hora_evento|time:"H:i" }} hrs</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-4">
+              <div class="icon-box"><i class="fas fa-map-marker-alt"></i></div>
+              <div>
+                <p class="detail-label">Ubicación</p>
+                <p class="detail-value font-semibold">{{ evento.lugar }}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-4">
+              <div class="icon-box"><i class="fas fa-users"></i></div>
+              <div>
+                <p class="detail-label">Capacidad</p>
+                <p class="detail-value font-semibold">{{ cap_total }} personas</p>
+              </div>
+            </div>
+          </div>
+
+          {% if evento.descripcion %}
+          <div class="section-divider-v2"></div>
+          <div class="mb-8">
+            <h3 class="section-subtitle-v2 mb-4">Acerca del Evento</h3>
+            <p class="section-text-v2">{{ evento.descripcion }}</p>
+          </div>
+          {% endif %}
+
+          <div class="section-divider-v2"></div>
+          <div>
+            <h3 class="section-subtitle-v2 mb-4">Información Importante</h3>
+            <div class="flex flex-col gap-3">
+              <div class="flex items-center gap-3 text-gray-300">
+                <i class="fas fa-info-circle text-[#00AEEF]"></i>
+                <span class="text-sm">Las puertas se abren 1 hora antes del inicio del evento</span>
+              </div>
+              <div class="flex items-center gap-3 text-gray-300">
+                <i class="fas fa-info-circle text-[#00AEEF]"></i>
+                <span class="text-sm">Se recomienda llegar con anticipación para evitar inconvenientes</span>
+              </div>
+              <div class="flex items-center gap-3 text-gray-300">
+                <i class="fas fa-info-circle text-[#00AEEF]"></i>
+                <span class="text-sm">Evento para todas las edades — Menores acompañados de adultos</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Columna derecha: precios y botón -->
+      <div class="purchase-sidebar-column">
+        <div class="purchase-card-v2 flex flex-col justify-between">
+          <div>
+            <h3 class="purchase-title-v2">Comprar Entradas</h3>
+            <div class="flex flex-col gap-3">
+              {% for ez in zonas %}
+              <div class="ticket-row-v2">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <h5 class="zone-name">{{ ez.zona.nombre|upper }}</h5>
+                    {% if ez.zona.descripcion %}
+                    <p class="zone-desc">{{ ez.zona.descripcion }}</p>
+                    {% endif %}
+                  </div>
+                  <span class="zone-price">Bs. {{ ez.precio_base }}</span>
+                </div>
+              </div>
+              {% empty %}
+              <p class="text-gray-400 text-sm">No hay zonas disponibles para este evento.</p>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="mt-6">
+            <hr class="border-white/10 mb-6">
+            {% if request.session.usuario_id %}
+            <a href="{% url 'seleccionar_zona' evento.id %}"
+              class="btn-select-zone w-full font-bold inline-flex justify-center items-center"
+              style="text-decoration: none;">
+              Seleccionar Zona
+            </a>
+            {% else %}
+            <button type="button"
+              class="btn-select-zone w-full font-bold"
+              data-bs-toggle="modal" data-bs-target="#authModal"
+              onclick="switchAuthTab('login')">
+              Iniciar Sesión para Comprar
+            </button>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,111 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Inicio | Teatro Al Aire Libre{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/pages/users/inicio.css' %}" />
+
+<section class="hero-section d-flex align-items-center min-vh-100">
+  <div class="container text-center position-relative z-1 fade-in-up">
+    <h1 class="hero-title text-white">Vive la Magia del Teatro</h1>
+    <h1 class="hero-title hero-title-accent mb-4">Bajo las Estrellas</h1>
+
+    <p class="hero-subtitle mb-5 mx-auto text-white">
+      Disfruta de los mejores espectáculos culturales, conciertos y obras de
+      teatro en el corazón de La Paz, Bolivia.
+    </p>
+
+    <div class="d-flex justify-content-center gap-3 flex-wrap mt-4">
+      <a href="#eventos-destacados" class="btn btn-primary-custom btn-lg px-5 py-3 fw-bold rounded-pill">Ver Eventos</a>
+      <a href="#ubicacion" class="btn btn-outline-custom btn-lg px-5 py-3 fw-bold rounded-pill">Conocer Más</a>
+    </div>
+  </div>
+</section>
+
+<section id="eventos-destacados" class="py-5" style="background-color: #0A0E14;">
+  <div class="container py-5">
+    <div class="text-center mb-5 fade-in-up">
+      <h2 class="fw-bold text-white mb-3 fs-1">No Te Pierdas Estos Espectáculos</h2>
+      <p class="text-light fs-5 max-w-2xl mx-auto opacity-75">
+        Los eventos más esperados de la temporada. ¡Reserva tus entradas ahora!!
+      </p>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 justify-content-center">
+      {% for item in eventos_data %}
+      {% with ev=item.evento %}
+      <div class="col fade-in-up" style="animation-delay: {{ forloop.counter0 }}00ms;">
+        <div class="card event-card h-100 border-0 overflow-hidden rounded-4">
+          <div class="position-relative card-img-container">
+            {% if ev.imagen_url %}
+            <img src="{{ ev.imagen_url }}"
+              onerror="this.src='https://via.placeholder.com/400x250/111/fff?text={{ ev.nombre|urlencode }}'"
+              class="card-img-top custom-card-img" alt="{{ ev.nombre }}">
+            {% else %}
+            <img src="https://via.placeholder.com/400x250/111/fff?text={{ ev.nombre|urlencode }}"
+              class="card-img-top custom-card-img" alt="{{ ev.nombre }}">
+            {% endif %}
+            <div class="event-date-badge position-absolute top-0 end-0 m-0 text-center p-2 text-white">
+              {{ ev.fecha_evento|date:"l" }}<br>
+              <span class="badge-day">{{ ev.fecha_evento|date:"d" }}</span><br>
+              <small>{{ ev.fecha_evento|date:"M" }}</small>
+            </div>
+          </div>
+          <div class="card-body p-4 bg-dark-card d-flex flex-column text-white">
+            <h5 class="card-title fw-bold mb-3 fs-5">{{ ev.nombre }}</h5>
+            <p class="card-text mb-1 text-light opacity-75">
+              <i class="far fa-calendar-alt me-2 icon-primary"></i>{{ ev.fecha_evento|date:"l, d \d\e F, Y" }}
+            </p>
+            <p class="card-text mb-4 text-light opacity-75">
+              <i class="far fa-clock me-2 icon-primary"></i>{{ ev.hora_evento|time:"H:i" }} Hrs.
+            </p>
+            <div class="d-flex justify-content-between align-items-end mb-4 mt-auto">
+              <div>
+                <small class="text-light opacity-75">Desde</small><br>
+                <strong class="fs-5 text-white fw-bold">Bs. {{ item.precio_min }}</strong>
+              </div>
+              <div class="text-end">
+                <small class="text-light opacity-75">Capacidad</small><br>
+                <strong class="fs-5 text-white fw-bold">{{ item.cap_total }}</strong>
+              </div>
+            </div>
+            <a href="{% url 'comprar_entradas' ev.id %}"
+              class="btn btn-buy-custom w-100 py-2 fw-bold rounded-3 text-decoration-none text-center">
+              Comprar Entradas!
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endwith %}
+      {% empty %}
+      <div class="col-12 text-center py-5">
+        <p class="text-light opacity-75 fs-5">No hay eventos disponibles en este momento.</p>
+        <a href="{% url 'eventos' %}" class="btn btn-outline-view-more px-4 py-2 mt-3 rounded-3">Ver todos los eventos</a>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="text-center mt-5 pt-4">
+      <a href="{% url 'eventos' %}"
+        class="btn btn-outline-view-more px-5 py-2 fw-bold text-decoration-none rounded-3">Ver más</a>
+    </div>
+  </div>
+</section>
+
+<section id="ubicacion" class="py-5" style="background-color: #0A0E14;">
+  <div class="container py-5 text-center fade-in-up">
+    <h2 class="fw-bold mb-3 text-white fs-1">Ubicación</h2>
+    <p class="text-light mb-4 fs-6 opacity-75">Avenida del Poeta, La Paz</p>
+
+    <a href="https://maps.google.com/?q=Teatro+Al+Aire+Libre+La+Paz" target="_blank"
+      class="d-block mx-auto shadow-lg map-container rounded-4 border-map-glow"
+      style="max-width: 900px; text-decoration: none;">
+      <img src="{% static 'img/mapa.jpg' %}"
+        onerror="this.src='https://via.placeholder.com/900x450/111/fff?text=Mapa+Avenida+del+Poeta'"
+        class="img-fluid w-100 map-img" alt="Mapa de Ubicación">
+    </a>
+  </div>
+</section>
+
+{% endblock %}

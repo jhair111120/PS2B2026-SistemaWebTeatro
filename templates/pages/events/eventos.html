@@ -1,0 +1,108 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Eventos | Teatro Al Aire Libre{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/pages/events/eventos.css' %}" />
+
+<div class="w-full min-h-screen bg-[#0A0E14] pb-12">
+
+  <!-- HERO -->
+  <section class="events-hero">
+    <div class="max-w-7xl mx-auto px-6 w-full">
+      <h1 class="text-5xl font-bold text-white mb-4">Eventos</h1>
+      <p class="text-xl text-gray-300">Descubre las mejores entradas para conciertos y espectáculos.</p>
+    </div>
+  </section>
+
+  <!-- FILTROS -->
+  <div class="max-w-7xl mx-auto px-6">
+    <form method="get" action="{% url 'eventos' %}" class="search-container-wrapper">
+      <div class="search-container">
+        <div class="search-input-group flex-grow-[2]">
+          <i class="fas fa-search"></i>
+          <input type="text" name="q" value="{{ q }}" class="search-input" placeholder="Buscar por nombre de evento...">
+        </div>
+        <div class="search-input-group flex-grow">
+          <i class="far fa-calendar-alt"></i>
+          <input type="date" name="fecha_desde" value="{{ fecha_desde }}" class="search-input" placeholder="Desde">
+        </div>
+        <div class="search-input-group flex-grow">
+          <i class="far fa-calendar-alt"></i>
+          <input type="date" name="fecha_hasta" value="{{ fecha_hasta }}" class="search-input" placeholder="Hasta">
+        </div>
+        <button type="submit" class="btn-buy-modern px-4">Buscar</button>
+        {% if q or fecha_desde or fecha_hasta %}
+        <a href="{% url 'eventos' %}" class="btn-buy-modern px-4" style="background:#1E293B;">Limpiar</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- LISTADO -->
+  <section class="max-w-7xl mx-auto px-6 py-12">
+    <h2 class="text-2xl font-bold text-white mb-8">
+      Eventos Disponibles
+      {% if eventos_data %}<span class="text-gray-400 text-lg font-normal">({{ eventos_data|length }})</span>{% endif %}
+    </h2>
+
+    <div class="event-grid" id="event-grid">
+      {% for item in eventos_data %}
+      {% with ev=item.evento %}
+      <div class="event-card-modern">
+        <div class="card-image-wrapper">
+          {% if ev.imagen_url %}
+          <img src="{{ ev.imagen_url }}"
+            onerror="this.src='https://via.placeholder.com/400x250/151920/fff?text={{ ev.nombre|urlencode }}'"
+            alt="{{ ev.nombre }}">
+          {% else %}
+          <img src="https://via.placeholder.com/400x250/151920/fff?text={{ ev.nombre|urlencode }}" alt="{{ ev.nombre }}">
+          {% endif %}
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">{{ ev.nombre }}</h3>
+          <div class="card-info">
+            <div class="info-item">
+              <i class="far fa-calendar-alt"></i>
+              <span>{{ ev.fecha_evento|date:"D, d M Y" }}</span>
+            </div>
+            <div class="info-item">
+              <i class="far fa-clock"></i>
+              <span>{{ ev.hora_evento|time:"H:i" }} hrs</span>
+            </div>
+            <div class="info-item">
+              <i class="fas fa-map-marker-alt"></i>
+              <span>{{ ev.lugar }}</span>
+            </div>
+          </div>
+
+          <div class="card-footer-modern">
+            <div class="price-box">
+              <span class="price-label">Desde:</span>
+              <span class="price-value">Bs. {{ item.precio_min }}</span>
+            </div>
+            <a href="{% url 'comprar_entradas' ev.id %}" class="btn-buy-modern">
+              Comprar Entradas!
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endwith %}
+      {% empty %}
+      <div id="no-results" class="text-center py-20 col-span-full">
+        <i class="fas fa-search text-5xl text-gray-600 mb-4"></i>
+        <h3 class="text-xl text-white">
+          {% if q or fecha_desde or fecha_hasta %}
+            No se encontraron eventos con los filtros seleccionados.
+          {% else %}
+            No hay eventos disponibles en este momento.
+          {% endif %}
+        </h3>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+</div>
+{% endblock %}

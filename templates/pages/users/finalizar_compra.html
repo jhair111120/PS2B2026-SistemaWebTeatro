@@ -1,0 +1,167 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Finalizar Compra | {{ evento.nombre }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/pages/users/comprar_entradas.css' %}" />
+
+<div class="min-h-screen py-8 px-4">
+  <div class="max-w-6xl mx-auto">
+
+    <div class="mb-6">
+      <a href="{% url 'seleccionar_zona' evento.id %}" class="back-link flex items-center gap-2">
+        <i class="fas fa-arrow-left"></i>
+        <span>Volver</span>
+      </a>
+    </div>
+
+    <div class="mb-6">
+      <h1 class="text-4xl font-extrabold text-white">Finalizar Compra</h1>
+      <p class="text-gray-400 mt-2">Revisa tu selección y elige el método de pago.</p>
+    </div>
+
+    {% if messages %}
+    <div class="mb-4">
+      {% for msg in messages %}
+      <div class="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400 mb-2">
+        <i class="fas fa-exclamation-circle me-2"></i>{{ msg }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if not carrito %}
+    <div class="text-center py-16">
+      <i class="fas fa-shopping-cart text-5xl text-gray-600 mb-4"></i>
+      <h3 class="text-xl text-white mb-4">Tu carrito está vacío</h3>
+      <a href="{% url 'seleccionar_zona' evento.id %}" class="btn-select-zone px-8 py-3 inline-block" style="text-decoration:none;">
+        Seleccionar Zonas
+      </a>
+    </div>
+    {% else %}
+
+    <form method="post" action="{% url 'confirmar_compra' evento.id %}">
+      {% csrf_token %}
+
+      <div class="main-event-grid">
+        <!-- Columna izquierda: info personal + pago -->
+        <div class="event-details-column">
+
+          <!-- Info del usuario (solo lectura) -->
+          <div class="form-section-card">
+            <h3 class="text-xl font-bold mb-4">Información Personal</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="input-group-v2">
+                <label>Nombre</label>
+                <input type="text" class="input-v2" value="{{ request.session.usuario_nombre }}" readonly>
+              </div>
+              <div class="input-group-v2">
+                <label>Correo</label>
+                <input type="text" class="input-v2" value="{{ request.session.usuario_correo }}" readonly>
+              </div>
+            </div>
+          </div>
+
+          <!-- Método de pago -->
+          <div class="form-section-card">
+            <h3 class="text-xl font-bold mb-6">Método de Pago <span class="text-sm text-gray-400 font-normal">(simulado)</span></h3>
+
+            <div class="flex flex-col gap-4 mb-6">
+              <label class="payment-method-option selected" id="opt-tarjeta">
+                <input type="radio" name="metodo_pago" value="Tarjeta de Crédito" checked onchange="selectMetodo(this)">
+                <div>
+                  <p class="font-bold">Tarjeta de Crédito o Débito</p>
+                  <p class="text-xs text-gray-500">Visa, Mastercard, American Express</p>
+                </div>
+              </label>
+              <label class="payment-method-option" id="opt-qr">
+                <input type="radio" name="metodo_pago" value="QR Bancario" onchange="selectMetodo(this)">
+                <div>
+                  <p class="font-bold">QR Bancario</p>
+                  <p class="text-xs text-gray-500">Pago con código QR</p>
+                </div>
+              </label>
+              <label class="payment-method-option" id="opt-transferencia">
+                <input type="radio" name="metodo_pago" value="Transferencia Bancaria" onchange="selectMetodo(this)">
+                <div>
+                  <p class="font-bold">Transferencia Bancaria</p>
+                  <p class="text-xs text-gray-500">Transferencia directa</p>
+                </div>
+              </label>
+            </div>
+
+            <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4">
+              <div class="flex gap-3">
+                <i class="fas fa-info-circle text-yellow-500 mt-1"></i>
+                <p class="text-xs text-yellow-300">
+                  El pago es <strong>simulado</strong>. No se realizará ningún cargo real.
+                  La compra se registrará en el sistema como confirmada.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-pay-purchase w-full">
+            Confirmar y Pagar — Bs. {{ total }}
+          </button>
+        </div>
+
+        <!-- Sidebar: resumen -->
+        <div class="purchase-sidebar-column">
+          <div class="summary-card">
+            <h3 class="summary-title"><i class="fas fa-shopping-cart text-[#00AEEF]"></i> Resumen de Compra</h3>
+
+            <div class="event-summary-box">
+              {% if evento.imagen_url %}
+              <img src="{{ evento.imagen_url }}" class="summary-event-image" alt="{{ evento.nombre }}">
+              {% else %}
+              <img src="https://via.placeholder.com/400x120/151920/fff?text={{ evento.nombre|urlencode }}" class="summary-event-image" alt="{{ evento.nombre }}">
+              {% endif %}
+              <h4 class="font-bold text-lg mt-3">{{ evento.nombre }}</h4>
+              <p class="text-xs text-gray-500">{{ evento.fecha_evento|date:"d/m/Y" }} - {{ evento.hora_evento|time:"H:i" }}</p>
+            </div>
+
+            <div class="text-sm font-semibold mb-4">Zonas Seleccionadas</div>
+            <div id="cart-items" class="mb-6">
+              {% for item in carrito %}
+              <div class="selected-item">
+                <div>
+                  <p class="font-bold text-sm">{{ item.zona_nombre }}</p>
+                  <p class="text-xs text-gray-500">{{ item.qty }} entrada{{ item.qty|pluralize }} × Bs. {{ item.precio }}</p>
+                </div>
+                <span class="font-bold">Bs. {{ item.subtotal }}</span>
+              </div>
+              {% endfor %}
+            </div>
+
+            <div class="border-t border-white/10 pt-4">
+              <div class="summary-line">
+                <span class="text-gray-400">SubTotal</span>
+                <span>Bs. {{ subtotal }}</span>
+              </div>
+              <div class="summary-line">
+                <span class="text-gray-400">Cargo por Servicio</span>
+                <span>Bs. {{ cargo_servicio }}</span>
+              </div>
+              <div class="summary-total">
+                <span>Total</span>
+                <span class="text-[#00AEEF]">Bs. {{ total }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+    {% endif %}
+
+  </div>
+</div>
+
+<script>
+function selectMetodo(radio) {
+  document.querySelectorAll('.payment-method-option').forEach(el => el.classList.remove('selected'));
+  radio.closest('.payment-method-option').classList.add('selected');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,205 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Mis Entradas | Teatro Al Aire Libre{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/pages/tickets/tickets.css' %}" />
+
+<div class="w-full min-h-screen bg-[#0A0E14] pb-12">
+  <div class="max-w-7xl mx-auto px-6 tickets-container">
+
+    <!-- Header -->
+    <div class="tickets-header">
+      <h1 class="tickets-title">Mis Entradas</h1>
+      <p class="tickets-subtitle">Administra tus tickets y accede a ellos cuando los necesites</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tickets-tabs">
+      <div class="tab-btn active" data-tab="upcoming">
+        Próximos Eventos ({{ proximas|length }})
+      </div>
+      <div class="tab-btn" data-tab="past">
+        Eventos Pasados ({{ pasadas|length }})
+      </div>
+    </div>
+
+    <!-- Próximos eventos -->
+    <div id="upcoming-events" class="ticket-grid">
+      {% for item in proximas %}
+      {% with ev=item.evento venta=item.venta %}
+      <div class="ticket-card" data-venta-id="{{ venta.id }}">
+        {% if ev.imagen_url %}
+        <img src="{{ ev.imagen_url }}"
+          onerror="this.src='https://via.placeholder.com/400x200/151920/fff?text={{ ev.nombre|urlencode }}'"
+          class="ticket-img" alt="{{ ev.nombre }}">
+        {% else %}
+        <img src="https://via.placeholder.com/400x200/151920/fff?text={{ ev.nombre|urlencode }}"
+          class="ticket-img" alt="{{ ev.nombre }}">
+        {% endif %}
+        <div class="ticket-body">
+          <h3 class="ticket-event-name">{{ ev.nombre }}</h3>
+          <div class="ticket-info-list">
+            <div class="ticket-info-item">
+              <i class="far fa-calendar-alt"></i>
+              <span>{{ ev.fecha_evento|date:"l, d \d\e F \d\e Y" }}</span>
+            </div>
+            <div class="ticket-info-item">
+              <i class="fas fa-map-marker-alt"></i>
+              <span>{{ ev.lugar }}</span>
+            </div>
+            <div class="ticket-info-item">
+              <i class="fas fa-couch"></i>
+              <span>
+                {% for detalle in venta.reserva.detalles.all %}
+                  {{ detalle.evento_zona.zona.nombre }} (×{{ detalle.cantidad }}){% if not forloop.last %}, {% endif %}
+                {% endfor %}
+              </span>
+            </div>
+            <div class="ticket-info-item">
+              <i class="fas fa-receipt"></i>
+              <span>{{ venta.reserva.codigo_reserva }}</span>
+            </div>
+          </div>
+          <div class="ticket-actions">
+            {% with primera=item.entradas.0 %}
+            {% if primera %}
+            <button class="btn-qr" onclick="abrirQR(
+              '{{ primera.codigo_qr }}',
+              '{{ primera.codigo_ticket }}',
+              '{{ ev.nombre|escapejs }}',
+              '{{ ev.fecha_evento|date:"d/m/Y" }}',
+              '{% for d in venta.reserva.detalles.all %}{{ d.evento_zona.zona.nombre }}{% if not forloop.last %}, {% endif %}{% endfor %}',
+              '{{ request.session.usuario_nombre_completo|escapejs }}',
+              'Bs. {{ venta.total }}'
+            )">
+              <i class="fas fa-qrcode"></i> Ver QR
+            </button>
+            {% endif %}
+            {% endwith %}
+          </div>
+        </div>
+      </div>
+      {% endwith %}
+      {% empty %}
+      <div class="col-span-full text-center py-16">
+        <i class="fas fa-ticket-alt text-5xl text-gray-600 mb-4"></i>
+        <h3 class="text-xl text-white mb-2">No tienes entradas para próximos eventos</h3>
+        <a href="{% url 'eventos' %}" class="btn-qr mt-4 inline-block" style="text-decoration:none;">
+          Ver Eventos Disponibles
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Eventos pasados -->
+    <div id="past-events" class="ticket-grid hidden">
+      {% for item in pasadas %}
+      {% with ev=item.evento venta=item.venta %}
+      <div class="ticket-card opacity-75">
+        {% if ev.imagen_url %}
+        <img src="{{ ev.imagen_url }}"
+          onerror="this.src='https://via.placeholder.com/400x200/151920/fff?text={{ ev.nombre|urlencode }}'"
+          class="ticket-img" alt="{{ ev.nombre }}">
+        {% else %}
+        <img src="https://via.placeholder.com/400x200/151920/fff?text={{ ev.nombre|urlencode }}"
+          class="ticket-img" alt="{{ ev.nombre }}">
+        {% endif %}
+        <div class="ticket-body">
+          <h3 class="ticket-event-name">{{ ev.nombre }}</h3>
+          <div class="ticket-info-list">
+            <div class="ticket-info-item">
+              <i class="far fa-calendar-alt"></i>
+              <span>{{ ev.fecha_evento|date:"l, d \d\e F \d\e Y" }}</span>
+            </div>
+            <div class="ticket-info-item">
+              <i class="fas fa-map-marker-alt"></i>
+              <span>{{ ev.lugar }}</span>
+            </div>
+            <div class="ticket-info-item">
+              <i class="fas fa-couch"></i>
+              <span>
+                {% for detalle in venta.reserva.detalles.all %}
+                  {{ detalle.evento_zona.zona.nombre }} (×{{ detalle.cantidad }}){% if not forloop.last %}, {% endif %}
+                {% endfor %}
+              </span>
+            </div>
+          </div>
+          <div class="ticket-actions">
+            <button class="btn-qr" disabled style="background:#4B5563; cursor:not-allowed;">
+              <i class="fas fa-check"></i> Evento Finalizado
+            </button>
+          </div>
+        </div>
+      </div>
+      {% endwith %}
+      {% empty %}
+      <div class="col-span-full text-center py-16">
+        <i class="fas fa-history text-5xl text-gray-600 mb-4"></i>
+        <h3 class="text-xl text-white">No tienes eventos pasados</h3>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal QR -->
+<div id="qr-modal" class="qr-modal">
+  <div class="qr-modal-content">
+    <i id="close-modal" class="fas fa-times btn-close-modal"></i>
+
+    <div class="qr-code-box">
+      <img id="qr-img" src="" alt="QR Code">
+      <span class="ticket-id" id="qr-ticket-id"></span>
+    </div>
+
+    <div class="qr-details">
+      <div class="detail-group col-span-2">
+        <span class="detail-label">Evento</span>
+        <span class="detail-value" id="qr-evento"></span>
+      </div>
+      <div class="detail-group">
+        <span class="detail-label">Fecha</span>
+        <span class="detail-value" id="qr-fecha"></span>
+      </div>
+      <div class="detail-group">
+        <span class="detail-label">Estado</span>
+        <span class="status-badge">Emitida</span>
+      </div>
+      <div class="detail-group">
+        <span class="detail-label">Zona</span>
+        <span class="detail-value" id="qr-zona"></span>
+      </div>
+      <div class="detail-group">
+        <span class="detail-label">Comprador</span>
+        <span class="detail-value" id="qr-comprador"></span>
+      </div>
+      <div class="detail-group">
+        <span class="detail-label">Total</span>
+        <span class="detail-value text-[#00FFD1]" id="qr-total"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function abrirQR(codigoQr, codigoTicket, evento, fecha, zona, comprador, total) {
+  document.getElementById('qr-img').src =
+    'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(codigoQr);
+  document.getElementById('qr-ticket-id').textContent = codigoTicket;
+  document.getElementById('qr-evento').textContent = evento;
+  document.getElementById('qr-fecha').textContent = fecha;
+  document.getElementById('qr-zona').textContent = zona;
+  document.getElementById('qr-comprador').textContent = comprador;
+  document.getElementById('qr-total').textContent = total;
+  document.getElementById('qr-modal').classList.add('active');
+}
+
+document.getElementById('close-modal').addEventListener('click', function () {
+  document.getElementById('qr-modal').classList.remove('active');
+});
+</script>
+<script src="{% static 'js/pages/tickets/tickets.js' %}"></script>
+{% endblock %}
