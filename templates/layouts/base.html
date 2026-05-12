@@ -20,6 +20,25 @@
 
   {% include 'components/navbar.html' %}
 
+  {# Mensajes de Django — visibles en página y accesibles para el modal #}
+  {% if messages %}
+  <div id="django-messages-container" style="position:fixed;top:70px;right:20px;z-index:9999;max-width:380px;">
+    {% for message in messages %}
+    <div class="django-message alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% else %}alert-info{% endif %} alert-dismissible fade show shadow"
+         data-message="{{ message }}"
+         data-tags="{{ message.tags }}"
+         role="alert"
+         style="font-size:0.9rem;">
+      {% if message.tags == 'error' %}<i class="fas fa-exclamation-circle me-2"></i>
+      {% elif message.tags == 'success' %}<i class="fas fa-check-circle me-2"></i>
+      {% else %}<i class="fas fa-info-circle me-2"></i>{% endif %}
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
   <main class="flex-grow-1">
     {% block content %}{% endblock %}
   </main>

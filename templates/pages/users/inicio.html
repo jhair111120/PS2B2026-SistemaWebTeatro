@@ -33,117 +33,57 @@
     </div>
 
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 justify-content-center">
-      <div class="col fade-in-up" style="animation-delay: 0.1s;">
+      {% for item in eventos_data %}
+      {% with ev=item.evento %}
+      <div class="col fade-in-up" style="animation-delay: {{ forloop.counter0 }}00ms;">
         <div class="card event-card h-100 border-0 overflow-hidden rounded-4">
           <div class="position-relative card-img-container">
-            <img src="{% static 'img/rata-blanca.jpg' %}"
-              onerror="this.src='https://via.placeholder.com/400x250/111/fff?text=Rata+Blanca'"
-              class="card-img-top custom-card-img" alt="Rata Blanca">
-
+            {% if ev.imagen_url %}
+            <img src="{{ ev.imagen_url }}"
+              onerror="this.src='https://via.placeholder.com/400x250/111/fff?text={{ ev.nombre|urlencode }}'"
+              class="card-img-top custom-card-img" alt="{{ ev.nombre }}">
+            {% else %}
+            <img src="https://via.placeholder.com/400x250/111/fff?text={{ ev.nombre|urlencode }}"
+              class="card-img-top custom-card-img" alt="{{ ev.nombre }}">
+            {% endif %}
             <div class="event-date-badge position-absolute top-0 end-0 m-0 text-center p-2 text-white">
-              Viernes<br>
-              <span class="badge-day">27</span><br>
-              <small>Marzo</small>
+              {{ ev.fecha_evento|date:"l" }}<br>
+              <span class="badge-day">{{ ev.fecha_evento|date:"d" }}</span><br>
+              <small>{{ ev.fecha_evento|date:"M" }}</small>
             </div>
           </div>
-
           <div class="card-body p-4 bg-dark-card d-flex flex-column text-white">
-            <h5 class="card-title fw-bold mb-3 fs-5">Concierto Rata Blanca</h5>
-            <p class="card-text mb-1 text-light opacity-75"><i
-                class="far fa-calendar-alt me-2 icon-primary"></i>Viernes, 27 de Marzo, 2026</p>
-            <p class="card-text mb-4 text-light opacity-75"><i class="far fa-clock me-2 icon-primary"></i>19:00 Hrs.</p>
-
+            <h5 class="card-title fw-bold mb-3 fs-5">{{ ev.nombre }}</h5>
+            <p class="card-text mb-1 text-light opacity-75">
+              <i class="far fa-calendar-alt me-2 icon-primary"></i>{{ ev.fecha_evento|date:"l, d \d\e F, Y" }}
+            </p>
+            <p class="card-text mb-4 text-light opacity-75">
+              <i class="far fa-clock me-2 icon-primary"></i>{{ ev.hora_evento|time:"H:i" }} Hrs.
+            </p>
             <div class="d-flex justify-content-between align-items-end mb-4 mt-auto">
               <div>
                 <small class="text-light opacity-75">Desde</small><br>
-                <strong class="fs-5 text-white fw-bold">Bs. 150</strong>
+                <strong class="fs-5 text-white fw-bold">Bs. {{ item.precio_min }}</strong>
               </div>
               <div class="text-end">
-                <small class="text-light opacity-75">Disponibles</small><br>
-                <strong class="fs-5 text-white fw-bold">270</strong>
+                <small class="text-light opacity-75">Capacidad</small><br>
+                <strong class="fs-5 text-white fw-bold">{{ item.cap_total }}</strong>
               </div>
             </div>
-
-            <a href="{% url 'comprar_entradas' %}"
-              class="btn btn-buy-custom w-100 py-2 fw-bold rounded-3 text-decoration-none text-center">Comprar
-              Entradas!</a>
+            <a href="{% url 'comprar_entradas' ev.id %}"
+              class="btn btn-buy-custom w-100 py-2 fw-bold rounded-3 text-decoration-none text-center">
+              Comprar Entradas!
+            </a>
           </div>
         </div>
       </div>
-
-      <div class="col fade-in-up" style="animation-delay: 0.2s;">
-        <div class="card event-card h-100 border-0 overflow-hidden rounded-4">
-          <div class="position-relative card-img-container">
-            <img src="{% static 'img/wisin-yandel.jpg' %}"
-              onerror="this.src='https://via.placeholder.com/400x250/111/fff?text=Wisin+y+Yandel'"
-              class="card-img-top custom-card-img" alt="Wisin Y Yandel">
-            <div class="event-date-badge position-absolute top-0 end-0 m-0 text-center p-2 text-white">
-              Sábado<br>
-              <span class="badge-day">28</span><br>
-              <small>Marzo</small>
-            </div>
-          </div>
-
-          <div class="card-body p-4 bg-dark-card d-flex flex-column text-white">
-            <h5 class="card-title fw-bold mb-3 fs-5">Concierto Wisin Y Yandel</h5>
-            <p class="card-text mb-1 text-light opacity-75"><i class="far fa-calendar-alt me-2 icon-primary"></i>Sábado,
-              28 de Marzo, 2026</p>
-            <p class="card-text mb-4 text-light opacity-75"><i class="far fa-clock me-2 icon-primary"></i>20:00 Hrs.</p>
-
-            <div class="d-flex justify-content-between align-items-end mb-4 mt-auto">
-              <div>
-                <small class="text-light opacity-75">Desde</small><br>
-                <strong class="fs-5 text-white fw-bold">Bs. 230</strong>
-              </div>
-              <div class="text-end">
-                <small class="text-light opacity-75">Disponibles</small><br>
-                <strong class="fs-5 text-white fw-bold">15</strong>
-              </div>
-            </div>
-
-            <a href="{% url 'comprar_entradas' %}"
-              class="btn btn-buy-custom w-100 py-2 fw-bold rounded-3 text-decoration-none text-center">Comprar
-              Entradas!</a>
-          </div>
-        </div>
+      {% endwith %}
+      {% empty %}
+      <div class="col-12 text-center py-5">
+        <p class="text-light opacity-75 fs-5">No hay eventos disponibles en este momento.</p>
+        <a href="{% url 'eventos' %}" class="btn btn-outline-view-more px-4 py-2 mt-3 rounded-3">Ver todos los eventos</a>
       </div>
-
-      <div class="col fade-in-up" style="animation-delay: 0.3s;">
-        <div class="card event-card h-100 border-0 overflow-hidden rounded-4">
-          <div class="position-relative card-img-container">
-            <img src="{% static 'img/slipknot.jpg' %}"
-              onerror="this.src='https://via.placeholder.com/400x250/111/fff?text=Slipknot'"
-              class="card-img-top custom-card-img" alt="Slipknot">
-            <div class="event-date-badge position-absolute top-0 end-0 m-0 text-center p-2 text-white">
-              Viernes<br>
-              <span class="badge-day">10</span><br>
-              <small>Abril</small>
-            </div>
-          </div>
-
-          <div class="card-body p-4 bg-dark-card d-flex flex-column text-white">
-            <h5 class="card-title fw-bold mb-3 fs-5">Concierto Slipknot</h5>
-            <p class="card-text mb-1 text-light opacity-75"><i
-                class="far fa-calendar-alt me-2 icon-primary"></i>Viernes, 10 de Abril, 2026</p>
-            <p class="card-text mb-4 text-light opacity-75"><i class="far fa-clock me-2 icon-primary"></i>19:00 Hrs.</p>
-
-            <div class="d-flex justify-content-between align-items-end mb-4 mt-auto">
-              <div>
-                <small class="text-light opacity-75">Desde</small><br>
-                <strong class="fs-5 text-white fw-bold">Bs. 500</strong>
-              </div>
-              <div class="text-end">
-                <small class="text-light opacity-75">Disponibles</small><br>
-                <strong class="fs-5 text-danger fw-bold">2</strong>
-              </div>
-            </div>
-
-            <a href="{% url 'comprar_entradas' %}"
-              class="btn btn-buy-custom w-100 py-2 fw-bold rounded-3 text-decoration-none text-center">Comprar
-              Entradas!</a>
-          </div>
-        </div>
-      </div>
+      {% endfor %}
     </div>
 
     <div class="text-center mt-5 pt-4">

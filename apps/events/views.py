@@ -3,8 +3,10 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.db import transaction
-from django.shortcuts import get_object_or_404, redirect
+from django.db.models import Min, Q, Sum
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_time
 from django.core.exceptions import ValidationError
 from django.views.decorators.cache import never_cache
@@ -12,6 +14,10 @@ from django.views.decorators.http import require_http_methods
 
 from .models import Evento, EstadoEvento, EventoZona, Zona
 
+
+# ─────────────────────────────────────────────
+# HELPERS ADMIN
+# ─────────────────────────────────────────────
 
 def _require_admin(request):
     if not request.session.get('usuario_id'):
@@ -171,7 +177,6 @@ def _save_event_and_zonas(ev, payload):
     ev.full_clean()
     ev.save()
 
-    # upsert de zonas editables (VIP/Graderia/General) para este evento
     zona_specs = {spec[0].id: (spec[0], spec[1]) for spec in payload['precio_specs']}
     for idx, zona_id in enumerate(zona_specs.keys()):
         zona_obj, precio = zona_specs[zona_id]
@@ -194,6 +199,114 @@ def _save_event_and_zonas(ev, payload):
         ez.full_clean()
         ez.save()
 
+
+# ─────────────────────────────────────────────
+# VISTAS PÚBLICAS — EVENTOS
+# ─────────────────────────────────────────────
+
+@never_cache
+def inicio_view(request):
+    """Página de inicio con los próximos 3 eventos activos."""
+    hoy = timezone.localdate()
+    eventos = (
+        Evento.objects.select_related('estado_evento')
+        .prefetch_related('eventozona_set__zona')
+        .filter(estado_evento__nombre__icontains='activ', fecha_evento__gte=hoy)
+        .order_by('fecha_evento', 'hora_evento')[:3]
+    )
+
+    eventos_data = []
+    for ev in eventos:
+        zonas = ev.eventozona_set.filter(habilitada=True).order_by('precio_base')
+        precio_min = zonas.aggregate(m=Min('precio_base'))['m'] or Decimal('0')
+        cap_total = zonas.aggregate(s=Sum('capacidad_evento'))['s'] or 0
+        eventos_data.append({
+            'evento': ev,
+            'precio_min': precio_min,
+            'cap_total': cap_total,
+        })
+
+    return render(request, 'pages/users/inicio.html', {'eventos_data': eventos_data})
+
+
+@never_cache
+def eventos_view(request):
+    """Listado completo de eventos activos con búsqueda y filtros."""
+    hoy = timezone.localdate()
+    q = (request.GET.get('q') or '').strip()
+    fecha_desde = request.GET.get('fecha_desde') or ''
+    fecha_hasta = request.GET.get('fecha_hasta') or ''
+
+    qs = (
+        Evento.objects.select_related('estado_evento')
+        .prefetch_related('eventozona_set__zona')
+        .filter(estado_evento__nombre__icontains='activ', fecha_evento__gte=hoy)
+        .order_by('fecha_evento', 'hora_evento')
+    )
+
+    if q:
+        qs = qs.filter(Q(nombre__icontains=q) | Q(descripcion__icontains=q) | Q(lugar__icontains=q))
+
+    if fecha_desde:
+        d = parse_date(fecha_desde)
+        if d:
+            qs = qs.filter(fecha_evento__gte=d)
+
+    if fecha_hasta:
+        d = parse_date(fecha_hasta)
+        if d:
+            qs = qs.filter(fecha_evento__lte=d)
+
+    eventos_data = []
+    for ev in qs:
+        zonas = ev.eventozona_set.filter(habilitada=True).order_by('precio_base')
+        precio_min = zonas.aggregate(m=Min('precio_base'))['m'] or Decimal('0')
+        cap_total = zonas.aggregate(s=Sum('capacidad_evento'))['s'] or 0
+        eventos_data.append({
+            'evento': ev,
+            'precio_min': precio_min,
+            'cap_total': cap_total,
+        })
+
+    return render(request, 'pages/events/eventos.html', {
+        'eventos_data': eventos_data,
+        'q': q,
+        'fecha_desde': fecha_desde,
+        'fecha_hasta': fecha_hasta,
+    })
+
+
+@never_cache
+def comprar_entrada_view(request, evento_id):
+    """Detalle de un evento para iniciar la compra."""
+    hoy = timezone.localdate()
+    evento = get_object_or_404(
+        Evento.objects.select_related('estado_evento').prefetch_related('eventozona_set__zona'),
+        pk=evento_id,
+        estado_evento__nombre__icontains='activ',
+        fecha_evento__gte=hoy,
+    )
+
+    zonas = (
+        evento.eventozona_set
+        .select_related('zona')
+        .filter(habilitada=True)
+        .order_by('-precio_base')
+    )
+
+    cap_total = zonas.aggregate(s=Sum('capacidad_evento'))['s'] or 0
+
+    return render(request, 'pages/users/comprar_entrada.html', {
+        'evento': evento,
+        'zonas': zonas,
+        'cap_total': cap_total,
+    })
+
+
+
+# ─────────────────────────────────────────────
+# VISTAS ADMIN — EVENTOS CRUD
+# ─────────────────────────────────────────────
 
 @never_cache
 @require_http_methods(['GET', 'POST'])

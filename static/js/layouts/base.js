@@ -76,11 +76,35 @@ function togglePassword(icon) {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
+  // Auto-dismiss mensajes de éxito después de 4 segundos
+  setTimeout(function() {
+    document.querySelectorAll('#django-messages-container .alert-success').forEach(function(el) {
+      var bsAlert = bootstrap.Alert.getOrCreateInstance(el);
+      bsAlert.close();
+    });
+  }, 4000);
   const action = new URLSearchParams(window.location.search).get('action');
   if (action === 'login' || action === 'signup') {
     var authModal = new bootstrap.Modal(document.getElementById('authModal'));
     switchAuthTab(action);
     authModal.show();
     window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
+  // Mostrar mensajes de Django dentro del modal si está abierto
+  const djangoMessages = document.querySelectorAll('.django-message');
+  if (djangoMessages.length > 0 && (action === 'login' || action === 'signup')) {
+    djangoMessages.forEach(function(msg) {
+      const container = action === 'login'
+        ? document.getElementById('form-login')
+        : document.getElementById('form-signup');
+      if (container) {
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-danger py-2 px-3 mb-3 rounded-3';
+        alert.style.fontSize = '0.85rem';
+        alert.textContent = msg.dataset.message;
+        container.insertBefore(alert, container.firstChild);
+      }
+    });
   }
 });

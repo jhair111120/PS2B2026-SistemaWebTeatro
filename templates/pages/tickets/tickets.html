@@ -7,193 +7,199 @@
 <link rel="stylesheet" href="{% static 'css/pages/tickets/tickets.css' %}" />
 
 <div class="w-full min-h-screen bg-[#0A0E14] pb-12">
-    <div class="max-w-7xl mx-auto px-6 tickets-container">
+  <div class="max-w-7xl mx-auto px-6 tickets-container">
+
     <!-- Header -->
     <div class="tickets-header">
-        <h1 class="tickets-title">Mis Entradas</h1>
-        <p class="tickets-subtitle">Administra tus tickets y accede a ellos cuando los necesites</p>
+      <h1 class="tickets-title">Mis Entradas</h1>
+      <p class="tickets-subtitle">Administra tus tickets y accede a ellos cuando los necesites</p>
     </div>
 
     <!-- Tabs -->
     <div class="tickets-tabs">
-        <div class="tab-btn active" data-tab="upcoming">Proximos Eventos (3)</div>
-        <div class="tab-btn" data-tab="past">Eventos Pasados (1)</div>
+      <div class="tab-btn active" data-tab="upcoming">
+        Próximos Eventos ({{ proximas|length }})
+      </div>
+      <div class="tab-btn" data-tab="past">
+        Eventos Pasados ({{ pasadas|length }})
+      </div>
     </div>
 
-    <!-- Upcoming Events Grid -->
+    <!-- Próximos eventos -->
     <div id="upcoming-events" class="ticket-grid">
-        <!-- Ticket 1 -->
-        <div class="ticket-card">
-            <img src="https://images.unsplash.com/photo-1493225255756-d9584f8606e9?auto=format&fit=crop&q=80&w=800" class="ticket-img" alt="Evento">
-            <div class="ticket-body">
-                <h3 class="ticket-event-name">Concierto Folklórico Nacional</h3>
-                <div class="ticket-info-list">
-                    <div class="ticket-info-item">
-                        <i class="far fa-calendar-alt"></i>
-                        <span>domingo, 15 de marzo</span>
-                    </div>
-                    <div class="ticket-info-item">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <span>Teatro La Paz</span>
-                    </div>
-                    <div class="ticket-info-item">
-                        <i class="fas fa-couch"></i>
-                        <span>VIP - A-10, A-11</span>
-                    </div>
-                </div>
-                <div class="ticket-actions">
-                    <button class="btn-qr">
-                        <i class="fas fa-qrcode"></i> Ver QR
-                    </button>
-                    <button class="btn-download-small">
-                        <i class="fas fa-download"></i>
-                    </button>
-                </div>
+      {% for item in proximas %}
+      {% with ev=item.evento venta=item.venta %}
+      <div class="ticket-card" data-venta-id="{{ venta.id }}">
+        {% if ev.imagen_url %}
+        <img src="{{ ev.imagen_url }}"
+          onerror="this.src='https://via.placeholder.com/400x200/151920/fff?text={{ ev.nombre|urlencode }}'"
+          class="ticket-img" alt="{{ ev.nombre }}">
+        {% else %}
+        <img src="https://via.placeholder.com/400x200/151920/fff?text={{ ev.nombre|urlencode }}"
+          class="ticket-img" alt="{{ ev.nombre }}">
+        {% endif %}
+        <div class="ticket-body">
+          <h3 class="ticket-event-name">{{ ev.nombre }}</h3>
+          <div class="ticket-info-list">
+            <div class="ticket-info-item">
+              <i class="far fa-calendar-alt"></i>
+              <span>{{ ev.fecha_evento|date:"l, d \d\e F \d\e Y" }}</span>
             </div>
-        </div>
-
-        <!-- Ticket 2 -->
-        <div class="ticket-card">
-            <img src="https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&q=80&w=800" class="ticket-img" alt="Evento">
-            <div class="ticket-body">
-                <h3 class="ticket-event-name">El Rugido del Kraken</h3>
-                <div class="ticket-info-list">
-                    <div class="ticket-info-item">
-                        <i class="far fa-calendar-alt"></i>
-                        <span>viernes, 10 de mayo</span>
-                    </div>
-                    <div class="ticket-info-item">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <span>Teatro La Paz</span>
-                    </div>
-                    <div class="ticket-info-item">
-                        <i class="fas fa-couch"></i>
-                        <span>Graderia A - B-15</span>
-                    </div>
-                </div>
-                <div class="ticket-actions">
-                    <button class="btn-qr">
-                        <i class="fas fa-qrcode"></i> Ver QR
-                    </button>
-                    <button class="btn-download-small">
-                        <i class="fas fa-download"></i>
-                    </button>
-                </div>
+            <div class="ticket-info-item">
+              <i class="fas fa-map-marker-alt"></i>
+              <span>{{ ev.lugar }}</span>
             </div>
-        </div>
-
-        <!-- Ticket 3 -->
-        <div class="ticket-card">
-            <img src="https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&q=80&w=800" class="ticket-img" alt="Evento">
-            <div class="ticket-body">
-                <h3 class="ticket-event-name">Los Iracundos</h3>
-                <div class="ticket-info-list">
-                    <div class="ticket-info-item">
-                        <i class="far fa-calendar-alt"></i>
-                        <span>sabado, 25 de mayo</span>
-                    </div>
-                    <div class="ticket-info-item">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <span>Teatro La Paz</span>
-                    </div>
-                    <div class="ticket-info-item">
-                        <i class="fas fa-couch"></i>
-                        <span>VIP - A-9, A-10</span>
-                    </div>
-                </div>
-                <div class="ticket-actions">
-                    <button class="btn-qr">
-                        <i class="fas fa-qrcode"></i> Ver QR
-                    </button>
-                    <button class="btn-download-small">
-                        <i class="fas fa-download"></i>
-                    </button>
-                </div>
+            <div class="ticket-info-item">
+              <i class="fas fa-couch"></i>
+              <span>
+                {% for detalle in venta.reserva.detalles.all %}
+                  {{ detalle.evento_zona.zona.nombre }} (×{{ detalle.cantidad }}){% if not forloop.last %}, {% endif %}
+                {% endfor %}
+              </span>
             </div>
-        </div>
-    </div>
-
-    <!-- Past Events Grid (Hidden by default) -->
-    <div id="past-events" class="ticket-grid hidden">
-        <div class="ticket-card opacity-75">
-            <img src="https://images.unsplash.com/photo-1506157786151-b8491531f063?auto=format&fit=crop&q=80&w=800" class="ticket-img" alt="Evento">
-            <div class="ticket-body">
-                <h3 class="ticket-event-name">Precas de Colores</h3>
-                <div class="ticket-info-list">
-                    <div class="ticket-info-item">
-                        <i class="far fa-calendar-alt"></i>
-                        <span>sabado, 17 de enero 2026</span>
-                    </div>
-                    <div class="ticket-info-item">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <span>Teatro La Paz</span>
-                    </div>
-                    <div class="ticket-info-item">
-                        <i class="fas fa-couch"></i>
-                        <span>VIP - A-10, A-11</span>
-                    </div>
-                </div>
-                <div class="ticket-actions">
-                    <button class="btn-qr" disabled style="background: #4B5563; cursor: not-allowed;">
-                        <i class="fas fa-check"></i> Evento Finalizado
-                    </button>
-                </div>
+            <div class="ticket-info-item">
+              <i class="fas fa-receipt"></i>
+              <span>{{ venta.reserva.codigo_reserva }}</span>
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- QR Modal -->
-<div id="qr-modal" class="qr-modal">
-    <div class="qr-modal-content">
-        <i id="close-modal" class="fas fa-times btn-close-modal"></i>
-        
-        <div class="qr-code-box">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=QR-V001-ABC123" alt="QR Code">
-            <span class="ticket-id">QR-V001-ABC123</span>
-        </div>
-
-        <div class="qr-details">
-            <div class="detail-group col-span-2">
-                <span class="detail-label">Evento</span>
-                <span class="detail-value">Concierto Folklórico Nacional</span>
-            </div>
-            
-            <div class="detail-group">
-                <span class="detail-label">Fecha</span>
-                <span class="detail-value">15/3/2027</span>
-            </div>
-            
-            <div class="detail-group">
-                <span class="detail-label">Estado</span>
-                <span class="status-badge">completado</span>
-            </div>
-            
-            <div class="detail-group">
-                <span class="detail-label">Asientos</span>
-                <span class="detail-value">A-10, A-11</span>
-            </div>
-            
-            <div class="detail-group">
-                <span class="detail-label">Comprador</span>
-                <span class="detail-value">Ana Lopez</span>
-            </div>
-            
-            <div class="detail-group">
-                <span class="detail-label">Comprador</span>
-                <span class="detail-value text-[#00FFD1]">Bs. 340</span>
-            </div>
-        </div>
-
-        <div class="qr-actions">
-            <button class="btn-download-full">
-                Descargar <i class="fas fa-download"></i>
+          </div>
+          <div class="ticket-actions">
+            {% with primera=item.entradas.0 %}
+            {% if primera %}
+            <button class="btn-qr" onclick="abrirQR(
+              '{{ primera.codigo_qr }}',
+              '{{ primera.codigo_ticket }}',
+              '{{ ev.nombre|escapejs }}',
+              '{{ ev.fecha_evento|date:"d/m/Y" }}',
+              '{% for d in venta.reserva.detalles.all %}{{ d.evento_zona.zona.nombre }}{% if not forloop.last %}, {% endif %}{% endfor %}',
+              '{{ request.session.usuario_nombre_completo|escapejs }}',
+              'Bs. {{ venta.total }}'
+            )">
+              <i class="fas fa-qrcode"></i> Ver QR
             </button>
+            {% endif %}
+            {% endwith %}
+          </div>
         </div>
+      </div>
+      {% endwith %}
+      {% empty %}
+      <div class="col-span-full text-center py-16">
+        <i class="fas fa-ticket-alt text-5xl text-gray-600 mb-4"></i>
+        <h3 class="text-xl text-white mb-2">No tienes entradas para próximos eventos</h3>
+        <a href="{% url 'eventos' %}" class="btn-qr mt-4 inline-block" style="text-decoration:none;">
+          Ver Eventos Disponibles
+        </a>
+      </div>
+      {% endfor %}
     </div>
-</div>
+
+    <!-- Eventos pasados -->
+    <div id="past-events" class="ticket-grid hidden">
+      {% for item in pasadas %}
+      {% with ev=item.evento venta=item.venta %}
+      <div class="ticket-card opacity-75">
+        {% if ev.imagen_url %}
+        <img src="{{ ev.imagen_url }}"
+          onerror="this.src='https://via.placeholder.com/400x200/151920/fff?text={{ ev.nombre|urlencode }}'"
+          class="ticket-img" alt="{{ ev.nombre }}">
+        {% else %}
+        <img src="https://via.placeholder.com/400x200/151920/fff?text={{ ev.nombre|urlencode }}"
+          class="ticket-img" alt="{{ ev.nombre }}">
+        {% endif %}
+        <div class="ticket-body">
+          <h3 class="ticket-event-name">{{ ev.nombre }}</h3>
+          <div class="ticket-info-list">
+            <div class="ticket-info-item">
+              <i class="far fa-calendar-alt"></i>
+              <span>{{ ev.fecha_evento|date:"l, d \d\e F \d\e Y" }}</span>
+            </div>
+            <div class="ticket-info-item">
+              <i class="fas fa-map-marker-alt"></i>
+              <span>{{ ev.lugar }}</span>
+            </div>
+            <div class="ticket-info-item">
+              <i class="fas fa-couch"></i>
+              <span>
+                {% for detalle in venta.reserva.detalles.all %}
+                  {{ detalle.evento_zona.zona.nombre }} (×{{ detalle.cantidad }}){% if not forloop.last %}, {% endif %}
+                {% endfor %}
+              </span>
+            </div>
+          </div>
+          <div class="ticket-actions">
+            <button class="btn-qr" disabled style="background:#4B5563; cursor:not-allowed;">
+              <i class="fas fa-check"></i> Evento Finalizado
+            </button>
+          </div>
+        </div>
+      </div>
+      {% endwith %}
+      {% empty %}
+      <div class="col-span-full text-center py-16">
+        <i class="fas fa-history text-5xl text-gray-600 mb-4"></i>
+        <h3 class="text-xl text-white">No tienes eventos pasados</h3>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
 </div>
 
+<!-- Modal QR -->
+<div id="qr-modal" class="qr-modal">
+  <div class="qr-modal-content">
+    <i id="close-modal" class="fas fa-times btn-close-modal"></i>
+
+    <div class="qr-code-box">
+      <img id="qr-img" src="" alt="QR Code">
+      <span class="ticket-id" id="qr-ticket-id"></span>
+    </div>
+
+    <div class="qr-details">
+      <div class="detail-group col-span-2">
+        <span class="detail-label">Evento</span>
+        <span class="detail-value" id="qr-evento"></span>
+      </div>
+      <div class="detail-group">
+        <span class="detail-label">Fecha</span>
+        <span class="detail-value" id="qr-fecha"></span>
+      </div>
+      <div class="detail-group">
+        <span class="detail-label">Estado</span>
+        <span class="status-badge">Emitida</span>
+      </div>
+      <div class="detail-group">
+        <span class="detail-label">Zona</span>
+        <span class="detail-value" id="qr-zona"></span>
+      </div>
+      <div class="detail-group">
+        <span class="detail-label">Comprador</span>
+        <span class="detail-value" id="qr-comprador"></span>
+      </div>
+      <div class="detail-group">
+        <span class="detail-label">Total</span>
+        <span class="detail-value text-[#00FFD1]" id="qr-total"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function abrirQR(codigoQr, codigoTicket, evento, fecha, zona, comprador, total) {
+  document.getElementById('qr-img').src =
+    'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(codigoQr);
+  document.getElementById('qr-ticket-id').textContent = codigoTicket;
+  document.getElementById('qr-evento').textContent = evento;
+  document.getElementById('qr-fecha').textContent = fecha;
+  document.getElementById('qr-zona').textContent = zona;
+  document.getElementById('qr-comprador').textContent = comprador;
+  document.getElementById('qr-total').textContent = total;
+  document.getElementById('qr-modal').classList.add('active');
+}
+
+document.getElementById('close-modal').addEventListener('click', function () {
+  document.getElementById('qr-modal').classList.remove('active');
+});
+</script>
 <script src="{% static 'js/pages/tickets/tickets.js' %}"></script>
 {% endblock %}
-
