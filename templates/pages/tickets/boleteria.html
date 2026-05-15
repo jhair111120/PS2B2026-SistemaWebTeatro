@@ -1,0 +1,523 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Boletería | Teatro Al Aire Libre "Jaime Laredo"</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'css/pages/tickets/boleteria.css' %}">
+</head>
+
+<body>
+
+  <div class="main-content">
+
+    <!-- ── TOPBAR ───────────────────────────────────────────────── -->
+    <header class="topbar">
+      <div>
+        <h6 class="text-white mb-0 fw-bold">
+          <i class="fas fa-store me-2" style="color: var(--color-cyan);"></i>Ventanilla de Boletería
+        </h6>
+        <small class="text-gray-custom">Venta presencial de entradas</small>
+      </div>
+      <div class="topbar-right">
+        <div class="dropdown">
+          <button class="btn-account dropdown-toggle" type="button"
+            data-bs-toggle="dropdown" aria-expanded="false">
+            <div class="user-avatar"><i class="far fa-user"></i></div>
+            <span class="fw-bold text-white">
+              {{ request.session.usuario_nombre|default:"Empleado" }}
+            </span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end user-dropdown-menu">
+            <li class="user-dropdown-header">
+              <div class="fw-bold text-white fs-6">
+                {{ request.session.usuario_nombre_completo|default:"Empleado" }}
+              </div>
+              <div class="small text-gray-custom">
+                {{ request.session.usuario_correo|default:"" }}
+              </div>
+            </li>
+            <li>
+              <a class="user-dropdown-item logout" href="{% url 'logout' %}">
+                <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </header>
+
+    <!-- ── MAIN ─────────────────────────────────────────────────── -->
+    <main class="boleteria-wrapper">
+
+      <!-- Django messages -->
+      {% if messages %}
+      <div class="mb-3">
+        {% for msg in messages %}
+        <div class="alert alert-{{ msg.tags }} alert-dismissible fade show" role="alert">
+          <i class="fas fa-{% if msg.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %} me-2"></i>
+          {{ msg }}
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Step indicator -->
+      <div class="step-indicator mb-4">
+        <div class="step active" id="step-dot-1">
+          <div class="step-circle" id="sc-1">1</div>
+          <span>Evento</span>
+        </div>
+        <div class="step-line" id="line-1"></div>
+        <div class="step" id="step-dot-2">
+          <div class="step-circle" id="sc-2">2</div>
+          <span>Zonas</span>
+        </div>
+        <div class="step-line" id="line-2"></div>
+        <div class="step" id="step-dot-3">
+          <div class="step-circle" id="sc-3">3</div>
+          <span>Pago</span>
+        </div>
+      </div>
+
+      <!-- Form (wraps all steps) -->
+      <form method="POST" action="{% url 'boleteria_confirmar' %}" id="boleForm">
+        {% csrf_token %}
+        <input type="hidden" name="evento_id"    id="hiddenEventoId">
+        <input type="hidden" name="carrito_json" id="hiddenCarrito">
+        <input type="hidden" name="metodo_pago"  id="hiddenMetodo" value="Efectivo">
+
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- PASO 1: Seleccionar Evento                              -->
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <div id="step1" class="step-section">
+          <div class="section-header mb-3">
+            <h5>
+              <i class="fas fa-calendar-alt me-2 text-cyan"></i>
+              Selecciona un Evento
+            </h5>
+            <p class="text-gray-custom small mb-0">
+              Haz clic en el evento para el que deseas vender entradas.
+            </p>
+          </div>
+
+          {% if eventos %}
+          <div class="events-grid">
+            {% for evento in eventos %}
+            <div class="event-card"
+              onclick="selectEvent(
+                {{ evento.id }},
+                '{{ evento.nombre|escapejs }}',
+                '{{ evento.fecha_evento|date:"d/m/Y" }}',
+                '{{ evento.hora_evento|time:"H:i" }}',
+                '{{ evento.lugar|escapejs }}'
+              )">
+              <div class="event-card-body">
+                <div class="event-badge">{{ evento.estado_evento.nombre|upper }}</div>
+                <h6 class="event-name">{{ evento.nombre }}</h6>
+                <div class="event-meta">
+                  <span>
+                    <i class="far fa-calendar me-1"></i>{{ evento.fecha_evento|date:"d/m/Y" }}
+                  </span>
+                  <span>
+                    <i class="far fa-clock me-1"></i>{{ evento.hora_evento|time:"H:i" }}
+                  </span>
+                </div>
+                {% if evento.lugar %}
+                <div class="event-meta mt-1">
+                  <span>
+                    <i class="fas fa-map-marker-alt me-1"></i>{{ evento.lugar }}
+                  </span>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="empty-state">
+            <i class="fas fa-calendar-times"></i>
+            <p class="mt-2">No hay eventos activos disponibles en este momento.</p>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- PASO 2: Seleccionar Zonas                               -->
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <div id="step2" class="step-section d-none">
+
+          <div class="d-flex align-items-center gap-3 mb-4">
+            <button type="button" class="btn-back" onclick="goToStep(1)" title="Volver">
+              <i class="fas fa-arrow-left"></i>
+            </button>
+            <div>
+              <h5 class="mb-0">
+                <i class="fas fa-map me-2 text-cyan"></i>Selecciona Zonas y Cantidades
+              </h5>
+              <p class="text-gray-custom small mb-0" id="selectedEventLabel">—</p>
+            </div>
+          </div>
+
+          <!-- Loading -->
+          <div id="zonasLoading" class="text-center py-5">
+            <i class="fas fa-circle-notch fa-spin fs-2 text-cyan"></i>
+            <p class="text-gray-custom mt-3 small">Cargando zonas disponibles…</p>
+          </div>
+
+          <!-- Zones container -->
+          <div id="zonasContainer" class="d-none">
+            <div class="zones-grid" id="zonesGrid"></div>
+
+            <!-- Running total bar -->
+            <div class="d-flex justify-content-between align-items-center mt-4 p-3"
+              style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:12px;">
+              <div>
+                <span class="text-gray-custom small me-2">Total seleccionado:</span>
+                <span id="runningTotal" class="fw-bold" style="color:var(--color-cyan); font-size:1.1rem;">
+                  Bs. 0.00
+                </span>
+                <span class="text-gray-custom small ms-2" id="runningCount">(0 entradas)</span>
+              </div>
+              <button type="button" class="btn-primary-action" id="btnGoToPayment"
+                onclick="goToStep(3)" disabled>
+                Ir al Pago <i class="fas fa-arrow-right ms-2"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Error state -->
+          <div id="zonasError" class="d-none text-center py-4">
+            <i class="fas fa-exclamation-triangle text-danger fs-2"></i>
+            <p class="text-gray-custom mt-2">Error al cargar las zonas. Intenta de nuevo.</p>
+            <button type="button" class="btn-primary-action"
+              onclick="loadZonas(currentEventoId)">
+              <i class="fas fa-redo me-2"></i>Reintentar
+            </button>
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <!-- PASO 3: Método de Pago y Confirmación                   -->
+        <!-- ═══════════════════════════════════════════════════════ -->
+        <div id="step3" class="step-section d-none">
+
+          <div class="d-flex align-items-center gap-3 mb-4">
+            <button type="button" class="btn-back" onclick="goToStep(2)" title="Volver">
+              <i class="fas fa-arrow-left"></i>
+            </button>
+            <div>
+              <h5 class="mb-0">
+                <i class="fas fa-money-bill-wave me-2 text-cyan"></i>Confirmar y Cobrar
+              </h5>
+              <p class="text-gray-custom small mb-0">Revisa el resumen y elige el método de pago.</p>
+            </div>
+          </div>
+
+          <div class="row g-4">
+
+            <!-- Columna izquierda: Resumen de venta -->
+            <div class="col-lg-6">
+              <div class="summary-card">
+                <div class="summary-title">
+                  <i class="fas fa-receipt me-1"></i> Resumen de Venta
+                </div>
+
+                <div id="summaryEventName" class="summary-event-name mb-3">—</div>
+
+                <div id="summaryItems">
+                  <!-- Items se inyectan por JS -->
+                </div>
+
+                <div class="summary-divider"></div>
+
+                <div class="summary-total">
+                  <span>Total a cobrar</span>
+                  <span id="summaryTotal" class="total-amount">Bs. 0.00</span>
+                </div>
+
+                <div class="summary-note mt-3">
+                  <i class="fas fa-store me-1"></i>
+                  Venta en ventanilla — Sin cargo adicional por servicio
+                </div>
+              </div>
+            </div>
+
+            <!-- Columna derecha: Pago -->
+            <div class="col-lg-6">
+              <div class="payment-card">
+                <div class="summary-title">
+                  <i class="fas fa-credit-card me-1"></i> Forma de Pago
+                </div>
+
+                <div class="payment-methods">
+                  <!-- Efectivo -->
+                  <div class="payment-option active" id="opt-efectivo"
+                    onclick="selectPayment('Efectivo')">
+                    <div class="payment-icon">
+                      <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <div>
+                      <div class="payment-label">Efectivo</div>
+                      <div class="payment-sub">Pago directo en caja</div>
+                    </div>
+                    <i class="fas fa-check-circle payment-check"></i>
+                  </div>
+
+                  <!-- QR -->
+                  <div class="payment-option" id="opt-qr"
+                    onclick="selectPayment('QR')">
+                    <div class="payment-icon" style="background:rgba(0,255,209,.08); color:var(--color-cyan);">
+                      <i class="fas fa-qrcode"></i>
+                    </div>
+                    <div>
+                      <div class="payment-label">Código QR</div>
+                      <div class="payment-sub">Transferencia bancaria QR</div>
+                    </div>
+                    <i class="fas fa-check-circle payment-check" style="color:var(--color-cyan);"></i>
+                  </div>
+                </div>
+
+                <!-- QR del teatro (se muestra solo si seleccionan QR) -->
+                <div id="qrContainer" class="qr-container d-none">
+                  <p class="text-gray-custom small mb-3 text-center">
+                    Muestra este código QR al cliente para que realice el pago con su app bancaria:
+                  </p>
+                  <div class="qr-frame mx-auto" style="display:table;">
+                    <img
+                      src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=TEATRO%20AL%20AIRE%20LIBRE%20JAIME%20LAREDO&bgcolor=ffffff&color=000000&margin=12"
+                      alt="QR de pago — Teatro Al Aire Libre"
+                      class="qr-img">
+                  </div>
+                  <p class="text-center mt-2 fw-bold small" style="color:var(--color-cyan);">
+                    Teatro Al Aire Libre "Jaime Laredo"
+                  </p>
+                  <p class="text-gray-custom text-center" style="font-size:.72rem;">
+                    Confirma el pago antes de hacer clic en <em>Confirmar Venta</em>.
+                  </p>
+                </div>
+
+                <!-- Botón confirmar -->
+                <button type="submit" class="btn-confirm w-100 mt-3" id="btnConfirm">
+                  <i class="fas fa-check-circle"></i>
+                  Confirmar Venta
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        <!-- /step3 -->
+
+      </form>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // ─── Estado global ──────────────────────────────────────────────
+    let currentStep = 1;
+    let currentEventoId = null;
+    let carrito = {}; // { zona_id: { id, nombre, precio, qty, limite, color } }
+
+    // ─── Navegación entre pasos ────────────────────────────────────
+    function goToStep(n) {
+      if (n === 2 && !currentEventoId) return;
+      if (n === 3) {
+        if (getTotalQty() === 0) {
+          alert('Debes seleccionar al menos una entrada antes de continuar.');
+          return;
+        }
+        buildSummary();
+      }
+
+      // Ocultar sección actual y mostrar la nueva
+      document.getElementById('step' + currentStep).classList.add('d-none');
+      document.getElementById('step' + n).classList.remove('d-none');
+
+      // Actualizar indicador de pasos
+      for (let i = 1; i <= 3; i++) {
+        const dot  = document.getElementById('step-dot-' + i);
+        const circ = document.getElementById('sc-' + i);
+
+        if (i < n) {
+          dot.classList.remove('active');
+          dot.classList.add('completed');
+          circ.innerHTML = '<i class="fas fa-check" style="font-size:.75rem;"></i>';
+        } else if (i === n) {
+          dot.classList.add('active');
+          dot.classList.remove('completed');
+          circ.textContent = i;
+        } else {
+          dot.classList.remove('active', 'completed');
+          circ.textContent = i;
+        }
+      }
+
+      // Líneas de progreso
+      document.getElementById('line-1').classList.toggle('done', n > 1);
+      document.getElementById('line-2').classList.toggle('done', n > 2);
+
+      currentStep = n;
+    }
+
+    // ─── Selección de evento ────────────────────────────────────────
+    function selectEvent(id, nombre, fecha, hora, lugar) {
+      currentEventoId = id;
+      document.getElementById('hiddenEventoId').value = id;
+      document.getElementById('selectedEventLabel').textContent =
+        nombre + ' — ' + fecha + ' ' + hora + (lugar ? ' · ' + lugar : '');
+      carrito = {};
+      goToStep(2);
+      loadZonas(id);
+    }
+
+    // ─── Cargar zonas vía AJAX ──────────────────────────────────────
+    function loadZonas(eventoId) {
+      document.getElementById('zonasLoading').classList.remove('d-none');
+      document.getElementById('zonasContainer').classList.add('d-none');
+      document.getElementById('zonasError').classList.add('d-none');
+
+      fetch('/api/boleteria/zonas/' + eventoId + '/')
+        .then(function(r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        })
+        .then(function(data) {
+          if (!data.zonas || data.zonas.length === 0) {
+            document.getElementById('zonasLoading').classList.add('d-none');
+            document.getElementById('zonasContainer').innerHTML =
+              '<div class="empty-state"><i class="fas fa-ban"></i>' +
+              '<p class="mt-2">Este evento no tiene zonas habilitadas.</p></div>';
+            document.getElementById('zonasContainer').classList.remove('d-none');
+            return;
+          }
+          renderZonas(data.zonas);
+          document.getElementById('zonasLoading').classList.add('d-none');
+          document.getElementById('zonasContainer').classList.remove('d-none');
+        })
+        .catch(function() {
+          document.getElementById('zonasLoading').classList.add('d-none');
+          document.getElementById('zonasError').classList.remove('d-none');
+        });
+    }
+
+    // ─── Renderizar tarjetas de zona ────────────────────────────────
+    function renderZonas(zonas) {
+      const grid = document.getElementById('zonesGrid');
+      grid.innerHTML = '';
+      carrito = {};
+
+      zonas.forEach(function(z) {
+        carrito[z.id] = { id: z.id, nombre: z.nombre, precio: z.precio, qty: 0, limite: z.limite, color: z.color };
+
+        const card = document.createElement('div');
+        card.className = 'zone-card';
+        card.style.borderColor = z.color;
+        card.innerHTML =
+          '<div class="zone-color-bar" style="background:' + z.color + '"></div>' +
+          '<div class="zone-body">' +
+            '<div class="zone-name">' + escHtml(z.nombre) + '</div>' +
+            '<div class="zone-price">Bs. ' + parseFloat(z.precio).toFixed(2) + '</div>' +
+            '<div class="zone-limit text-gray-custom small">Máx. ' + z.limite + ' por compra</div>' +
+            '<div class="qty-control mt-3">' +
+              '<button type="button" class="qty-btn" onclick="changeQty(' + z.id + ', -1)">−</button>' +
+              '<span class="qty-value" id="qty-' + z.id + '">0</span>' +
+              '<button type="button" class="qty-btn" onclick="changeQty(' + z.id + ', 1)">+</button>' +
+            '</div>' +
+            '<div class="zone-subtotal" id="sub-' + z.id + '">Bs. 0.00</div>' +
+          '</div>';
+        grid.appendChild(card);
+      });
+    }
+
+    // ─── Control de cantidad ────────────────────────────────────────
+    function changeQty(zonaId, delta) {
+      const item = carrito[zonaId];
+      if (!item) return;
+      const newQty = Math.max(0, Math.min(item.qty + delta, item.limite));
+      item.qty = newQty;
+
+      document.getElementById('qty-' + zonaId).textContent = newQty;
+      document.getElementById('sub-' + zonaId).textContent =
+        newQty > 0 ? 'Bs. ' + (newQty * item.precio).toFixed(2) : 'Bs. 0.00';
+
+      updateRunningTotal();
+    }
+
+    function getTotalQty() {
+      return Object.values(carrito).reduce(function(s, i) { return s + i.qty; }, 0);
+    }
+    function getTotal() {
+      return Object.values(carrito).reduce(function(s, i) { return s + (i.qty * i.precio); }, 0);
+    }
+
+    function updateRunningTotal() {
+      const qty   = getTotalQty();
+      const total = getTotal();
+      document.getElementById('runningTotal').textContent  = 'Bs. ' + total.toFixed(2);
+      document.getElementById('runningCount').textContent  = '(' + qty + ' entrada' + (qty !== 1 ? 's' : '') + ')';
+      document.getElementById('btnGoToPayment').disabled   = qty === 0;
+    }
+
+    // ─── Construir resumen en paso 3 ────────────────────────────────
+    function buildSummary() {
+      document.getElementById('summaryEventName').textContent =
+        document.getElementById('selectedEventLabel').textContent;
+
+      const itemsEl = document.getElementById('summaryItems');
+      itemsEl.innerHTML = '';
+      let total = 0;
+
+      Object.values(carrito).forEach(function(item) {
+        if (item.qty > 0) {
+          const sub = item.qty * item.precio;
+          total += sub;
+          const row = document.createElement('div');
+          row.className = 'summary-item';
+          row.innerHTML =
+            '<span>' + escHtml(item.nombre) + ' × ' + item.qty + '</span>' +
+            '<span>Bs. ' + sub.toFixed(2) + '</span>';
+          itemsEl.appendChild(row);
+        }
+      });
+
+      document.getElementById('summaryTotal').textContent = 'Bs. ' + total.toFixed(2);
+
+      // Armar JSON del carrito para el POST
+      const carritoArr = Object.values(carrito)
+        .filter(function(i) { return i.qty > 0; })
+        .map(function(i) { return { evento_zona_id: i.id, cantidad: i.qty }; });
+      document.getElementById('hiddenCarrito').value = JSON.stringify(carritoArr);
+    }
+
+    // ─── Selección de método de pago ────────────────────────────────
+    function selectPayment(metodo) {
+      document.getElementById('hiddenMetodo').value = metodo;
+      document.querySelectorAll('.payment-option').forEach(function(el) {
+        el.classList.remove('active');
+      });
+      document.getElementById('opt-' + metodo.toLowerCase()).classList.add('active');
+      document.getElementById('qrContainer').classList.toggle('d-none', metodo !== 'QR');
+    }
+
+    // ─── Prevenir doble submit ──────────────────────────────────────
+    document.getElementById('boleForm').addEventListener('submit', function() {
+      const btn = document.getElementById('btnConfirm');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-circle-notch fa-spin me-2"></i>Procesando…';
+    });
+
+    // ─── Utilidades ────────────────────────────────────────────────
+    function escHtml(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+  </script>
+
+</body>
+</html>

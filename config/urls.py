@@ -3,6 +3,7 @@ URL configuration for config project.
 """
 from django.contrib import admin
 from django.urls import path
+from apps.tickets.views import boleteria_view, boleteria_confirmar_view, api_get_zonas
 
 # Auth & perfil
 from apps.users.views import (
@@ -97,4 +98,9 @@ urlpatterns = [
     path('mi-soporte/<int:ticket_id>/', cliente_soporte_view, name='cliente_soporte_detalle'),
     path('mi-soporte/api/mensajes/<int:ticket_id>/', cliente_mensajes_api, name='cliente_mensajes_api'),
     path('mi-soporte/api/enviar/<int:ticket_id>/', cliente_enviar_mensaje_api, name='cliente_enviar_mensaje_api'),
+
+    # ── BOLETERÍA (VENTANILLA) ────────────────────────────────────────
+    path('boleteria/', boleteria_view, name='boleteria'),
+    path('boleteria/confirmar/', boleteria_confirmar_view, name='boleteria_confirmar'),
+    path('api/boleteria/zonas/<int:evento_id>/', api_get_zonas, name='api_get_zonas'),
 ]
