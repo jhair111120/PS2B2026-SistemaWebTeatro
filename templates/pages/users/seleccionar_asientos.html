@@ -1,0 +1,176 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Seleccionar Asientos | {{ ez.zona.nombre }} — {{ evento.nombre }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/pages/users/comprar_entradas.css' %}" />
+<link rel="stylesheet" href="{% static 'css/pages/users/seleccionar_asientos.css' %}" />
+
+<div class="min-h-screen py-8 px-4" data-purchase-step="seats">
+  <span id="evento-id-data" data-evento-id="{{ evento.id }}" style="display:none;"></span>
+
+  <div class="max-w-7xl mx-auto">
+
+    <!-- Volver -->
+    <div class="mb-5">
+      <a href="{% url 'seleccionar_zona' evento.id %}" class="back-link flex items-center gap-2">
+        <i class="fas fa-arrow-left"></i>
+        <span>Volver al mapa de zonas</span>
+      </a>
+    </div>
+
+    <!-- Encabezado -->
+    <div class="mb-5">
+      <div class="zone-header-badge" style="--zone-color: {{ color }};">
+        <span class="zone-badge-dot" style="background:{{ color }};"></span>
+        <span class="zone-badge-name">{{ ez.zona.nombre }}</span>
+      </div>
+      <h1 class="text-3xl font-extrabold text-white mt-2">Selecciona tus Asientos</h1>
+      <p class="text-gray-400 mt-1">{{ evento.nombre }} — {{ evento.fecha_evento|date:"d/m/Y" }} {{ evento.hora_evento|time:"H:i" }}</p>
+    </div>
+
+    <!-- Timer -->
+    <div class="timer-banner" id="timer-container">
+      <div class="timer-text">
+        <i class="far fa-clock"></i>
+        <span>Tiempo restante para completar tu compra.</span>
+      </div>
+      <div class="timer-clock" id="countdown">15:00</div>
+    </div>
+
+    <!-- Layout principal -->
+    <div class="seats-layout">
+
+      <!-- ══ COLUMNA IZQUIERDA: Mapa de asientos ══ -->
+      <div class="seats-map-column">
+
+        <!-- Vista 3D del escenario -->
+        <div class="stage-preview-card" id="stage-preview-card">
+          <div class="stage-preview-header">
+            <i class="fas fa-eye me-2" style="color:{{ color }};"></i>
+            <span>Vista desde el asiento seleccionado</span>
+            <span class="stage-preview-hint" id="preview-hint">Selecciona un asiento para ver la perspectiva</span>
+          </div>
+          <div class="stage-3d-wrapper">
+            <canvas id="stage3d" width="600" height="220"></canvas>
+            <div class="stage-3d-overlay" id="stage3d-overlay">
+              <i class="fas fa-chair" style="font-size:2rem; color:rgba(255,255,255,.2);"></i>
+              <p style="color:rgba(255,255,255,.4); font-size:.85rem; margin-top:.5rem;">Haz clic en un asiento</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mapa de asientos curvo -->
+        <div class="seat-map-card">
+          <div class="seat-map-header">
+            <div>
+              <h2 class="text-xl font-bold text-white">Mapa de Asientos</h2>
+              <p class="text-sm text-gray-400">Zona <strong style="color:{{ color }};">{{ ez.zona.nombre }}</strong> — Bs. {{ precio }} por asiento</p>
+            </div>
+            <div class="seat-legend">
+              <span class="legend-seat available"></span><span>Disponible</span>
+              <span class="legend-seat selected"></span><span>Seleccionado</span>
+              <span class="legend-seat occupied"></span><span>Ocupado</span>
+            </div>
+          </div>
+
+          <!-- Controles de zoom -->
+          <div class="zoom-controls">
+            <button id="btn-zoom-in"    class="zoom-btn" title="Acercar"><i class="fas fa-plus"></i></button>
+            <button id="btn-zoom-reset" class="zoom-btn" title="Restablecer vista"><i class="fas fa-compress-arrows-alt"></i></button>
+            <button id="btn-zoom-out"   class="zoom-btn" title="Alejar"><i class="fas fa-minus"></i></button>
+            <span class="zoom-hint"><i class="fas fa-mouse me-1"></i>Rueda para zoom · Arrastra para mover · Doble clic para resetear</span>
+          </div>
+
+          <!-- Contenedor del mapa curvo — el escenario se dibuja dentro del SVG -->
+          <div class="curved-map-container" id="curved-map-container">
+            <!-- SVG generado por JS: escenario abajo, arco abre hacia arriba -->
+          </div>
+
+          <p class="text-center text-xs text-gray-500 mt-3">
+            Máximo <strong style="color:{{ color }};">{{ limite }}</strong> asientos por compra
+          </p>
+        </div>
+
+      </div>
+
+      <!-- ══ COLUMNA DERECHA: Resumen ══ -->
+      <div class="purchase-sidebar-column">
+        <div class="summary-card">
+          <h3 class="summary-title">
+            <i class="fas fa-ticket-alt" style="color:#00AEEF;"></i>
+            Resumen de Compra
+          </h3>
+
+          <div class="event-summary-box">
+            {% if evento.imagen_url %}
+            <img src="{{ evento.imagen_url }}" class="summary-event-image" alt="{{ evento.nombre }}">
+            {% else %}
+            <img src="https://via.placeholder.com/400x120/151920/fff?text={{ evento.nombre|urlencode }}" class="summary-event-image" alt="{{ evento.nombre }}">
+            {% endif %}
+            <h4 class="font-bold text-base mt-3">{{ evento.nombre }}</h4>
+            <p class="text-xs text-gray-500">{{ evento.fecha_evento|date:"d/m/Y" }} — {{ evento.hora_evento|time:"H:i" }}</p>
+          </div>
+
+          <!-- Zona seleccionada -->
+          <div class="selected-zone-info mb-4">
+            <div class="zone-info-row">
+              <span class="zone-dot" style="background:{{ color }};"></span>
+              <span class="font-semibold text-white">{{ ez.zona.nombre }}</span>
+              <span class="text-gray-400 text-sm ms-auto">Bs. {{ precio }}/asiento</span>
+            </div>
+          </div>
+
+          <!-- Asientos seleccionados -->
+          <div id="selected-seats-list" class="mb-4">
+            <p class="text-center text-gray-500 text-sm py-3">No has seleccionado asientos aún</p>
+          </div>
+
+          <!-- Totales -->
+          <div class="border-t border-white/10 pt-4 mb-5">
+            <div class="summary-line">
+              <span class="text-gray-400">Subtotal</span>
+              <span id="subtotal-val">Bs. 0.00</span>
+            </div>
+            <div class="summary-line">
+              <span class="text-gray-400">Cargo por servicio</span>
+              <span id="service-val">Bs. 0.00</span>
+            </div>
+            <div class="summary-total mt-2">
+              <span>Total</span>
+              <span class="text-[#00AEEF]" id="total-val">Bs. 0.00</span>
+            </div>
+          </div>
+
+          <button id="btn-continue-payment" class="btn-select-zone w-full font-bold" disabled>
+            <i class="fas fa-lock me-2"></i>Continuar al Pago
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Form oculto para enviar al servidor -->
+  <form id="seats-form" method="POST" action="{% url 'finalizar_compra' evento.id %}" style="display:none;">
+    {% csrf_token %}
+    <input type="hidden" name="carrito_json" id="hidden-carrito-json">
+  </form>
+</div>
+
+<!-- Datos para JS -->
+<script>
+  const EVENTO_ID      = {{ evento.id }};
+  const EVENTO_ZONA_ID = {{ ez.id }};
+  const ZONA_NOMBRE    = "{{ ez.zona.nombre|escapejs }}";
+  const ZONA_COLOR     = "{{ color }}";
+  const PRECIO_UNIT    = {{ precio }};
+  const LIMITE         = {{ limite }};
+  const ASIENTOS_DATA  = {{ asientos_json|safe }};
+  const FINALIZAR_URL  = "{% url 'finalizar_compra' evento.id %}";
+  const CSRF_TOKEN     = "{{ csrf_token }}";
+</script>
+<script src="{% static 'js/pages/users/seleccionar_asientos.js' %}"></script>
+
+{% endblock %}

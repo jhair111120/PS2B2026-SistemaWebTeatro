@@ -1,0 +1,108 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+{% block title %}Términos y Condiciones | Teatro Al Aire Libre{% endblock %}
+
+{% block content %}
+<style>
+  .tc-hero {
+    background: linear-gradient(135deg, #0A0E14 0%, #151920 100%);
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    padding: 4rem 1.5rem 3rem;
+    text-align: center;
+  }
+  .tc-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(0,174,239,0.12);
+    border: 1px solid rgba(0,174,239,0.3);
+    color: #00AEEF;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.85rem;
+    border-radius: 999px;
+    margin-bottom: 1.25rem;
+  }
+  .tc-body { background: #0A0E14; padding: 3.5rem 1.5rem 5rem; }
+  .tc-card {
+    background: #151920;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 1rem;
+    padding: 1.75rem 2rem;
+    transition: border-color 0.25s;
+  }
+  .tc-card:hover { border-color: rgba(0,174,239,0.25); }
+  .tc-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: rgba(0,174,239,0.12);
+    color: #00AEEF;
+    font-size: 0.8rem;
+    font-weight: 800;
+    border-radius: 0.5rem;
+    flex-shrink: 0;
+    margin-right: 0.85rem;
+  }
+  .tc-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: white;
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.85rem;
+  }
+  .tc-text { color: #9CA3AF; font-size: 0.93rem; line-height: 1.85; padding-left: 2.85rem; }
+</style>
+
+<!-- Hero -->
+<div class="tc-hero">
+  <div class="tc-badge"><i class="fas fa-file-contract"></i> Documento Legal</div>
+  <h1 style="font-size:clamp(1.8rem,4vw,2.75rem);font-weight:800;color:white;margin-bottom:0.75rem;">
+    Términos y Condiciones
+  </h1>
+  <p style="color:#9CA3AF;font-size:0.97rem;max-width:520px;margin:0 auto 0.5rem;">
+    Al usar nuestros servicios, aceptas los siguientes términos. Léelos con atención.
+  </p>
+  <p style="color:#64748B;font-size:0.82rem;">Última actualización: enero de 2026</p>
+</div>
+
+<!-- Contenido -->
+<div class="tc-body">
+  <div style="max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:1rem;">
+
+    {% for seccion in secciones %}
+    <div class="tc-card">
+      <div class="tc-title">
+        <span class="tc-num">{{ forloop.counter }}</span>
+        {{ seccion.titulo }}
+      </div>
+      <p class="tc-text">{{ seccion.contenido }}</p>
+    </div>
+    {% endfor %}
+
+  </div>
+
+  <!-- Footer CTA -->
+  <div style="max-width:820px;margin:2.5rem auto 0;background:rgba(0,174,239,0.05);border:1px solid rgba(0,174,239,0.18);border-radius:1rem;padding:1.75rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+    <div>
+      <p style="color:white;font-weight:600;margin-bottom:0.25rem;font-size:0.97rem;">
+        ¿Tienes preguntas sobre estos términos?
+      </p>
+      <p style="color:#9CA3AF;font-size:0.85rem;margin:0;">
+        Nuestro equipo de soporte está disponible para ayudarte.
+      </p>
+    </div>
+    <a href="{% url 'contacto' %}"
+       style="background:#00AEEF;color:white;text-decoration:none;padding:0.7rem 1.75rem;border-radius:999px;font-weight:700;font-size:0.9rem;white-space:nowrap;transition:background 0.2s;"
+       onmouseover="this.style.background='#0099d1'" onmouseout="this.style.background='#00AEEF'">
+      <i class="fas fa-headset" style="margin-right:0.5rem;"></i>Ir a Soporte
+    </a>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,359 @@
+/* ══════════════════════════════════════════════════════
+   SELECCIONAR ASIENTOS — CSS
+   Teatro Al Aire Libre "Jaime Laredo"
+══════════════════════════════════════════════════════ */
+
+/* ── Layout principal ─────────────────────────────── */
+.seats-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (min-width: 1100px) {
+  .seats-layout {
+    grid-template-columns: 1.6fr 1fr;
+  }
+}
+
+.seats-map-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 0;
+}
+
+/* ── Badge de zona ────────────────────────────────── */
+.zone-header-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 999px;
+  padding: .35rem .9rem;
+  font-size: .8rem;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: #e5e7eb;
+}
+
+.zone-badge-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Vista 3D del escenario ───────────────────────── */
+.stage-preview-card {
+  background: #0d1117;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.stage-preview-header {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .85rem 1.25rem;
+  background: rgba(255,255,255,.03);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  font-size: .85rem;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+.stage-preview-hint {
+  margin-left: auto;
+  font-size: .75rem;
+  font-weight: 400;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.stage-3d-wrapper {
+  position: relative;
+  width: 100%;
+  background: #060a0f;
+}
+
+.stage-3d-wrapper canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.stage-3d-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  transition: opacity .3s;
+}
+
+.stage-3d-overlay.hidden {
+  opacity: 0;
+}
+
+/* ── Mapa de asientos ─────────────────────────────── */
+.seat-map-card {
+  background: #151920;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  overflow-x: auto;
+}
+
+.seat-map-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ── Leyenda ──────────────────────────────────────── */
+.seat-legend {
+  display: flex;
+  align-items: center;
+  gap: .5rem .9rem;
+  flex-wrap: wrap;
+  font-size: .78rem;
+  color: #9ca3af;
+}
+
+.legend-seat {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.legend-seat.available {
+  background: #1e293b;
+  border: 1.5px solid rgba(255,255,255,.25);
+}
+
+.legend-seat.selected {
+  background: #00AEEF;
+  border: 1.5px solid #00AEEF;
+}
+
+.legend-seat.occupied {
+  background: #374151;
+  border: 1.5px solid #374151;
+  opacity: .5;
+}
+
+/* ── Escenario visual ─────────────────────────────── */
+.stage-visual {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.stage-bar {
+  background: linear-gradient(90deg, rgba(217,70,239,.15) 0%, rgba(217,70,239,.35) 50%, rgba(217,70,239,.15) 100%);
+  border: 1px solid rgba(217,70,239,.5);
+  border-radius: 999px;
+  padding: .5rem 2.5rem;
+  font-size: .85rem;
+  font-weight: 700;
+  letter-spacing: .15em;
+  color: #e879f9;
+  text-transform: uppercase;
+  box-shadow: 0 0 20px rgba(217,70,239,.2);
+}
+
+/* ── Contenedor del mapa curvo ────────────────────── */
+.curved-map-container {
+  position: relative;
+  width: 100%;
+  height: 580px;
+  overflow: hidden;          /* recorta el SVG en los bordes */
+  border-radius: .75rem;
+  background: #0d1117;
+  border: 1px solid rgba(255,255,255,.06);
+}
+
+@media (max-width: 768px) {
+  .curved-map-container { height: 420px; }
+}
+
+.curved-map-container svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;         /* permite que el viewBox salga del canvas al hacer pan */
+}
+
+/* ── Fila de asientos (legacy, ya no se usa con SVG) ── */
+.seat-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin-bottom: 6px;
+  position: relative;
+}
+
+.row-label {
+  font-size: .7rem;
+  font-weight: 700;
+  color: #6b7280;
+  width: 22px;
+  text-align: center;
+  flex-shrink: 0;
+  letter-spacing: .05em;
+}
+
+/* ── Asiento individual (legacy) ──────────────────── */
+.seat-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px 6px 4px 4px;
+  border: 1.5px solid rgba(255,255,255,.2);
+  background: #1e293b;
+  cursor: pointer;
+  transition: all .18s ease;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .6rem;
+  font-weight: 700;
+  color: rgba(255,255,255,.4);
+  flex-shrink: 0;
+}
+
+.seat-btn.selected {
+  background: var(--zone-color, #00AEEF);
+  border-color: var(--zone-color, #00AEEF);
+  color: white;
+}
+
+.seat-btn.occupied {
+  background: #1a1f2a;
+  border-color: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.15);
+  cursor: not-allowed;
+  opacity: .5;
+}
+
+/* ── Zona info en sidebar ─────────────────────────── */
+.selected-zone-info {
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: .75rem;
+  padding: .85rem 1rem;
+}
+
+.zone-info-row {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+}
+
+.zone-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Lista de asientos seleccionados ──────────────── */
+.seat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  background: rgba(0,174,239,.12);
+  border: 1px solid rgba(0,174,239,.3);
+  border-radius: 999px;
+  padding: .3rem .75rem;
+  font-size: .78rem;
+  font-weight: 600;
+  color: #7dd3fc;
+  margin: .2rem;
+}
+
+.seat-chip-remove {
+  cursor: pointer;
+  color: rgba(255,255,255,.4);
+  transition: color .15s;
+  background: none;
+  border: none;
+  padding: 0;
+  line-height: 1;
+}
+
+.seat-chip-remove:hover {
+  color: #ef4444;
+}
+
+#selected-seats-list {
+  min-height: 48px;
+}
+
+/* ── Controles de zoom ────────────────────────────── */
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: .75rem;
+  flex-wrap: wrap;
+}
+
+.zoom-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: .5rem;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.05);
+  color: #e5e7eb;
+  font-size: .85rem;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.zoom-btn:hover {
+  background: rgba(255,255,255,.12);
+  border-color: rgba(255,255,255,.3);
+}
+
+.zoom-hint {
+  font-size: .72rem;
+  color: #6b7280;
+  margin-left: .25rem;
+}
+
+/* ── Responsive ───────────────────────────────────── */
+@media (max-width: 640px) {
+  .seat-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: 4px 4px 3px 3px;
+    font-size: .5rem;
+  }
+
+  .seat-row {
+    gap: 3px;
+    margin-bottom: 4px;
+  }
+
+  .row-label {
+    width: 16px;
+    font-size: .6rem;
+  }
+}

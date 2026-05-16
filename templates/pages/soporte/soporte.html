@@ -1,0 +1,217 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Soporte | Teatro Al Aire Libre</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/pages/support/support.css' %}">
+</head>
+
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <h5 class="text-white">TEATRO AL AIRE<br>LIBRE</h5>
+            <p>Panel de administración</p>
+        </div>
+        <nav class="mt-2">
+            <a href="#" class="nav-item-admin active"><i class="far fa-comment-dots"></i> Soporte</a>
+            <a href="#" class="nav-item-admin"><i class="fas fa-cog"></i> Configuracion</a>
+        </nav>
+    </aside>
+
+    <div class="main-content">
+        <header class="topbar">
+            <div class="search-bar-top">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Buscar conversaciones...">
+            </div>
+
+            <div class="topbar-right">
+                <div class="position-relative" style="cursor: pointer;">
+                    <i class="far fa-bell fs-5 text-white hover-cyan transition"></i>
+                    <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger rounded-circle"
+                        style="width: 8px; height: 8px;"></span>
+                </div>
+
+                <div class="dropdown ms-3">
+                    <button class="btn-account dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        <div class="user-avatar"><i class="far fa-user"></i></div>
+                        <span class="fw-bold text-white text-sm">
+                            {{ request.session.usuario_nombre|default:"Admin" }}
+                        </span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end user-dropdown-menu">
+                        <li class="user-dropdown-header">
+                            <div class="fw-bold text-white fs-6">
+                                {{ request.session.usuario_nombre_completo|default:"Administrador" }}
+                            </div>
+                            <div class="small text-gray-custom">
+                                {{ request.session.usuario_correo|default:"admin@teatrolapaz.bo" }}
+                            </div>
+                        </li>
+                        <li>
+                            <a class="user-dropdown-item logout" href="{% url 'logout' %}">
+                                <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <main class="support-wrapper">
+            <div class="page-header">
+                <h3>Soporte Técnico</h3>
+                <p>Atiende consultas de usuario en tiempo real</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card shadow-sm active-filter" onclick="filterTickets('all', this)">
+                    <div>
+                        <h6>Conversaciones totales</h6>
+                        <h2 id="count-all">0</h2>
+                    </div>
+                    <div class="stat-icon icon-blue"><i class="far fa-comment-alt"></i></div>
+                </div>
+                <div class="stat-card shadow-sm" onclick="filterTickets('unread', this)">
+                    <div>
+                        <h6>No Leídas / Pendientes</h6>
+                        <h2 id="count-unread">0</h2>
+                    </div>
+                    <div class="stat-icon icon-yellow"><i class="far fa-clock"></i></div>
+                </div>
+                <div class="stat-card shadow-sm" onclick="filterTickets('read', this)">
+                    <div>
+                        <h6>Conversaciones Leídas</h6>
+                        <h2 id="count-read">0</h2>
+                    </div>
+                    <div class="stat-icon icon-green"><i class="far fa-check-square"></i></div>
+                </div>
+            </div>
+
+            <div class="chat-container">
+
+                <div class="inbox-sidebar">
+                    <div class="inbox-header">
+                        <h6>Bandeja de entrada</h6>
+                        <span class="badge bg-secondary" id="currentFilterLabel">Todas</span>
+                    </div>
+
+                    <div class="conversation-list" id="ticketList">
+                        {% if not tickets %}
+                        <div class="text-center text-muted mt-5 small p-3">No hay tickets activos actualmente.</div>
+                        {% else %}
+                        {% for ticket in tickets %}
+                        <a href="#" class="ticket-chat-card" id="card-{{ ticket.id }}" data-ticket-id="{{ ticket.id }}"
+                            data-status="{% if ticket.fecha_cierre %}read{% else %}unread{% endif %}"
+                            data-is-closed="{% if ticket.fecha_cierre %}true{% else %}false{% endif %}"
+                            onclick="loadTicket('{{ ticket.id }}', event)">
+
+                            <div class="user-initials">
+                                {{ ticket.usuario.nombre|first|upper }}
+                                <span class="unread-dot"
+                                    style="display: {% if ticket.fecha_cierre %}none{% else %}block{% endif %};"></span>
+                            </div>
+                            <div class="w-100 overflow-hidden">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <div class="fw-bold text-white text-truncate"
+                                        style="font-size: 0.95rem; max-width: 55%;">{{ ticket.usuario.nombre }}
+                                        {{ ticket.usuario.apellido }}</div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        {% if ticket.fecha_cierre %}
+                                        <span class="status-badge-mini badge-cerrado">Cerrado</span>
+                                        {% else %}
+                                        <span class="status-badge-mini badge-abierto">Abierto</span>
+                                        {% endif %}
+                                        <div class="small text-gray-custom" style="font-size: 0.7rem;">
+                                            {{ ticket.fecha_creacion|date:"d M, h:i A" }}</div>
+                                    </div>
+                                </div>
+                                <div class="small text-cyan fw-bold text-truncate mb-1" style="font-size: 0.8rem;">
+                                    Asunto: {{ ticket.asunto }}</div>
+                                <div class="small text-gray-custom text-truncate" style="font-size: 0.75rem;">
+                                    {{ ticket.usuario.correo }}</div>
+                            </div>
+                        </a>
+                        {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="chat-window" id="chatWindow">
+                    <div class="no-ticket-selected" id="noTicketSelected">
+                        <div class="empty-state-circle"><i class="far fa-comments"></i></div>
+                        <h5 class="fw-bold mt-4">Selecciona una conversación</h5>
+                        <p class="small text-gray-custom">Haz clic en un ticket de la lista para comenzar a responder.
+                        </p>
+                    </div>
+
+                    <div class="text-center mt-5" id="chatLoading" style="display: none;">
+                        <i class="fas fa-circle-notch fa-spin fs-1 text-cyan"></i>
+                    </div>
+
+                    <div class="chat-header" id="chatHeader">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="user-initials" style="width: 45px; height: 45px; font-size: 1.3rem;"
+                                id="headerUserInitial">U</div>
+                            <div>
+                                <div class="fw-bold fs-6 text-white" id="headerUserName">Usuario</div>
+                                <div class="small text-cyan" id="headerUserEmail">usuario@email.com</div>
+                            </div>
+                        </div>
+                        <button class="btn btn-close-ticket btn-sm fw-bold" id="btnCloseTicketObj"
+                            onclick="closeTicket(event)">
+                            <i class="fas fa-check-circle me-1"></i> Cerrar Ticket
+                        </button>
+                    </div>
+
+                    <div class="chat-messages" id="chatMessages"></div>
+
+                    <div class="chat-input-area" id="chatInputArea">
+                        <div class="chat-input-wrapper">
+                            <input type="text" id="replyInput" placeholder="Escribe tu respuesta..." autocomplete="off">
+                        </div>
+                        <button class="btn-send" id="btnSendReply" onclick="sendMessage()">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <div class="modal fade" id="confirmCloseModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+            <div class="modal-content"
+                style="background-color: #161B22; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 15px;">
+                <div class="modal-body p-4 text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-exclamation-circle text-danger" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5 class="text-white fw-bold mb-3">¿Cerrar Ticket?</h5>
+                    <p class="text-gray-custom small mb-4">¿Estás seguro de que quieres marcar este ticket como
+                        'Cerrado'? El usuario no podrá responder más.</p>
+                    <div class="d-flex justify-content-center gap-3">
+                        <button type="button" class="btn btn-secondary rounded-pill px-4 fw-bold"
+                            data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-danger rounded-pill px-4 fw-bold" id="btnConfirmClose">Sí,
+                            Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/pages/support/support.js' %}"></script>
+</body>
+
+</html>

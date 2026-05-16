@@ -1,0 +1,143 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Compra Exitosa | Teatro Al Aire Libre{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/pages/users/comprar_entradas.css' %}" />
+
+<div class="min-h-screen py-8 px-4">
+  <div class="max-w-3xl mx-auto">
+
+    <div class="success-header">
+      <div class="success-icon"><i class="fas fa-check"></i></div>
+      <h1 class="text-4xl font-extrabold mb-2">¡Compra Exitosa!</h1>
+      <p class="text-gray-400">Tu entrada ha sido confirmada y registrada en el sistema.</p>
+    </div>
+
+    <div class="voucher-card">
+      <!-- Código de reserva -->
+      <div class="text-center mb-6">
+        <p class="text-xs text-gray-500 uppercase tracking-widest mb-1">Código de Reserva</p>
+        <p class="text-2xl font-bold text-[#00AEEF]">{{ venta.reserva.codigo_reserva }}</p>
+      </div>
+
+      <!-- QR de la primera entrada -->
+      {% with primera_entrada=entradas.first %}
+      {% if primera_entrada %}
+      <div class="qr-code-placeholder">
+        <img
+          src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ primera_entrada.codigo_qr }}"
+          class="w-full h-full"
+          alt="QR Code"
+        >
+      </div>
+      <p class="text-center text-xs text-gray-500 mb-6">{{ primera_entrada.codigo_ticket }}</p>
+      {% endif %}
+      {% endwith %}
+
+      <!-- Totales -->
+      <div class="grid grid-cols-2 gap-8 text-center mb-8">
+        <div>
+          <p class="text-xs text-gray-500 uppercase">Total Pagado</p>
+          <p class="text-lg font-bold text-green-500">Bs. {{ venta.total }}</p>
+        </div>
+        <div>
+          <p class="text-xs text-gray-500 uppercase">Método de Pago</p>
+          <p class="text-lg font-bold">{{ primer_pago.metodo_pago.nombre|default:"—" }}</p>
+        </div>
+      </div>
+
+      <!-- Resumen del evento -->
+      <div class="summary-card mb-6">
+        <h4 class="font-bold mb-4">Resumen de tu Compra</h4>
+        <div class="event-summary-box mb-4">
+          {% if venta.reserva.evento.imagen_url %}
+          <img src="{{ venta.reserva.evento.imagen_url }}" class="summary-event-image" alt="{{ venta.reserva.evento.nombre }}">
+          {% else %}
+          <img src="https://via.placeholder.com/400x120/151920/fff?text={{ venta.reserva.evento.nombre|urlencode }}" class="summary-event-image" alt="{{ venta.reserva.evento.nombre }}">
+          {% endif %}
+          <h4 class="font-bold text-lg mt-3">{{ venta.reserva.evento.nombre }}</h4>
+          <p class="text-xs text-gray-500">
+            {{ venta.reserva.evento.fecha_evento|date:"d/m/Y" }} — {{ venta.reserva.evento.hora_evento|time:"H:i" }}
+          </p>
+        </div>
+
+        {% for detalle in detalles %}
+        <div class="selected-item">
+          <div>
+            <p class="font-bold text-sm">{{ detalle.evento_zona.zona.nombre }}</p>
+            {% if detalle.evento_asiento %}
+            <p class="text-xs mt-0.5" style="color:#7dd3fc;">
+              <i class="fas fa-chair me-1" style="font-size:.65rem;"></i>
+              Fila {{ detalle.evento_asiento.asiento.fila }} — Asiento {{ detalle.evento_asiento.asiento.numero }}
+            </p>
+            {% else %}
+            <p class="text-xs text-gray-500">{{ detalle.cantidad }} entrada{{ detalle.cantidad|pluralize }} × Bs. {{ detalle.precio_unitario }}</p>
+            {% endif %}
+          </div>
+          <span class="font-bold">Bs. {{ detalle.subtotal }}</span>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Aviso -->
+      <div class="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mb-6">
+        <div class="flex gap-3">
+          <i class="fas fa-ticket-alt text-blue-500 mt-1"></i>
+          <div>
+            <p class="font-bold text-sm">Entradas Registradas</p>
+            <p class="text-xs text-gray-400">
+              Tus {{ entradas|length }} entrada{{ entradas|length|pluralize }} han sido registradas.
+              Puedes verlas en "Mis Entradas" en cualquier momento.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info importante -->
+      <div class="bg-black/20 rounded-xl p-6 mb-8">
+        <h4 class="font-bold text-sm mb-4">Información Importante</h4>
+        <ul class="text-xs text-gray-400 flex flex-col gap-3">
+          <li class="flex items-start gap-2">
+            <i class="fas fa-star text-yellow-500 mt-0.5"></i>
+            Llega al menos 30 minutos antes del inicio del evento.
+          </li>
+          <li class="flex items-start gap-2">
+            <i class="fas fa-star text-yellow-500 mt-0.5"></i>
+            Presenta tu código QR en la entrada del teatro.
+          </li>
+          <li class="flex items-start gap-2">
+            <i class="fas fa-star text-yellow-500 mt-0.5"></i>
+            Conserva tu comprobante hasta finalizar el evento.
+          </li>
+        </ul>
+      </div>
+
+      <div class="flex gap-4">
+        <a href="{% url 'mis_tickets' %}"
+          class="flex-1 bg-[#00AEEF] py-3 rounded-lg font-bold text-center text-white"
+          style="text-decoration:none;">
+          <i class="fas fa-ticket-alt me-2"></i> Ver mis Entradas
+        </a>
+        <a href="{% url 'eventos' %}"
+          class="flex-1 bg-white/5 py-3 rounded-lg font-bold text-center text-white"
+          style="text-decoration:none;">
+          Ver más Eventos
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Limpiar el deadline del contador al completar la compra
+  (function() {
+    var keys = Object.keys(localStorage);
+    keys.forEach(function(k) {
+      if (k.indexOf('purchaseDeadline_') === 0) localStorage.removeItem(k);
+    });
+  })();
+</script>
+{% endblock %}

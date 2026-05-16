@@ -1,0 +1,1401 @@
+{% extends "layouts/admin_base.html" %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block admin_content %}
+<div class="admin-dashboard">
+{{ chart_payload|json_script:"admin-dash-charts-data" }}
+{{ reportes_chart_payload|json_script:"admin-reportes-charts-data" }}
+
+<!-- ========== DASHBOARD ========== -->
+<section id="panel-dashboard" class="admin-panel admin-section">
+  <div class="admin-page-head">
+    <h1 class="admin-page-title">Dashboard</h1>
+    <p class="admin-page-desc">Bienvenido al panel de administración del Teatro al Aire Libre</p>
+  </div>
+
+  <div class="admin-kpi-grid">
+    <div class="admin-card">
+      <div class="admin-kpi-card__row">
+        <div>
+          <p class="admin-kpi-card__label">Total de ventas (emitidas)</p>
+          <p class="admin-kpi-card__value">Bs.&nbsp;{{ kpi_total_ventas|floatformat:0 }}</p>
+        </div>
+        <span class="admin-kpi-card__icon admin-kpi-card__icon--sky"><i class="fas fa-dollar-sign"></i></span>
+      </div>
+    </div>
+    <div class="admin-card">
+      <div class="admin-kpi-card__row">
+        <div>
+          <p class="admin-kpi-card__label">Reservas activas</p>
+          <p class="admin-kpi-card__value">{{ kpi_reservas_activas }}</p>
+        </div>
+        <span class="admin-kpi-card__icon admin-kpi-card__icon--emerald"><i class="fas fa-users"></i></span>
+      </div>
+    </div>
+    <div class="admin-card">
+      <div class="admin-kpi-card__row">
+        <div>
+          <p class="admin-kpi-card__label">Ocupación próximos eventos</p>
+          <p class="admin-kpi-card__value">{{ kpi_ocupacion_pct }}&nbsp;%</p>
+        </div>
+        <span class="admin-kpi-card__icon admin-kpi-card__icon--violet"><i class="fas fa-arrow-trend-up"></i></span>
+      </div>
+    </div>
+    <div class="admin-card">
+      <div class="admin-kpi-card__row">
+        <div>
+          <p class="admin-kpi-card__label">Eventos activos próximos</p>
+          <p class="admin-kpi-card__value">{{ kpi_eventos_activos }}</p>
+        </div>
+        <span class="admin-kpi-card__icon admin-kpi-card__icon--amber"><i class="fas fa-calendar-check"></i></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-grid-2">
+    <div class="admin-card">
+      <h3 class="admin-card__title">Ventas de la Semana</h3>
+      <p class="admin-card__subtitle">Ingreso en Bolivianos</p>
+      <div class="admin-chart-box">
+        <canvas id="chart-ventas-semana" aria-label="Gráfico de ventas semanales"></canvas>
+      </div>
+    </div>
+    <div class="admin-card">
+      <h3 class="admin-card__title">Ocupación por zonas</h3>
+      <p class="admin-card__subtitle">Porcentaje de ocupación actual</p>
+      <div class="admin-chart-box admin-chart-box--pie">
+        <canvas id="chart-ocupacion-zonas" aria-label="Gráfico de ocupación por zona"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <h3 class="admin-page-title" style="font-size: 1.125rem;">Próximos eventos</h3>
+    <p class="admin-page-desc">Eventos activos ordenados por fecha</p>
+    <div class="admin-event-grid" style="margin-top: 1rem;">
+      {% for fila in proximos_filas %}
+        <div class="admin-card">
+          <p class="cell-strong" style="margin:0;">{{ fila.evento.nombre }}</p>
+          <div class="admin-event-card__meta">
+            <span><i class="fas fa-calendar"></i>{{ fila.evento.fecha_evento|date:"j M Y" }}</span>
+            <span><i class="fas fa-clock"></i>{{ fila.evento.hora_evento|time:"H:i" }}</span>
+          </div>
+          <div class="admin-event-card__footer">
+            <span class="admin-event-card__stats">
+              {% if fila.capacidad %}
+                Ocupados (no DISPONIBLE) {{ fila.vendidos }} / {{ fila.capacidad }}
+              {% else %}
+                Sin asientos en catálogo / capacidad configurada para este evento
+              {% endif %}
+            </span>
+            {% if fila.capacidad %}
+              <span class="admin-event-card__pct">{{ fila.pct }}% ocupación</span>
+            {% endif %}
+          </div>
+          {% if fila.capacidad %}
+          <div class="admin-progress">
+            <div class="admin-progress__bar" style="width: {{ fila.pct }}%;"></div>
+          </div>
+          {% endif %}
+        </div>
+      {% empty %}
+        <p class="admin-empty">No hay eventos próximos registrados.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="admin-card">
+    <h3 class="admin-card__title">Tendencia de ventas mensuales</h3>
+    <p class="admin-card__subtitle">Comparación de los últimos 3 meses</p>
+    <div class="admin-chart-box admin-chart-box--sm">
+      <canvas id="chart-tendencia-mensual" aria-label="Tendencia de ventas"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ========== EVENTOS ========== -->
+<section id="panel-eventos" class="admin-panel admin-section hidden">
+  <div class="admin-page-head-row">
+    <div class="admin-page-head">
+      <h1 class="admin-page-title">Gestión de Eventos</h1>
+      <p class="admin-page-desc">Crea, edita y administra eventos del teatro.</p>
+    </div>
+    <button type="button" id="btn-open-modal-evento" class="admin-btn-primary"><i class="fas fa-plus"></i> Nuevo evento</button>
+  </div>
+
+  <div class="admin-table-shell">
+    <div class="admin-table-shell__head">
+      <h2>Todos los Eventos</h2>
+    </div>
+    <div class="admin-table-scroll">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th style="width:56px;">Img</th>
+            <th>Evento</th>
+            <th>Fecha y Hora</th>
+            <th>Lugar</th>
+            <th>Precios (Bs.)</th>
+            <th>Ocupación</th>
+            <th>Estado</th>
+            <th class="cell-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for fila in eventos_filas %}
+            {% cycle '#f97316' '#0ea5e9' '#ef4444' '#22c55e' '#8b5cf6' as bar_hex silent %}
+            {% with ev=fila.evento %}
+            <tr>
+              <td class="cell-muted" style="vertical-align:middle;">
+                {% if ev.imagen_url %}
+                  <img src="{{ ev.imagen_url }}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:8px;border:1px solid rgba(148,163,184,0.35);" loading="lazy" onerror="this.style.display='none'" />
+                {% else %}
+                  <span class="cell-xs">—</span>
+                {% endif %}
+              </td>
+              <td class="cell-strong">{{ ev.nombre }}</td>
+              <td class="cell-muted">
+                <div class="admin-stack" style="gap:0.25rem;">
+                  <span><i class="fas fa-calendar-day" style="color:#38bdf8;margin-right:0.35rem;"></i>{{ ev.fecha_evento|date:"d/m/Y" }}</span>
+                  <span><i class="fas fa-clock" style="color:#38bdf8;margin-right:0.35rem;"></i>{{ ev.hora_evento|time:"H:i" }}</span>
+                </div>
+              </td>
+              <td class="cell-muted cell-xs">{{ ev.lugar }}</td>
+              <td class="cell-muted cell-xs">
+                {% for ez in ev.eventozona_set.all %}
+                  <div>{{ ez.zona.nombre }}: {{ ez.precio_base }}</div>
+                {% empty %}
+                  <span class="cell-muted">—</span>
+                {% endfor %}
+              </td>
+              <td>
+                {% if fila.capacidad %}
+                <div class="admin-mini-progress">
+                  <div class="admin-mini-progress__track">
+                    <div class="admin-mini-progress__fill" style="width: {{ fila.pct }}%; background-color: {{ bar_hex }};"></div>
+                  </div>
+                  <p class="cell-xs cell-muted" style="margin:0.35rem 0 0;">
+                    {{ fila.ocup }} / {{ fila.capacidad }} · {{ fila.pct }}%
+                  </p>
+                </div>
+                {% else %}
+                  <span class="cell-muted cell-xs">Sin asientos zona</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if 'final' in ev.estado_evento.nombre|lower %}
+                  <span class="admin-badge admin-badge--neutral">{{ ev.estado_evento.nombre }}</span>
+                {% else %}
+                  <span class="admin-badge admin-badge--ok">{{ ev.estado_evento.nombre }}</span>
+                {% endif %}
+              </td>
+              <td class="cell-right">
+                <button
+                  type="button"
+                  class="admin-icon-action admin-icon-action--edit js-edit-evento-btn"
+                  title="Editar"
+                  data-id="{{ ev.id }}"
+                  data-nombre="{{ ev.nombre|escape }}"
+                  data-fecha="{{ ev.fecha_evento|date:'Y-m-d' }}"
+                  data-hora="{{ ev.hora_evento|time:'H:i' }}"
+                  data-pvip="{% if fila.precio_vip != None %}{{ fila.precio_vip }}{% endif %}"
+                  data-pgrad="{% if fila.precio_grad != None %}{{ fila.precio_grad }}{% endif %}"
+                  data-pgen="{% if fila.precio_gen != None %}{{ fila.precio_gen }}{% endif %}"
+                  data-cap="{% if fila.cap_total %}{{ fila.cap_total }}{% endif %}"
+                  data-activo="{% if fila.es_activo %}1{% else %}0{% endif %}"
+                  data-descripcion="{{ ev.descripcion|default_if_none:''|escapejs }}"
+                  data-imagen-url="{{ ev.imagen_url|default_if_none:''|escapejs }}"
+                ><i class="fas fa-pen"></i></button>
+                <form method="post" action="{% url 'admin_evento_eliminar' ev.id %}" style="display:inline;" onsubmit="return confirm('¿Eliminar este evento?');">
+                  {% csrf_token %}
+                  <button type="submit" class="admin-icon-action admin-icon-action--del" title="Eliminar"><i class="fas fa-trash"></i></button>
+                </form>
+              </td>
+            </tr>
+            {% endwith %}
+          {% empty %}
+            <tr>
+              <td colspan="8" style="text-align:center;padding:2rem;color:#94a3b8;">No hay eventos registrados.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ========== ZONAS ========== -->
+<section id="panel-zonas" class="admin-panel admin-section hidden">
+  <div class="admin-page-head">
+    <h1 class="admin-page-title">Zonas y Asientos</h1>
+    <p class="admin-page-desc">Catálogo de zonas físicas del teatro y número de filas/asientos registradas en cada zona.</p>
+  </div>
+  <div class="admin-table-shell">
+    <div class="admin-table-shell__head">
+      <h2>Zonas y conteo de asientos</h2>
+    </div>
+    <div class="admin-table-scroll">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Nombre</th>
+            <th>Tipo zona</th>
+            <th>Asignación</th>
+            <th>Capacidad base</th>
+            <th>Color</th>
+            <th>Asientos</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for z in zonas_lista %}
+            <tr>
+              <td class="cell-muted">{{ z.orden_visual }}</td>
+              <td class="cell-strong">{{ z.nombre }}</td>
+              <td class="cell-muted cell-xs">{{ z.tipo_zona }}</td>
+              <td class="cell-muted cell-xs">{{ z.tipo_asignacion }}</td>
+              <td class="cell-muted">{{ z.capacidad_base|default:"—" }}</td>
+              <td class="cell-xs">
+                {% if z.codigo_color %}
+                  <span class="admin-badge admin-badge--neutral" style="font-family:monospace;">{{ z.codigo_color }}</span>
+                {% else %}—{% endif %}
+              </td>
+              <td class="cell-strong">{{ z.num_asientos }}</td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="7" style="text-align:center;padding:2rem;color:#94a3b8;">No hay zonas en la base de datos.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p class="admin-page-desc" style="margin-top: 1rem;">Los precios por función aparecen en la pestaña Eventos (por zona y función).</p>
+</section>
+
+<!-- ========== RESERVAS ========== -->
+<section id="panel-reservas" class="admin-panel admin-section hidden">
+  <div class="admin-page-head">
+    <h1 class="admin-page-title">Reservas</h1>
+    <p class="admin-page-desc">Listado de reservas reales con búsqueda, filtro por estado y acciones de confirmar o cancelar.</p>
+  </div>
+  <div class="admin-kpi-grid admin-kpi-grid--3">
+    <div class="admin-card admin-flex-between">
+      <div>
+        <p class="admin-kpi-card__label">Activas</p>
+        <p class="admin-kpi-card__value">{{ kpi_res_panel_activa }}</p>
+      </div>
+      <span class="admin-kpi-card__icon admin-kpi-card__icon--amber"><i class="fas fa-clock"></i></span>
+    </div>
+    <div class="admin-card admin-flex-between">
+      <div>
+        <p class="admin-kpi-card__label">Confirmadas</p>
+        <p class="admin-kpi-card__value">{{ kpi_res_panel_confirm }}</p>
+      </div>
+      <span class="admin-kpi-card__icon admin-kpi-card__icon--emerald"><i class="fas fa-check"></i></span>
+    </div>
+    <div class="admin-card admin-flex-between">
+      <div>
+        <p class="admin-kpi-card__label">Expiradas</p>
+        <p class="admin-kpi-card__value">{{ kpi_res_panel_exp }}</p>
+      </div>
+      <span class="admin-kpi-card__icon admin-kpi-card__icon--red"><i class="fas fa-xmark"></i></span>
+    </div>
+  </div>
+  <form class="admin-filters" method="get" action="{% url 'admin_panel' %}">
+    <input type="hidden" name="tab" value="reservas" />
+    <div class="admin-input-wrap">
+      <i class="fas fa-magnifying-glass"></i>
+      <input class="admin-input" type="search" name="res_q" value="{{ res_q }}" placeholder="Código, evento, nombre o correo..." />
+    </div>
+    <select class="admin-select" name="res_estado">
+      <option value="">Todos los estados</option>
+      {% for er in cat_estados_reserva %}
+        <option value="{{ er.nombre }}" {% if res_estado == er.nombre %}selected{% endif %}>{{ er.nombre }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="admin-btn-primary" style="padding:0.5rem 1rem;font-size:0.8125rem;">Buscar</button>
+  </form>
+  <div class="admin-table-shell">
+    <div class="admin-table-shell__head"><h2>Reservas</h2></div>
+    <div class="admin-table-scroll">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Código</th><th>Cliente</th><th>Evento</th><th>Ubicación / detalle</th><th>Monto</th><th>Tiempo / exp.</th><th>Estado</th><th class="cell-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in reservas_rows %}
+            {% with r=row.reserva %}
+            {% with u=r.usuario|default:r.creada_por_usuario %}
+            <tr>
+              <td class="cell-xs" style="font-family:ui-monospace,monospace;">{{ r.codigo_reserva }}</td>
+              <td>
+                {% if u %}
+                  <div class="cell-strong">{{ u.nombre }} {{ u.apellido }}</div>
+                  <div class="cell-xs cell-muted">{{ u.correo }}</div>
+                {% else %}
+                  <span class="cell-muted">—</span>
+                {% endif %}
+              </td>
+              <td class="cell-muted">{{ r.evento.nombre }}</td>
+              <td class="cell-muted cell-xs"><i class="fas fa-location-dot" style="color:#38bdf8;"></i> {{ row.asiento_txt }}</td>
+              <td>Bs.&nbsp;{{ r.total_reserva|floatformat:2 }}</td>
+              <td class="{{ row.tiempo_class }}"><i class="fas fa-clock"></i> {{ row.tiempo_txt }}</td>
+              <td>
+                {% if 'expir' in r.estado_reserva.nombre|lower or 'cancel' in r.estado_reserva.nombre|lower %}
+                  <span class="admin-badge admin-badge--danger">{{ r.estado_reserva.nombre }}</span>
+                {% elif 'confirm' in r.estado_reserva.nombre|lower %}
+                  <span class="admin-badge admin-badge--ok">{{ r.estado_reserva.nombre }}</span>
+                {% else %}
+                  <span class="admin-badge admin-badge--warn">{{ r.estado_reserva.nombre }}</span>
+                {% endif %}
+              </td>
+              <td class="cell-right admin-actions-gap">
+                {% if row.puede_confirmar %}
+                  <form method="post" action="{% url 'admin_reserva_action' %}" style="display:inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="reserva_id" value="{{ r.pk }}" />
+                    <input type="hidden" name="action" value="confirmar" />
+                    <button type="submit" class="admin-btn-success" style="padding:0.35rem 0.75rem;font-size:0.75rem;">Confirmar</button>
+                  </form>
+                {% endif %}
+                {% if row.puede_cancelar %}
+                  <form method="post" action="{% url 'admin_reserva_action' %}" style="display:inline;" onsubmit="return confirm('¿Cancelar esta reserva?');">
+                    {% csrf_token %}
+                    <input type="hidden" name="reserva_id" value="{{ r.pk }}" />
+                    <input type="hidden" name="action" value="cancelar" />
+                    <button type="submit" class="admin-btn-danger" style="padding:0.35rem 0.75rem;font-size:0.75rem;">Cancelar</button>
+                  </form>
+                {% endif %}
+                {% if not row.puede_confirmar and not row.puede_cancelar %}
+                  <span class="cell-muted cell-xs">—</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endwith %}
+            {% endwith %}
+          {% empty %}
+            <tr><td colspan="8" style="text-align:center;padding:2rem;color:#94a3b8;">No hay reservas que coincidan.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ========== VENTAS ========== -->
+<section id="panel-ventas" class="admin-panel admin-section hidden">
+  <div class="admin-page-head">
+    <h1 class="admin-page-title">Ventas</h1>
+    <p class="admin-page-desc">Ventas registradas, totales por estado emitida y método de pago según el último pago de la reserva.</p>
+  </div>
+  <div class="admin-kpi-grid admin-kpi-grid--3">
+    <div class="admin-card admin-flex-between">
+      <div>
+        <p class="admin-kpi-card__label">Ingresos (emitidas)</p>
+        <p class="admin-kpi-card__value">Bs.&nbsp;{{ kpi_vta_ingresos|floatformat:0 }}</p>
+      </div>
+      <span class="admin-kpi-card__icon admin-kpi-card__icon--emerald"><i class="fas fa-dollar-sign"></i></span>
+    </div>
+    <div class="admin-card admin-flex-between">
+      <div>
+        <p class="admin-kpi-card__label">Ventas emitidas</p>
+        <p class="admin-kpi-card__value">{{ kpi_vta_emitidas }}</p>
+      </div>
+      <span class="admin-kpi-card__icon admin-kpi-card__icon--sky"><i class="fas fa-credit-card"></i></span>
+    </div>
+    <div class="admin-card admin-flex-between">
+      <div>
+        <p class="admin-kpi-card__label">Otras (no emitida)</p>
+        <p class="admin-kpi-card__value">{{ kpi_vta_otras }}</p>
+      </div>
+      <span class="admin-kpi-card__icon admin-kpi-card__icon--amber"><i class="fas fa-hourglass-half"></i></span>
+    </div>
+  </div>
+  <form class="admin-filters" method="get" action="{% url 'admin_panel' %}">
+    <input type="hidden" name="tab" value="ventas" />
+    <div class="admin-input-wrap"><i class="fas fa-magnifying-glass"></i><input class="admin-input" type="search" name="vta_q" value="{{ vta_q }}" placeholder="ID venta, código reserva, evento o cliente..." /></div>
+    <select class="admin-select" name="vta_estado">
+      <option value="">Todos los estados</option>
+      {% for ev in cat_estados_venta %}
+        <option value="{{ ev.nombre }}" {% if vta_estado == ev.nombre %}selected{% endif %}>{{ ev.nombre }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="admin-btn-primary" style="padding:0.5rem 1rem;font-size:0.8125rem;">Buscar</button>
+  </form>
+  <div class="admin-table-shell">
+    <div class="admin-table-shell__head"><h2>Historial de ventas</h2></div>
+    <div class="admin-table-scroll">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>ID</th><th>Cliente</th><th>Evento</th><th>Detalle</th><th>Monto</th><th>Método</th><th>Fecha</th><th>Estado</th><th class="cell-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in ventas_rows %}
+            {% with v=row.venta %}
+            <tr>
+              <td class="cell-xs" style="font-family:monospace;">{{ v.id }}</td>
+              <td>
+                {% if v.usuario %}
+                  <div class="cell-strong">{{ v.usuario.nombre }} {{ v.usuario.apellido }}</div>
+                  <div class="cell-xs cell-muted">{{ v.usuario.correo }}</div>
+                {% else %}
+                  <span class="cell-muted">Ventanilla / sin usuario</span>
+                {% endif %}
+              </td>
+              <td class="cell-muted"><i class="fas fa-calendar" style="color:#38bdf8;"></i> {{ v.reserva.evento.nombre }}</td>
+              <td class="cell-muted cell-xs"><i class="fas fa-location-dot" style="color:#38bdf8;"></i> {{ row.asientos_txt }}</td>
+              <td>Bs.&nbsp;{{ v.total|floatformat:2 }}</td>
+              <td class="cell-xs">{{ row.metodo }}</td>
+              <td class="cell-xs cell-muted">{{ v.fecha_venta|date:"d M Y H:i" }}</td>
+              <td>
+                {% if 'emit' in v.estado_venta.nombre|lower %}
+                  <span class="admin-badge admin-badge--ok">{{ v.estado_venta.nombre }}</span>
+                {% elif 'anul' in v.estado_venta.nombre|lower or 'reemb' in v.estado_venta.nombre|lower %}
+                  <span class="admin-badge admin-badge--danger">{{ v.estado_venta.nombre }}</span>
+                {% else %}
+                  <span class="admin-badge admin-badge--warn">{{ v.estado_venta.nombre }}</span>
+                {% endif %}
+              </td>
+              <td class="cell-right">
+                <a href="{% url 'admin_venta_detalle' v.id %}" class="admin-icon-btn" style="color:#38bdf8;text-decoration:none;" title="Ver detalle"><i class="fas fa-eye"></i></a>
+              </td>
+            </tr>
+            {% endwith %}
+          {% empty %}
+            <tr><td colspan="9" style="text-align:center;padding:2rem;color:#94a3b8;">No hay ventas que coincidan.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ========== REPORTES ========== -->
+<section id="panel-reportes" class="admin-panel admin-section hidden">
+  <div class="admin-page-head">
+    <h1 class="admin-page-title">Reportes</h1>
+    <p class="admin-page-desc">Rango de fechas aplicado a ventas emitidas, entradas y asientos de eventos en esas fechas.</p>
+  </div>
+  <div class="admin-card">
+    <h3 class="admin-card__title" style="font-size:0.9rem;">Configurar reporte</h3>
+    <form class="admin-report-toolbar" style="margin-top:1rem;" method="get" action="{% url 'admin_panel' %}">
+      <input type="hidden" name="tab" value="reportes" />
+      <div>
+        <label for="rep-tipo">Tipo (exportación CSV)</label>
+        <select id="rep-tipo" name="rep_tipo">
+          <option value="ventas" {% if rep_tipo == 'ventas' %}selected{% endif %}>Ventas</option>
+          <option value="ocupacion" {% if rep_tipo == 'ocupacion' %}selected{% endif %}>Ocupación</option>
+          <option value="reservas" {% if rep_tipo == 'reservas' %}selected{% endif %}>Reservas</option>
+        </select>
+      </div>
+      <div>
+        <label for="rep-desde">Fecha inicio</label>
+        <input id="rep-desde" type="date" name="rep_desde" value="{{ rep_desde|date:'Y-m-d' }}" />
+      </div>
+      <div>
+        <label for="rep-hasta">Fecha fin</label>
+        <input id="rep-hasta" type="date" name="rep_hasta" value="{{ rep_hasta|date:'Y-m-d' }}" />
+      </div>
+      <button type="submit" class="admin-btn-primary" style="align-self:flex-end;"><i class="fas fa-filter"></i> Aplicar</button>
+      <a class="admin-btn-danger" style="align-self:flex-end;text-decoration:none;display:inline-flex;align-items:center;gap:0.35rem;" href="{% url 'admin_report_export' %}?rep_desde={{ rep_desde|date:'Y-m-d' }}&amp;rep_hasta={{ rep_hasta|date:'Y-m-d' }}&amp;rep_tipo={{ rep_tipo }}&amp;fmt=pdf"><i class="fas fa-file-pdf"></i> PDF</a>
+      <a class="admin-btn-success" style="align-self:flex-end;text-decoration:none;display:inline-flex;align-items:center;gap:0.35rem;" href="{% url 'admin_report_export' %}?rep_desde={{ rep_desde|date:'Y-m-d' }}&amp;rep_hasta={{ rep_hasta|date:'Y-m-d' }}&amp;rep_tipo={{ rep_tipo }}&amp;fmt=csv"><i class="fas fa-file-excel"></i> Excel</a>
+    </form>
+  </div>
+  <div class="admin-kpi-grid admin-kpi-grid--3">
+    <div class="admin-card">
+      <p class="admin-kpi-card__label">Ingresos (emitidas en rango)</p>
+      <p class="admin-kpi-card__value">Bs.&nbsp;{{ rep_kpi_ingresos|floatformat:0 }}</p>
+    </div>
+    <div class="admin-card">
+      <p class="admin-kpi-card__label">Entradas emitidas</p>
+      <p class="admin-kpi-card__value">{{ rep_kpi_tickets }}</p>
+      <p class="cell-xs cell-muted">{{ rep_kpi_eventos }} evento(s) en fechas de función (rango)</p>
+    </div>
+    <div class="admin-card">
+      <p class="admin-kpi-card__label">Ocupación asientos (eventos en rango)</p>
+      <p class="admin-kpi-card__value">{{ rep_kpi_ocup }}%</p>
+      <p class="cell-xs cell-muted">No DISPONIBLE / total asientos programados</p>
+    </div>
+  </div>
+  <div class="admin-grid-2">
+    <div class="admin-card">
+      <h3 class="admin-card__title">Ventas en ventana (emitidas)</h3>
+      <p class="admin-card__subtitle">Hasta 7 días dentro del rango seleccionado</p>
+      <div class="admin-chart-box admin-chart-box--sm"><canvas id="chart-reportes-semanal"></canvas></div>
+    </div>
+    <div class="admin-card">
+      <h3 class="admin-card__title">Ocupación por zona</h3>
+      <p class="admin-card__subtitle">Eventos con fecha de función en el rango</p>
+      <div class="admin-chart-box admin-chart-box--sm"><canvas id="chart-reportes-zonas-h"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== CUENTAS ========== -->
+<section id="panel-cuentas" class="admin-panel admin-section hidden">
+  <div class="admin-page-head">
+    <h1 class="admin-page-title">Cuentas</h1>
+    <p class="admin-page-desc">Crea usuarios (cliente, empleado, soporte, administrador), activa o desactiva cuentas y asigna roles.</p>
+  </div>
+
+  <div class="admin-card" style="margin-bottom:1.25rem;">
+    <div class="admin-table-shell__head">
+      <h2 style="margin:0;">Nuevo usuario</h2>
+    </div>
+    <form method="post" action="{% url 'admin_usuario_create' %}" class="admin-modal__body" style="padding-top:1rem;">
+      {% csrf_token %}
+      <div class="admin-modal__grid admin-modal__grid--2">
+        <div class="admin-modal__field">
+          <label for="nu-nombre">Nombre</label>
+          <input type="text" id="nu-nombre" name="nombre" required maxlength="100" placeholder="Ej: Juan" autocomplete="off" />
+        </div>
+        <div class="admin-modal__field">
+          <label for="nu-apellido">Apellido</label>
+          <input type="text" id="nu-apellido" name="apellido" required maxlength="100" placeholder="Ej: Pérez" autocomplete="off" />
+        </div>
+      </div>
+      <div class="admin-modal__field" style="margin-top:1rem;">
+        <label for="nu-correo">Correo</label>
+        <input type="email" id="nu-correo" name="correo" required maxlength="254" placeholder="correo@dominio.bo" autocomplete="off" />
+      </div>
+      <div class="admin-modal__grid admin-modal__grid--2" style="margin-top:1rem;">
+        <div class="admin-modal__field">
+          <label for="nu-pass">Contraseña</label>
+          <input type="password" id="nu-pass" name="password" required minlength="8" autocomplete="new-password" />
+        </div>
+        <div class="admin-modal__field">
+          <label for="nu-pass2">Confirmar contraseña</label>
+          <input type="password" id="nu-pass2" name="password_confirm" required minlength="8" autocomplete="new-password" />
+        </div>
+      </div>
+      <div class="admin-modal__grid admin-modal__grid--2" style="margin-top:1rem;">
+        <div class="admin-modal__field">
+          <label for="nu-tel">Teléfono (opcional)</label>
+          <input type="text" id="nu-tel" name="telefono" maxlength="8" placeholder="6xxxxxxx o 7xxxxxxx" inputmode="numeric" />
+        </div>
+        <div class="admin-modal__field">
+          <label for="nu-rol">Rol</label>
+          <select id="nu-rol" name="rol_id" class="admin-select" required>
+            {% for r in roles_list %}
+              <option value="{{ r.id }}" {% if r.nombre|lower == 'cliente' %}selected{% endif %}>{{ r.nombre|title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="admin-modal__row-toggle" style="margin-top:1rem;">
+        <label class="admin-switch">
+          <input type="checkbox" id="nu-activo" name="activo" checked />
+          <span class="admin-switch__track" aria-hidden="true"></span>
+        </label>
+        <span class="admin-switch__label">Cuenta activa</span>
+      </div>
+      <div style="margin-top:1rem;display:flex;justify-content:flex-end;">
+        <button type="submit" class="admin-btn-primary"><i class="fas fa-user-plus"></i> Crear usuario</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="admin-card">
+    <div class="admin-table-shell__head" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+      <h2 style="margin:0;">Usuarios</h2>
+      <form method="get" action="{% url 'admin_panel' %}" style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin:0;">
+        <input type="hidden" name="tab" value="cuentas" />
+        <input
+          type="search"
+          name="usr_q"
+          class="admin-search-input"
+          placeholder="Buscar (nombre, correo, teléfono, DNI)…"
+          value="{{ usr_q }}"
+          style="min-width: 260px;"
+        />
+        <select name="usr_estado" class="admin-select">
+          <option value="" {% if not usr_estado %}selected{% endif %}>Estado: todos</option>
+          <option value="activo" {% if usr_estado == 'activo' %}selected{% endif %}>Activos</option>
+          <option value="inactivo" {% if usr_estado == 'inactivo' %}selected{% endif %}>Inactivos</option>
+        </select>
+        <select name="usr_rol" class="admin-select">
+          <option value="" {% if not usr_rol %}selected{% endif %}>Rol: todos</option>
+          {% for r in roles_list %}
+            <option value="{{ r.nombre }}" {% if usr_rol == r.nombre|lower %}selected{% endif %}>{{ r.nombre|title }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="admin-btn-primary">Filtrar</button>
+        <a href="{% url 'admin_panel' %}?tab=cuentas" class="admin-btn-outline" style="text-decoration:none;">Limpiar</a>
+      </form>
+    </div>
+
+    <div class="admin-table-scroll" style="margin-top:1rem;">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Contacto</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th class="cell-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in usuarios_list %}
+            <tr>
+              <td class="cell-strong">
+                <div class="admin-stack" style="gap:0.2rem;">
+                  <span>{{ u.nombre }} {{ u.apellido }}</span>
+                  <span class="cell-xs cell-muted">ID {{ u.id }} · {{ u.fecha_creacion|date:"d/m/Y" }}</span>
+                </div>
+              </td>
+              <td class="cell-muted cell-xs">
+                <div class="admin-stack" style="gap:0.2rem;">
+                  <span><i class="fas fa-envelope" style="margin-right:0.35rem;color:#38bdf8;"></i>{{ u.correo }}</span>
+                  <span><i class="fas fa-phone" style="margin-right:0.35rem;color:#38bdf8;"></i>{{ u.telefono|default:"—" }}</span>
+                </div>
+              </td>
+              <td>
+                <form method="post" action="{% url 'admin_usuario_action' %}" style="margin:0;display:flex;gap:0.5rem;align-items:center;">
+                  {% csrf_token %}
+                  <input type="hidden" name="usuario_id" value="{{ u.id }}" />
+                  <input type="hidden" name="action" value="set_rol" />
+                  <input type="hidden" name="next_tab" value="cuentas" />
+                  <select name="rol_id" class="admin-select" onchange="this.form.submit()">
+                    {% for r in roles_list %}
+                      <option value="{{ r.id }}" {% if u.rol_id == r.id %}selected{% endif %}>{{ r.nombre|title }}</option>
+                    {% endfor %}
+                  </select>
+                </form>
+              </td>
+              <td>
+                {% if u.activo %}
+                  <span class="admin-badge admin-badge--ok">Activo</span>
+                {% else %}
+                  <span class="admin-badge admin-badge--neutral">Inactivo</span>
+                {% endif %}
+              </td>
+              <td class="cell-right">
+                <div class="admin-row-actions">
+                  {% if u.activo %}
+                    <form method="post" action="{% url 'admin_usuario_action' %}" style="display:inline;margin:0;">
+                      {% csrf_token %}
+                      <input type="hidden" name="usuario_id" value="{{ u.id }}" />
+                      <input type="hidden" name="action" value="desactivar" />
+                      <input type="hidden" name="next_tab" value="cuentas" />
+                      <button type="submit" class="admin-btn-outline">Desactivar</button>
+                    </form>
+                  {% else %}
+                    <form method="post" action="{% url 'admin_usuario_action' %}" style="display:inline;margin:0;">
+                      {% csrf_token %}
+                      <input type="hidden" name="usuario_id" value="{{ u.id }}" />
+                      <input type="hidden" name="action" value="activar" />
+                      <input type="hidden" name="next_tab" value="cuentas" />
+                      <button type="submit" class="admin-btn-primary">Activar</button>
+                    </form>
+                  {% endif %}
+
+                  <form method="post" action="{% url 'admin_usuario_action' %}" style="display:inline;margin:0;" onsubmit="return confirm('¿Eliminar esta cuenta? Esta acción no se puede deshacer.');">
+                    {% csrf_token %}
+                    <input type="hidden" name="usuario_id" value="{{ u.id }}" />
+                    <input type="hidden" name="action" value="eliminar" />
+                    <input type="hidden" name="next_tab" value="cuentas" />
+                    <button type="submit" class="admin-btn-danger">Eliminar</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="5" class="admin-empty">No se encontraron usuarios.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ========== SOPORTE ========== -->
+<section id="panel-soporte" class="admin-panel admin-section hidden">
+  <div class="admin-page-head">
+    <h1 class="admin-page-title">Soporte</h1>
+    <p class="admin-page-desc">Tickets reales de la tabla soporte y sus mensajes.</p>
+  </div>
+  <div class="admin-kpi-grid admin-kpi-grid--3">
+    <div class="admin-card admin-flex-between">
+      <div><p class="admin-kpi-card__label">Tickets totales</p><p class="admin-kpi-card__value">{{ soporte_total }}</p></div>
+      <span class="admin-kpi-card__icon admin-kpi-card__icon--sky"><i class="fas fa-comments"></i></span>
+    </div>
+    <div class="admin-card admin-flex-between">
+      <div><p class="admin-kpi-card__label">Pendientes</p><p class="admin-kpi-card__value">{{ soporte_pendientes }}</p></div>
+      <span class="admin-kpi-card__icon admin-kpi-card__icon--amber"><i class="fas fa-clock"></i></span>
+    </div>
+    <div class="admin-card admin-flex-between">
+      <div><p class="admin-kpi-card__label">Cerrados</p><p class="admin-kpi-card__value">{{ soporte_cerrados }}</p></div>
+      <span class="admin-kpi-card__icon admin-kpi-card__icon--emerald"><i class="fas fa-check"></i></span>
+    </div>
+  </div>
+  <form class="admin-filters" method="get" action="{% url 'admin_panel' %}">
+    <input type="hidden" name="tab" value="soporte" />
+    <div class="admin-input-wrap">
+      <i class="fas fa-magnifying-glass"></i>
+      <input class="admin-input" type="search" name="sup_q" value="{{ sup_q }}" placeholder="Buscar por reclamo, asunto, usuario..." />
+    </div>
+    <select class="admin-select" name="sup_estado">
+      <option value="">Todos los estados</option>
+      {% for es in estados_soporte %}
+        <option value="{{ es.nombre }}" {% if sup_estado == es.nombre %}selected{% endif %}>{{ es.nombre }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="admin-btn-primary" style="padding:0.5rem 1rem;font-size:0.8125rem;">Buscar</button>
+  </form>
+  <div class="admin-split-chat">
+    <div class="admin-chat-list">
+      <div class="admin-chat-list__head">Tickets</div>
+      <div class="admin-chat-list__body">
+        {% for t in soporte_list %}
+        <a href="{% url 'admin_panel' %}?tab=soporte&sup_id={{ t.id }}{% if sup_q %}&sup_q={{ sup_q|urlencode }}{% endif %}{% if sup_estado %}&sup_estado={{ sup_estado|urlencode }}{% endif %}" class="admin-chat-item {% if soporte_activo and soporte_activo.id != t.id %}admin-chat-item--dim{% endif %}" style="text-decoration:none;color:inherit;">
+          <div class="admin-flex-between" style="align-items:center;">
+            <span class="cell-strong">{{ t.usuario.nombre }} {{ t.usuario.apellido }}</span>
+            {% if 'cerr' in t.estado_soporte.nombre|lower %}
+              <span class="admin-badge admin-badge--neutral" style="font-size:10px;padding:2px 6px;">{{ t.estado_soporte.nombre }}</span>
+            {% elif 'proceso' in t.estado_soporte.nombre|lower %}
+              <span class="admin-badge admin-badge--warn" style="font-size:10px;padding:2px 6px;">{{ t.estado_soporte.nombre }}</span>
+            {% else %}
+              <span class="admin-badge admin-badge--ok" style="font-size:10px;padding:2px 6px;">{{ t.estado_soporte.nombre }}</span>
+            {% endif %}
+          </div>
+          <p class="cell-xs cell-muted">{{ t.numero_reclamo }} · {{ t.usuario.correo }}</p>
+          <p class="cell-xs cell-muted" style="margin-top:0.35rem;">{{ t.asunto|truncatechars:55 }}</p>
+          <p style="font-size:10px;color:#475569;margin:0.35rem 0 0;">{{ t.fecha_creacion|date:"d/m/Y H:i" }}</p>
+        </a>
+        {% empty %}
+        <p class="cell-muted" style="padding:1rem;">Sin tickets.</p>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="admin-chat-window">
+      {% if soporte_activo %}
+      <div style="border-bottom:1px solid rgba(51,65,85,0.75);padding:0.75rem 1rem;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <p class="cell-strong" style="margin:0;">{{ soporte_activo.usuario.nombre }} {{ soporte_activo.usuario.apellido }}</p>
+          <p class="cell-xs cell-muted">{{ soporte_activo.numero_reclamo }} · {{ soporte_activo.usuario.correo }}</p>
+        </div>
+        <div class="admin-actions-gap">
+          <span class="admin-badge admin-badge--ok">{{ soporte_activo.estado_soporte.nombre }}</span>
+          {% if 'cerr' not in soporte_activo.estado_soporte.nombre|lower %}
+          <form method="post" action="{% url 'admin_soporte_close' %}">
+            {% csrf_token %}
+            <input type="hidden" name="ticket_id" value="{{ soporte_activo.id }}" />
+            <button type="submit" class="admin-btn-danger" style="padding:0.35rem 0.75rem;font-size:0.75rem;">Cerrar</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+      <div class="admin-chat-bubbles">
+        {% for m in soporte_activo.mensajes.all %}
+          {% if m.remitente.id == request.session.usuario_id %}
+          <div class="admin-bubble-out">{{ m.mensaje }}<p style="margin:0.35rem 0 0;font-size:10px;opacity:0.85;">{{ m.remitente.nombre }} · {{ m.fecha_envio|date:"d/m H:i" }}</p></div>
+          {% else %}
+          <div class="admin-bubble-in">{{ m.mensaje }}<p style="margin:0.35rem 0 0;font-size:10px;color:#94a3b8;">{{ m.remitente.nombre }} · {{ m.fecha_envio|date:"d/m H:i" }}</p></div>
+          {% endif %}
+        {% empty %}
+          <p class="cell-muted">Sin mensajes.</p>
+        {% endfor %}
+      </div>
+      {% if 'cerr' not in soporte_activo.estado_soporte.nombre|lower %}
+      <form class="admin-chat-input-row" method="post" action="{% url 'admin_soporte_reply' %}">
+        {% csrf_token %}
+        <input type="hidden" name="ticket_id" value="{{ soporte_activo.id }}" />
+        <input type="text" name="mensaje" placeholder="Escribe tu respuesta..." required />
+        <button type="submit"><i class="fas fa-paper-plane"></i></button>
+      </form>
+      {% endif %}
+      {% else %}
+      <div style="padding:1rem;" class="cell-muted">Selecciona un ticket para ver el detalle.</div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- ========== CONFIGURACIÓN ========== -->
+<section id="panel-configuracion" class="admin-panel admin-section admin-section--narrow hidden">
+  <div class="admin-page-head">
+    <h1 class="admin-page-title">Configuración</h1>
+    <p class="admin-page-desc">Administra las preferencias y configuración del sistema</p>
+  </div>
+  <div class="admin-tabs-inline">
+    <a class="{% if cfg_tab == 'general' %}admin-tabs-inline__active{% endif %}" href="{% url 'admin_panel' %}?tab=configuracion&cfg_tab=general">General</a>
+    <a class="{% if cfg_tab == 'notificaciones' %}admin-tabs-inline__active{% endif %}" href="{% url 'admin_panel' %}?tab=configuracion&cfg_tab=notificaciones">Notificaciones</a>
+    <a class="{% if cfg_tab == 'seguridad' %}admin-tabs-inline__active{% endif %}" href="{% url 'admin_panel' %}?tab=configuracion&cfg_tab=seguridad">Seguridad</a>
+    <a class="{% if cfg_tab == 'pagos' %}admin-tabs-inline__active{% endif %}" href="{% url 'admin_panel' %}?tab=configuracion&cfg_tab=pagos">Pagos</a>
+    <a class="{% if cfg_tab == 'sistema' %}admin-tabs-inline__active{% endif %}" href="{% url 'admin_panel' %}?tab=configuracion&cfg_tab=sistema">Sistema</a>
+  </div>
+  {% if cfg_tab == 'general' %}
+  <form class="admin-card" method="post" action="{% url 'admin_config_general_save' %}">
+    {% csrf_token %}
+    <h3 class="admin-card__title">Información General</h3>
+    <p class="admin-card__subtitle">Actualiza la información del teatro y del administrador</p>
+    <div class="admin-form-grid" style="margin-top:1.5rem;">
+      <div class="admin-stack">
+        <p class="admin-form-section-title">Información del Teatro</p>
+        <div class="admin-form-stack"><label>Nombre Teatro</label><input type="text" value="Teatro al Aire Libre" /></div>
+        <div class="admin-form-stack"><label>Capacidad Total</label><input type="text" value="2000" /></div>
+      </div>
+      <div class="admin-stack">
+        <p class="admin-form-section-title">&nbsp;</p>
+        <div class="admin-form-stack"><label>Ubicación</label><input type="text" value="La Paz, Bolivia" /></div>
+        <div class="admin-form-stack"><label>Teléfono</label><input type="text" name="telefono" value="{{ current_admin.telefono|default:'+591 2 1234567' }}" /></div>
+      </div>
+    </div>
+    <div class="admin-form-grid" style="margin-top:1rem;">
+      <div class="admin-stack">
+        <p class="admin-form-section-title">Información del Administrador</p>
+        <div class="admin-form-stack"><label>Nombre Completo</label><input type="text" name="nombre" value="{{ current_admin.nombre }}" required /></div>
+      </div>
+      <div class="admin-stack">
+        <p class="admin-form-section-title">&nbsp;</p>
+        <div class="admin-form-stack"><label>Email</label><input type="email" name="correo" value="{{ current_admin.correo }}" required /></div>
+      </div>
+    </div>
+    <div style="margin-top:2rem;display:flex;justify-content:flex-end;">
+      <button type="submit" class="admin-btn-primary"><i class="fas fa-floppy-disk"></i> Guardar Cambios</button>
+    </div>
+  </form>
+  {% elif cfg_tab == 'notificaciones' %}
+  <form class="admin-card">
+    <h3 class="admin-card__title">Preferencias de Notificaciones</h3>
+    <p class="admin-card__subtitle">Configura qué notificaciones deseas recibir</p>
+    <div class="admin-card" style="margin-top:1rem;padding:0.85rem 1rem;">
+      <div class="admin-flex-between"><div><p class="cell-strong" style="margin:0;">Nuevas Reservas</p><p class="cell-xs cell-muted" style="margin:0.15rem 0 0;">Recibe notificaciones cuando haya una nueva reserva</p></div><label class="admin-switch"><input type="checkbox" checked /><span class="admin-switch__track"></span></label></div>
+    </div>
+    <div class="admin-card" style="margin-top:0.75rem;padding:0.85rem 1rem;">
+      <div class="admin-flex-between"><div><p class="cell-strong" style="margin:0;">Nuevas Ventas</p><p class="cell-xs cell-muted" style="margin:0.15rem 0 0;">Recibe notificaciones cuando se complete una venta</p></div><label class="admin-switch"><input type="checkbox" checked /><span class="admin-switch__track"></span></label></div>
+    </div>
+    <div class="admin-card" style="margin-top:0.75rem;padding:0.85rem 1rem;">
+      <div class="admin-flex-between"><div><p class="cell-strong" style="margin:0;">Mensajes de Soporte</p><p class="cell-xs cell-muted" style="margin:0.15rem 0 0;">Recibe notificaciones de nuevas consultas de usuarios</p></div><label class="admin-switch"><input type="checkbox" checked /><span class="admin-switch__track"></span></label></div>
+    </div>
+    <div class="admin-card" style="margin-top:0.75rem;padding:0.85rem 1rem;">
+      <div class="admin-flex-between"><div><p class="cell-strong" style="margin:0;">Reportes Diarios</p><p class="cell-xs cell-muted" style="margin:0.15rem 0 0;">Recibe un resumen diario de ventas y ocupación</p></div><label class="admin-switch"><input type="checkbox" /><span class="admin-switch__track"></span></label></div>
+    </div>
+    <div style="margin-top:1rem;display:flex;justify-content:flex-end;">
+      <button type="button" class="admin-btn-primary"><i class="fas fa-floppy-disk"></i> Guardar Preferencias</button>
+    </div>
+  </form>
+  {% elif cfg_tab == 'seguridad' %}
+  <form class="admin-card" method="post" action="{% url 'admin_config_security_save' %}">
+    {% csrf_token %}
+    <h3 class="admin-card__title">Seguridad</h3>
+    <p class="admin-card__subtitle">Administra la seguridad de tu cuenta</p>
+    <h4 style="margin:1.25rem 0 0.75rem;">Cambiar Contraseña</h4>
+    <div class="admin-form-stack"><label>Contraseña Actual</label><input type="password" name="current_password" required /></div>
+    <div class="admin-form-stack" style="margin-top:0.75rem;"><label>Nueva Contraseña</label><input type="password" name="new_password" minlength="8" required /></div>
+    <div class="admin-form-stack" style="margin-top:0.75rem;"><label>Confirmar Nueva Contraseña</label><input type="password" name="repeat_password" minlength="8" required /></div>
+    <div style="margin-top:1rem;display:flex;justify-content:flex-start;">
+      <button type="submit" class="admin-btn-primary">Actualizar Contraseña</button>
+    </div>
+    <div class="admin-card" style="margin-top:1rem;padding:0.85rem 1rem;">
+      <div class="admin-flex-between"><div><p class="cell-strong" style="margin:0;">Autenticación de Dos Factores</p><p class="cell-xs cell-muted" style="margin:0.15rem 0 0;">Añade una capa extra de seguridad a tu cuenta</p></div><label class="admin-switch"><input type="checkbox" /><span class="admin-switch__track"></span></label></div>
+    </div>
+  </form>
+  {% elif cfg_tab == 'pagos' %}
+  <div class="admin-card">
+    <h3 class="admin-card__title">Métodos de Pago</h3>
+    <p class="admin-card__subtitle">Configura los métodos de pago aceptados</p>
+    <div class="admin-card" style="margin-top:1rem;padding:0.85rem 1rem;">
+      <div class="admin-flex-between"><div><p class="cell-strong" style="margin:0;">Tarjeta de Crédito/Débito</p><p class="cell-xs cell-muted" style="margin:0.15rem 0 0;">Visa, Mastercard, etc.</p></div><label class="admin-switch"><input type="checkbox" checked /><span class="admin-switch__track"></span></label></div>
+    </div>
+    <div class="admin-card" style="margin-top:0.75rem;padding:0.85rem 1rem;">
+      <div class="admin-flex-between"><div><p class="cell-strong" style="margin:0;">QR Bancario</p><p class="cell-xs cell-muted" style="margin:0.15rem 0 0;">Pagos mediante código QR</p></div><label class="admin-switch"><input type="checkbox" checked /><span class="admin-switch__track"></span></label></div>
+    </div>
+    <div class="admin-card" style="margin-top:0.75rem;padding:0.85rem 1rem;">
+      <div class="admin-flex-between"><div><p class="cell-strong" style="margin:0;">Transferencia Bancaria</p><p class="cell-xs cell-muted" style="margin:0.15rem 0 0;">Pagos por transferencia</p></div><label class="admin-switch"><input type="checkbox" checked /><span class="admin-switch__track"></span></label></div>
+    </div>
+    <div style="margin-top:1rem;display:flex;justify-content:flex-end;">
+      <button type="button" class="admin-btn-primary"><i class="fas fa-floppy-disk"></i> Guardar Cambios</button>
+    </div>
+    <hr style="border:none;border-top:1px solid rgba(51,65,85,0.6);margin:1.25rem 0;" />
+    <h3 class="admin-card__title">Transacciones (reales)</h3>
+    <p class="admin-card__subtitle">Consulta de tabla pago.</p>
+    <form class="admin-filters" method="get" action="{% url 'admin_panel' %}" style="margin-top:0.75rem;">
+      <input type="hidden" name="tab" value="configuracion" />
+      <input type="hidden" name="cfg_tab" value="pagos" />
+      <div class="admin-input-wrap"><i class="fas fa-magnifying-glass"></i><input class="admin-input" type="search" name="trans_q" value="{{ trans_q }}" placeholder="ID pago, referencia, código reserva..." /></div>
+      <select class="admin-select" name="trans_estado">
+        <option value="">Estado pago</option>
+        {% for e in estados_pago %}<option value="{{ e.nombre }}" {% if trans_estado == e.nombre %}selected{% endif %}>{{ e.nombre }}</option>{% endfor %}
+      </select>
+      <select class="admin-select" name="trans_metodo">
+        <option value="">Método pago</option>
+        {% for m in metodos_pago %}<option value="{{ m.nombre }}" {% if trans_metodo == m.nombre %}selected{% endif %}>{{ m.nombre }}</option>{% endfor %}
+      </select>
+      <button type="submit" class="admin-btn-primary" style="padding:0.5rem 1rem;font-size:0.8125rem;">Filtrar</button>
+    </form>
+    <div class="admin-table-scroll" style="margin-top:1rem;">
+      <table class="admin-table">
+        <thead><tr><th>ID</th><th>Reserva</th><th>Evento</th><th>Monto</th><th>Método</th><th>Estado</th><th>Fecha</th></tr></thead>
+        <tbody>
+          {% for p in transacciones_rows %}
+            <tr>
+              <td class="cell-xs">{{ p.id }}</td>
+              <td class="cell-xs">{{ p.reserva.codigo_reserva }}</td>
+              <td class="cell-xs">{{ p.reserva.evento.nombre }}</td>
+              <td>Bs.&nbsp;{{ p.monto|floatformat:2 }}</td>
+              <td class="cell-xs">{{ p.metodo_pago.nombre }}</td>
+              <td class="cell-xs">{{ p.estado_pago.nombre }}</td>
+              <td class="cell-xs cell-muted">{{ p.fecha_creacion|date:"d/m/Y H:i" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="7" style="text-align:center;padding:1rem;" class="cell-muted">Sin transacciones.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="admin-card">
+    <h3 class="admin-card__title">Configuración del Sistema</h3>
+    <p class="admin-card__subtitle">Ajustes generales del sistema</p>
+    <div class="admin-form-grid" style="margin-top:1rem;">
+      <div class="admin-form-stack"><label>Idioma</label><input type="text" value="Español" /></div>
+      <div class="admin-form-stack"><label>Zona Horaria</label><input type="text" value="America/La_Paz (BOT)" /></div>
+    </div>
+    <h4 style="margin:1.25rem 0 0.75rem;">Tiempo de Reserva</h4>
+    <div class="admin-form-stack">
+      <label>Duración de Bloqueo (minutos)</label>
+      <input type="number" value="15" />
+      <p class="cell-xs cell-muted" style="margin:0.35rem 0 0;">Tiempo que un asiento permanece reservado antes de liberarse</p>
+    </div>
+    <div style="margin-top:1rem;display:flex;justify-content:flex-end;">
+      <button type="button" class="admin-btn-primary"><i class="fas fa-floppy-disk"></i> Guardar Configuración</button>
+    </div>
+  </div>
+  {% endif %}
+</section>
+
+<!-- Modal crear evento -->
+<div id="admin-modal-evento" class="admin-modal hidden" aria-hidden="true" role="dialog" aria-labelledby="admin-modal-evento-title" aria-modal="true">
+  <div class="admin-modal__backdrop" data-close-modal-evento tabindex="-1"></div>
+  <div class="admin-modal__dialog">
+    <div class="admin-modal__head">
+      <h2 id="admin-modal-evento-title">Crear nuevo evento</h2>
+      <button type="button" class="admin-modal__close" data-close-modal-evento aria-label="Cerrar"><i class="fas fa-times"></i></button>
+    </div>
+    <form method="post" id="form-modal-evento" action="{% url 'admin_evento_nuevo' %}">
+      {% csrf_token %}
+      <div class="admin-modal__body">
+        <input type="hidden" id="modal-evento-id" value="" />
+        <div class="admin-modal__field">
+          <label for="modal-nombre-ev">Nombre del evento</label>
+          <input type="text" id="modal-nombre-ev" name="nombre" required minlength="3" maxlength="150" placeholder="Ej: Concierto folklórico nacional" autocomplete="off" />
+        </div>
+        <div class="admin-modal__field" style="margin-top:1rem;">
+          <label for="modal-desc-ev">Descripción</label>
+          <textarea id="modal-desc-ev" name="descripcion" rows="4" maxlength="5000" placeholder="Texto que verán los visitantes en la ficha del evento…"></textarea>
+        </div>
+        <div class="admin-modal__field" style="margin-top:1rem;">
+          <label for="modal-img-ev">URL de imagen</label>
+          <input type="url" id="modal-img-ev" name="imagen_url" maxlength="200" placeholder="https://…" autocomplete="off" />
+          <p class="cell-xs cell-muted" style="margin:0.35rem 0 0;">Se muestra en inicio, listado de eventos y compra.</p>
+        </div>
+        <div class="admin-modal__grid admin-modal__grid--2" style="margin-top:1rem;">
+          <div class="admin-modal__field">
+            <label for="modal-fecha-ev">Fecha</label>
+            <input type="date" id="modal-fecha-ev" name="fecha_evento" required />
+          </div>
+          <div class="admin-modal__field">
+            <label for="modal-hora-ev">Hora</label>
+            <input type="time" id="modal-hora-ev" name="hora_evento" required />
+          </div>
+        </div>
+        <div class="admin-modal__grid admin-modal__grid--2" style="margin-top:1rem;">
+          <div class="admin-modal__field">
+            <label for="modal-pvip">Precio VIP (Bs.)</label>
+            <input type="number" step="0.01" min="0" id="modal-pvip" name="precio_vip" placeholder="150" />
+          </div>
+          <div class="admin-modal__field">
+            <label for="modal-pgrad">Precio gradería (Bs.)</label>
+            <input type="number" step="0.01" min="0" id="modal-pgrad" name="precio_graderia" placeholder="80" />
+          </div>
+        </div>
+        <div class="admin-modal__grid admin-modal__grid--2" style="margin-top:1rem;">
+          <div class="admin-modal__field">
+            <label for="modal-pgen">Precio general (Bs.)</label>
+            <input type="number" step="0.01" min="0" id="modal-pgen" name="precio_general" placeholder="50" />
+          </div>
+          <div class="admin-modal__field">
+            <label for="modal-cap">Capacidad total</label>
+            <input type="number" min="0" step="1" id="modal-cap" name="capacidad_total" placeholder="2000" />
+          </div>
+        </div>
+        <div class="admin-modal__row-toggle" style="margin-top:1.15rem;">
+          <label class="admin-switch">
+            <input type="checkbox" id="modal-activo-ev" name="evento_activo" checked />
+            <span class="admin-switch__track" aria-hidden="true"></span>
+          </label>
+          <span class="admin-switch__label" id="lbl-toggle-activo">Evento activo</span>
+        </div>
+      </div>
+      <div class="admin-modal__footer">
+        <button type="button" class="admin-btn-outline" data-close-modal-evento>Cancelar</button>
+        <button type="submit" class="admin-btn-primary" id="modal-evento-submit-btn">Crear evento</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function () {
+    var ACTIVE = 'admin-nav-btn--active';
+
+    function showTab(tab) {
+      document.querySelectorAll('.admin-panel').forEach(function (el) {
+        el.classList.add('hidden');
+      });
+      var panel = document.getElementById('panel-' + tab);
+      if (panel) panel.classList.remove('hidden');
+
+      document.querySelectorAll('.admin-nav-btn').forEach(function (btn) {
+        btn.classList.toggle(ACTIVE, btn.getAttribute('data-admin-tab') === tab);
+      });
+
+      if (tab === 'dashboard') initDashboardCharts();
+      if (tab === 'reportes') {
+        setTimeout(function () { initReportesCharts(); }, 80);
+      }
+    }
+
+    document.body.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-admin-tab]');
+      if (!btn) return;
+      e.preventDefault();
+      showTab(btn.getAttribute('data-admin-tab'));
+    });
+
+    (function () {
+      var root = document.getElementById('admin-modal-evento');
+      if (!root) return;
+      var form = document.getElementById('form-modal-evento');
+      var title = document.getElementById('admin-modal-evento-title');
+      var submitBtn = document.getElementById('modal-evento-submit-btn');
+      var idInput = document.getElementById('modal-evento-id');
+      var inputNombre = document.getElementById('modal-nombre-ev');
+      var inputFecha = document.getElementById('modal-fecha-ev');
+      var inputHora = document.getElementById('modal-hora-ev');
+      var inputVip = document.getElementById('modal-pvip');
+      var inputGrad = document.getElementById('modal-pgrad');
+      var inputGen = document.getElementById('modal-pgen');
+      var inputCap = document.getElementById('modal-cap');
+      var inputActivo = document.getElementById('modal-activo-ev');
+      var inputDesc = document.getElementById('modal-desc-ev');
+      var inputImg = document.getElementById('modal-img-ev');
+
+      function toCreateMode() {
+        if (!form) return;
+        form.action = "{% url 'admin_evento_nuevo' %}";
+        if (title) title.textContent = 'Crear nuevo evento';
+        if (submitBtn) submitBtn.textContent = 'Crear evento';
+        if (idInput) idInput.value = '';
+        if (inputNombre) inputNombre.value = '';
+        if (inputFecha) inputFecha.value = '';
+        if (inputHora) inputHora.value = '';
+        if (inputVip) inputVip.value = '';
+        if (inputGrad) inputGrad.value = '';
+        if (inputGen) inputGen.value = '';
+        if (inputCap) inputCap.value = '';
+        if (inputActivo) inputActivo.checked = true;
+        if (inputDesc) inputDesc.value = '';
+        if (inputImg) inputImg.value = '';
+      }
+
+      function toEditMode(btn) {
+        if (!form) return;
+        var id = btn.getAttribute('data-id');
+        if (!id) return;
+        form.action = '/admin-panel/eventos/' + id + '/editar/';
+        if (title) title.textContent = 'Editar evento';
+        if (submitBtn) submitBtn.textContent = 'Actualizar evento';
+        if (idInput) idInput.value = id;
+        if (inputNombre) inputNombre.value = btn.getAttribute('data-nombre') || '';
+        if (inputFecha) inputFecha.value = btn.getAttribute('data-fecha') || '';
+        if (inputHora) inputHora.value = btn.getAttribute('data-hora') || '';
+        if (inputVip) inputVip.value = btn.getAttribute('data-pvip') || '';
+        if (inputGrad) inputGrad.value = btn.getAttribute('data-pgrad') || '';
+        if (inputGen) inputGen.value = btn.getAttribute('data-pgen') || '';
+        if (inputCap) inputCap.value = btn.getAttribute('data-cap') || '';
+        if (inputActivo) inputActivo.checked = (btn.getAttribute('data-activo') || '0') === '1';
+        if (inputDesc) inputDesc.value = btn.getAttribute('data-descripcion') || '';
+        if (inputImg) inputImg.value = btn.getAttribute('data-imagen-url') || '';
+      }
+
+      function openModal() {
+        root.classList.remove('hidden');
+        root.setAttribute('aria-hidden', 'false');
+      }
+
+      function closeModal() {
+        root.classList.add('hidden');
+        root.setAttribute('aria-hidden', 'true');
+      }
+
+      document.getElementById('btn-open-modal-evento')?.addEventListener('click', function () {
+        toCreateMode();
+        openModal();
+      });
+
+      document.querySelectorAll('.js-edit-evento-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          toEditMode(btn);
+          openModal();
+        });
+      });
+
+      root.querySelectorAll('[data-close-modal-evento]').forEach(function (el) {
+        el.addEventListener('click', closeModal);
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && root && !root.classList.contains('hidden')) closeModal();
+      });
+    })();
+
+    var dashboardChartsDone = false;
+    var reportesChartsDone = false;
+
+    function chartDefaults() {
+      if (typeof Chart === 'undefined') return null;
+      Chart.defaults.color = '#94a3b8';
+      Chart.defaults.borderColor = 'rgba(148, 163, 184, 0.15)';
+      return Chart;
+    }
+
+    function readDashChartsPayload() {
+      var node = document.getElementById('admin-dash-charts-data');
+      if (!node || !node.textContent) return null;
+      try {
+        return JSON.parse(node.textContent);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function piePalette(len) {
+      var pal = ['#1e3a5f', '#ea580c', '#7c3aed', '#16a34a', '#0ea5e9', '#f97316', '#eab308', '#ec4899', '#14b8a6', '#64748b', '#84cc16', '#6366f1'];
+      var out = [];
+      for (var i = 0; i < len; i++) out.push(pal[i % pal.length]);
+      return out;
+    }
+
+    function initDashboardCharts() {
+      var C = chartDefaults();
+      if (!C || dashboardChartsDone) return;
+      dashboardChartsDone = true;
+
+      var P = readDashChartsPayload();
+      var barLabels = P && Array.isArray(P.ventas_semana_labels) ? P.ventas_semana_labels : [];
+      var barVals = P && Array.isArray(P.ventas_semana_vals) ? P.ventas_semana_vals : [];
+      var barYmax = P && typeof P.ventas_semana_ymax === 'number' ? P.ventas_semana_ymax : 1000;
+
+      var pieLabs = P && Array.isArray(P.zonas_labels) ? P.zonas_labels : [];
+      var pieDat = P && Array.isArray(P.zonas_data) ? P.zonas_data : [];
+
+      var lineLabs = P && Array.isArray(P.mensual_labels) ? P.mensual_labels : [];
+      var lineVals = P && Array.isArray(P.mensual_vals) ? P.mensual_vals : [];
+      var lineMax = Math.max.apply(null, lineVals.concat([1]));
+      var lineYmax = Math.max(1000, Math.ceil(lineMax * 1.1));
+
+      var ctxBar = document.getElementById('chart-ventas-semana');
+      if (ctxBar) {
+        new Chart(ctxBar.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: barLabels,
+            datasets: [{
+              label: 'Bs.',
+              data: barVals,
+              backgroundColor: 'rgba(14, 165, 233, 0.85)',
+              borderRadius: 6,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, suggestedMax: barYmax, grid: { color: 'rgba(148,163,184,0.1)' } },
+              x: { grid: { display: false } },
+            },
+          },
+        });
+      }
+
+      var ctxPie = document.getElementById('chart-ocupacion-zonas');
+      if (ctxPie) {
+        new Chart(ctxPie.getContext('2d'), {
+          type: 'doughnut',
+          data: {
+            labels: pieLabs,
+            datasets: [{
+              data: pieDat,
+              backgroundColor: piePalette(pieDat.length || 1),
+              borderWidth: 0,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'bottom', labels: { boxWidth: 12 } },
+              tooltip: {
+                callbacks: {
+                  label: function (ctx) {
+                    var v = ctx.parsed;
+                    return (ctx.label || '') + ': ' + v + '%';
+                  },
+                },
+              },
+            },
+          },
+        });
+      }
+
+      var ctxLine = document.getElementById('chart-tendencia-mensual');
+      if (ctxLine) {
+        new Chart(ctxLine.getContext('2d'), {
+          type: 'line',
+          data: {
+            labels: lineLabs,
+            datasets: [{
+              label: 'Ingresos',
+              data: lineVals,
+              borderColor: '#22c55e',
+              backgroundColor: 'rgba(34, 197, 94, 0.1)',
+              fill: true,
+              tension: 0.35,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, suggestedMax: lineYmax, grid: { color: 'rgba(148,163,184,0.1)' } },
+              x: { grid: { display: false } },
+            },
+          },
+        });
+      }
+    }
+
+    function readReportesChartsPayload() {
+      var node = document.getElementById('admin-reportes-charts-data');
+      if (!node || !node.textContent) return null;
+      try {
+        return JSON.parse(node.textContent);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function initReportesCharts() {
+      var C = chartDefaults();
+      if (!C || reportesChartsDone) return;
+      reportesChartsDone = true;
+
+      var P = readReportesChartsPayload();
+      var labs = P && Array.isArray(P.sem_labels) ? P.sem_labels : [];
+      var vals = P && Array.isArray(P.sem_vals) ? P.sem_vals : [];
+      var ymax = P && typeof P.sem_ymax === 'number' ? P.sem_ymax : 500;
+      var zLabs = P && Array.isArray(P.zonas_labels) ? P.zonas_labels : [];
+      var zDat = P && Array.isArray(P.zonas_data) ? P.zonas_data : [];
+
+      var c1 = document.getElementById('chart-reportes-semanal');
+      if (c1) {
+        new Chart(c1.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: labs,
+            datasets: [{
+              label: 'Bs.',
+              data: vals,
+              backgroundColor: '#22d3ee',
+              borderRadius: 4,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, suggestedMax: ymax, grid: { color: 'rgba(148,163,184,0.1)' } },
+              x: { grid: { display: false } },
+            },
+          },
+        });
+      }
+
+      var c2 = document.getElementById('chart-reportes-zonas-h');
+      if (c2) {
+        new Chart(c2.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: zLabs,
+            datasets: [{
+              label: '%',
+              data: zDat,
+              backgroundColor: piePalette(zDat.length || 1),
+              borderRadius: 4,
+            }],
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function (ctx) {
+                    return (ctx.label || '') + ': ' + ctx.parsed.x + '%';
+                  },
+                },
+              },
+            },
+            scales: {
+              x: { beginAtZero: true, max: 100, grid: { color: 'rgba(148,163,184,0.1)' } },
+              y: { grid: { display: false } },
+            },
+          },
+        });
+      }
+    }
+
+    function initTabOnLoad() {
+      var tab = 'dashboard';
+      try {
+        var q = new URLSearchParams(window.location.search).get('tab');
+        if (q && document.getElementById('panel-' + q)) tab = q;
+      } catch (e) { /* noop */ }
+      showTab(tab);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initTabOnLoad);
+    } else {
+      initTabOnLoad();
+    }
+  })();
+</script>
+{% endblock %}

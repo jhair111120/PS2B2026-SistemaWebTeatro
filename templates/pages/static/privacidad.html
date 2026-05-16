@@ -1,0 +1,109 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+{% block title %}Política de Privacidad | Teatro Al Aire Libre{% endblock %}
+
+{% block content %}
+<style>
+  .pp-hero {
+    background: linear-gradient(135deg, #0A0E14 0%, #151920 100%);
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    padding: 4rem 1.5rem 3rem;
+    text-align: center;
+  }
+  .pp-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(0,255,209,0.1);
+    border: 1px solid rgba(0,255,209,0.25);
+    color: #00FFD1;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.85rem;
+    border-radius: 999px;
+    margin-bottom: 1.25rem;
+  }
+  .pp-body { background: #0A0E14; padding: 3.5rem 1.5rem 5rem; }
+  .pp-card {
+    background: #151920;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 1rem;
+    padding: 1.75rem 2rem;
+    transition: border-color 0.25s;
+  }
+  .pp-card:hover { border-color: rgba(0,255,209,0.2); }
+  .pp-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: rgba(0,255,209,0.1);
+    color: #00FFD1;
+    font-size: 0.8rem;
+    font-weight: 800;
+    border-radius: 0.5rem;
+    flex-shrink: 0;
+    margin-right: 0.85rem;
+  }
+  .pp-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: white;
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.85rem;
+  }
+  .pp-text { color: #9CA3AF; font-size: 0.93rem; line-height: 1.85; padding-left: 2.85rem; }
+</style>
+
+<!-- Hero -->
+<div class="pp-hero">
+  <div class="pp-badge"><i class="fas fa-shield-alt"></i> Privacidad</div>
+  <h1 style="font-size:clamp(1.8rem,4vw,2.75rem);font-weight:800;color:white;margin-bottom:0.75rem;">
+    Política de Privacidad
+  </h1>
+  <p style="color:#9CA3AF;font-size:0.97rem;max-width:540px;margin:0 auto 0.5rem;">
+    Tu privacidad es importante para nosotros. Aquí explicamos cómo recopilamos,
+    usamos y protegemos tu información personal.
+  </p>
+  <p style="color:#64748B;font-size:0.82rem;">Última actualización: enero de 2026</p>
+</div>
+
+<!-- Contenido -->
+<div class="pp-body">
+  <div style="max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:1rem;">
+
+    {% for seccion in secciones %}
+    <div class="pp-card">
+      <div class="pp-title">
+        <span class="pp-num">{{ forloop.counter }}</span>
+        {{ seccion.titulo }}
+      </div>
+      <p class="pp-text">{{ seccion.contenido }}</p>
+    </div>
+    {% endfor %}
+
+  </div>
+
+  <!-- Footer CTA -->
+  <div style="max-width:820px;margin:2.5rem auto 0;background:rgba(0,255,209,0.04);border:1px solid rgba(0,255,209,0.15);border-radius:1rem;padding:1.75rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+    <div>
+      <p style="color:white;font-weight:600;margin-bottom:0.25rem;font-size:0.97rem;">
+        ¿Tienes preguntas sobre tu privacidad?
+      </p>
+      <p style="color:#9CA3AF;font-size:0.85rem;margin:0;">
+        Contáctanos y te responderemos a la brevedad posible.
+      </p>
+    </div>
+    <a href="{% url 'contacto' %}"
+       style="background:#00FFD1;color:#0A0E14;text-decoration:none;padding:0.7rem 1.75rem;border-radius:999px;font-weight:700;font-size:0.9rem;white-space:nowrap;transition:background 0.2s;"
+       onmouseover="this.style.background='#00e6bc'" onmouseout="this.style.background='#00FFD1'">
+      <i class="fas fa-headset" style="margin-right:0.5rem;"></i>Ir a Soporte
+    </a>
+  </div>
+</div>
+
+{% endblock %}

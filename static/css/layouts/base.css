@@ -1,0 +1,172 @@
+:root {
+  --color-green: #10B981;
+  --color-blue: #0EA5E9;
+  --bg-darkest: #0A0E14;
+  --bg-navbar: #151920;
+  --bg-card: #1E293B;
+}
+
+body {
+  background-color: var(--bg-darkest);
+  color: white;
+  font-family: 'Inter', sans-serif;
+}
+
+.modal-content {
+  border-radius: 20px;
+  color: black;
+  padding: 10px;
+}
+
+.btn-close-custom {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: 2px solid black;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s;
+  cursor: pointer;
+  z-index: 1055;
+}
+
+.btn-close-custom:hover {
+  background-color: #f1f1f1;
+}
+
+.modal-brand {
+  font-family: 'IM Fell Great Primer SC', serif;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.auth-toggle-box {
+  background-color: #E2E8F0;
+  border-radius: 50px;
+  padding: 5px;
+  display: flex;
+  margin: 20px 0;
+}
+
+.auth-toggle-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  border-radius: 50px;
+  padding: 10px;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.auth-toggle-btn.active {
+  background-color: white;
+  border: 1px solid black;
+  color: black;
+}
+
+.custom-input {
+  border: 2px solid black;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 0.9rem;
+}
+
+.custom-input:focus {
+  border-color: var(--color-blue);
+  box-shadow: none;
+}
+
+.is-invalid-custom {
+  border-color: #dc3545 !important;
+  background-color: #f8d7da;
+}
+
+.is-valid-custom {
+  border-color: #198754 !important;
+  background-color: #d1e7dd;
+}
+
+.feedback-msg {
+  font-size: 0.7rem;
+  color: #dc3545;
+  display: none;
+  margin-top: 4px;
+}
+
+.feedback-msg.show {
+  display: block;
+}
+
+.password-wrapper {
+  position: relative;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 15px;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: black;
+}
+
+.btn-dark-action {
+  background-color: #1f2937;
+  color: white;
+  border-radius: 10px;
+  padding: 12px;
+  font-weight: bold;
+  width: 100%;
+  border: none;
+  transition: 0.2s;
+}
+
+.btn-dark-action:hover {
+  background-color: black;
+  color: white;
+}
+
+.floating-chat-btn {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, var(--color-blue), var(--color-green));
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  transition: 0.3s;
+  text-decoration: none;
+}
+
+.floating-chat-btn:hover {
+  transform: scale(1.1);
+  color: white;
+}
+
+.chat-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: #ef4444;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--bg-darkest);
+  font-weight: bold;
+}

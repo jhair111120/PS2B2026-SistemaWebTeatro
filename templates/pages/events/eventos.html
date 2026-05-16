@@ -1,0 +1,166 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Eventos | Teatro Al Aire Libre{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/pages/events/eventos.css' %}" />
+
+<div class="w-full min-h-screen bg-[#0A0E14] pb-12">
+
+  <!-- HERO -->
+  <section class="events-hero">
+    <div class="max-w-7xl mx-auto px-6 w-full">
+      <h1 class="text-5xl font-bold text-white mb-4">Eventos</h1>
+      <p class="text-xl text-gray-300">Descubre las mejores entradas para conciertos y espectáculos.</p>
+    </div>
+  </section>
+
+  <!-- FILTROS -->
+  <div class="max-w-7xl mx-auto px-6">
+    <form method="get" action="{% url 'eventos' %}" id="form-filtros" class="search-container-wrapper">
+      <div class="search-container">
+
+        <!-- Buscador en tiempo real -->
+        <div class="search-input-group flex-grow-[2]">
+          <i class="fas fa-search"></i>
+          <input type="text" id="search-realtime" name="q" value="{{ q }}"
+                 class="search-input" placeholder="Buscar evento en tiempo real...">
+        </div>
+
+        <!-- Filtro de fechas con labels -->
+        <div style="display:flex;flex-direction:column;gap:2px;flex-grow:1;">
+          <span style="font-size:0.7rem;color:#9CA3AF;padding-left:4px;">Desde</span>
+          <div class="search-input-group">
+            <i class="far fa-calendar-alt"></i>
+            <input type="date" name="fecha_desde" value="{{ fecha_desde }}" class="search-input">
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:2px;flex-grow:1;">
+          <span style="font-size:0.7rem;color:#9CA3AF;padding-left:4px;">Hasta</span>
+          <div class="search-input-group">
+            <i class="far fa-calendar-alt"></i>
+            <input type="date" name="fecha_hasta" value="{{ fecha_hasta }}" class="search-input">
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:2px;">
+          <span style="font-size:0.7rem;color:transparent;">.</span>
+          <button type="submit" class="btn-buy-modern px-4">Filtrar</button>
+        </div>
+
+        {% if fecha_desde or fecha_hasta %}
+        <div style="display:flex;flex-direction:column;gap:2px;">
+          <span style="font-size:0.7rem;color:transparent;">.</span>
+          <a href="{% url 'eventos' %}{% if q %}?q={{ q }}{% endif %}" class="btn-buy-modern px-4" style="background:#1E293B;text-decoration:none;">Limpiar</a>
+        </div>
+        {% endif %}
+
+      </div>
+    </form>
+  </div>
+
+  <!-- LISTADO -->
+  <section class="max-w-7xl mx-auto px-6 py-12">
+    <h2 class="text-2xl font-bold text-white mb-8">
+      Eventos Disponibles
+      {% if eventos_data %}<span class="text-gray-400 text-lg font-normal">({{ eventos_data|length }})</span>{% endif %}
+    </h2>
+
+    <div class="event-grid" id="event-grid">
+      {% for item in eventos_data %}
+      {% with ev=item.evento %}
+      <div class="event-card-modern">
+        <div class="card-image-wrapper">
+          {% if ev.imagen_url %}
+          <img src="{{ ev.imagen_url }}"
+            onerror="this.src='https://via.placeholder.com/400x250/151920/fff?text={{ ev.nombre|urlencode }}'"
+            alt="{{ ev.nombre }}">
+          {% else %}
+          <img src="https://via.placeholder.com/400x250/151920/fff?text={{ ev.nombre|urlencode }}" alt="{{ ev.nombre }}">
+          {% endif %}
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">{{ ev.nombre }}</h3>
+          {% if ev.descripcion %}
+          <p class="text-gray-400 text-sm mb-2" style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">{{ ev.descripcion|truncatechars:180 }}</p>
+          {% endif %}
+          <div class="card-info">
+            <div class="info-item">
+              <i class="far fa-calendar-alt"></i>
+              <span>{{ ev.fecha_evento|date:"D, d M Y" }}</span>
+            </div>
+            <div class="info-item">
+              <i class="far fa-clock"></i>
+              <span>{{ ev.hora_evento|time:"H:i" }} hrs</span>
+            </div>
+            <div class="info-item">
+              <i class="fas fa-map-marker-alt"></i>
+              <span>{{ ev.lugar }}</span>
+            </div>
+          </div>
+
+          <div class="card-footer-modern">
+            <div class="price-box">
+              <span class="price-label">Desde:</span>
+              <span class="price-value">Bs. {{ item.precio_min }}</span>
+            </div>
+            <a href="{% url 'comprar_entradas' ev.id %}" class="btn-buy-modern">
+              Comprar Entradas!
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endwith %}
+      {% empty %}
+      <div id="no-results" class="text-center py-20 col-span-full">
+        <i class="fas fa-search text-5xl text-gray-600 mb-4"></i>
+        <h3 class="text-xl text-white">
+          {% if q or fecha_desde or fecha_hasta %}
+            No se encontraron eventos con los filtros seleccionados.
+          {% else %}
+            No hay eventos disponibles en este momento.
+          {% endif %}
+        </h3>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+</div>
+
+<script>
+// Búsqueda en tiempo real — filtra las cards sin recargar la página
+document.addEventListener('DOMContentLoaded', function() {
+  var input = document.getElementById('search-realtime');
+  if (!input) return;
+
+  input.addEventListener('input', function() {
+    var q = this.value.toLowerCase().trim();
+    var cards = document.querySelectorAll('#event-grid .event-card-modern');
+    var visible = 0;
+
+    cards.forEach(function(card) {
+      var title = (card.querySelector('.card-title') || {}).textContent || '';
+      var desc  = (card.querySelector('p') || {}).textContent || '';
+      var match = title.toLowerCase().includes(q) || desc.toLowerCase().includes(q);
+      card.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+
+    // Mostrar/ocultar mensaje de sin resultados
+    var noResults = document.getElementById('no-results-realtime');
+    if (!noResults) {
+      noResults = document.createElement('div');
+      noResults.id = 'no-results-realtime';
+      noResults.className = 'text-center py-20 col-span-full';
+      noResults.innerHTML = '<i class="fas fa-search text-5xl text-gray-600 mb-4 block"></i><h3 class="text-xl text-white">No se encontraron eventos para "' + q + '"</h3>';
+      document.getElementById('event-grid').appendChild(noResults);
+    }
+    noResults.style.display = (visible === 0 && q.length > 0) ? '' : 'none';
+    noResults.querySelector('h3').textContent = 'No se encontraron eventos para "' + q + '"';
+  });
+});
+</script>
+{% endblock %}
