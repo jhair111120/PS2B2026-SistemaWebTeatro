@@ -158,18 +158,70 @@
 }
 
 /* ══════════════════════════════
+   QR VISIBLE EN CARD
+══════════════════════════════ */
+.ticket-qr-preview {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: rgba(0, 174, 239, 0.06);
+    border-top: 1px solid rgba(0, 174, 239, 0.2);
+    border-bottom: 1px solid rgba(0, 174, 239, 0.2);
+    padding: 0.85rem 1.25rem;
+}
+
+.ticket-qr-img {
+    width: 80px;
+    height: 80px;
+    border-radius: 0.5rem;
+    background: white;
+    padding: 4px;
+    flex-shrink: 0;
+}
+
+.ticket-qr-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+}
+
+.ticket-qr-label {
+    font-size: 0.7rem;
+    color: #00AEEF;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+}
+
+.ticket-qr-code {
+    font-family: monospace;
+    font-size: 0.75rem;
+    color: #9CA3AF;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ticket-qr-zona {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: white;
+}
+
+/* ══════════════════════════════
    QR MODAL
 ══════════════════════════════ */
 .qr-modal {
     position: fixed;
     inset: 0;
-    z-index: 1000;
+    z-index: 9999;
     display: none;
     align-items: center;
     justify-content: center;
     padding: 1.5rem;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(6px);
 }
 
 .qr-modal.active {

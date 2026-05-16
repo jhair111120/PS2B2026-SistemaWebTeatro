@@ -18,24 +18,45 @@
 
   <!-- FILTROS -->
   <div class="max-w-7xl mx-auto px-6">
-    <form method="get" action="{% url 'eventos' %}" class="search-container-wrapper">
+    <form method="get" action="{% url 'eventos' %}" id="form-filtros" class="search-container-wrapper">
       <div class="search-container">
+
+        <!-- Buscador en tiempo real -->
         <div class="search-input-group flex-grow-[2]">
           <i class="fas fa-search"></i>
-          <input type="text" name="q" value="{{ q }}" class="search-input" placeholder="Buscar por nombre de evento...">
+          <input type="text" id="search-realtime" name="q" value="{{ q }}"
+                 class="search-input" placeholder="Buscar evento en tiempo real...">
         </div>
-        <div class="search-input-group flex-grow">
-          <i class="far fa-calendar-alt"></i>
-          <input type="date" name="fecha_desde" value="{{ fecha_desde }}" class="search-input" placeholder="Desde">
+
+        <!-- Filtro de fechas con labels -->
+        <div style="display:flex;flex-direction:column;gap:2px;flex-grow:1;">
+          <span style="font-size:0.7rem;color:#9CA3AF;padding-left:4px;">Desde</span>
+          <div class="search-input-group">
+            <i class="far fa-calendar-alt"></i>
+            <input type="date" name="fecha_desde" value="{{ fecha_desde }}" class="search-input">
+          </div>
         </div>
-        <div class="search-input-group flex-grow">
-          <i class="far fa-calendar-alt"></i>
-          <input type="date" name="fecha_hasta" value="{{ fecha_hasta }}" class="search-input" placeholder="Hasta">
+
+        <div style="display:flex;flex-direction:column;gap:2px;flex-grow:1;">
+          <span style="font-size:0.7rem;color:#9CA3AF;padding-left:4px;">Hasta</span>
+          <div class="search-input-group">
+            <i class="far fa-calendar-alt"></i>
+            <input type="date" name="fecha_hasta" value="{{ fecha_hasta }}" class="search-input">
+          </div>
         </div>
-        <button type="submit" class="btn-buy-modern px-4">Buscar</button>
-        {% if q or fecha_desde or fecha_hasta %}
-        <a href="{% url 'eventos' %}" class="btn-buy-modern px-4" style="background:#1E293B;">Limpiar</a>
+
+        <div style="display:flex;flex-direction:column;gap:2px;">
+          <span style="font-size:0.7rem;color:transparent;">.</span>
+          <button type="submit" class="btn-buy-modern px-4">Filtrar</button>
+        </div>
+
+        {% if fecha_desde or fecha_hasta %}
+        <div style="display:flex;flex-direction:column;gap:2px;">
+          <span style="font-size:0.7rem;color:transparent;">.</span>
+          <a href="{% url 'eventos' %}{% if q %}?q={{ q }}{% endif %}" class="btn-buy-modern px-4" style="background:#1E293B;text-decoration:none;">Limpiar</a>
+        </div>
         {% endif %}
+
       </div>
     </form>
   </div>
@@ -108,4 +129,38 @@
   </section>
 
 </div>
+
+<script>
+// Búsqueda en tiempo real — filtra las cards sin recargar la página
+document.addEventListener('DOMContentLoaded', function() {
+  var input = document.getElementById('search-realtime');
+  if (!input) return;
+
+  input.addEventListener('input', function() {
+    var q = this.value.toLowerCase().trim();
+    var cards = document.querySelectorAll('#event-grid .event-card-modern');
+    var visible = 0;
+
+    cards.forEach(function(card) {
+      var title = (card.querySelector('.card-title') || {}).textContent || '';
+      var desc  = (card.querySelector('p') || {}).textContent || '';
+      var match = title.toLowerCase().includes(q) || desc.toLowerCase().includes(q);
+      card.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+
+    // Mostrar/ocultar mensaje de sin resultados
+    var noResults = document.getElementById('no-results-realtime');
+    if (!noResults) {
+      noResults = document.createElement('div');
+      noResults.id = 'no-results-realtime';
+      noResults.className = 'text-center py-20 col-span-full';
+      noResults.innerHTML = '<i class="fas fa-search text-5xl text-gray-600 mb-4 block"></i><h3 class="text-xl text-white">No se encontraron eventos para "' + q + '"</h3>';
+      document.getElementById('event-grid').appendChild(noResults);
+    }
+    noResults.style.display = (visible === 0 && q.length > 0) ? '' : 'none';
+    noResults.querySelector('h3').textContent = 'No se encontraron eventos para "' + q + '"';
+  });
+});
+</script>
 {% endblock %}

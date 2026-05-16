@@ -67,7 +67,14 @@
         <div class="selected-item">
           <div>
             <p class="font-bold text-sm">{{ detalle.evento_zona.zona.nombre }}</p>
+            {% if detalle.evento_asiento %}
+            <p class="text-xs mt-0.5" style="color:#7dd3fc;">
+              <i class="fas fa-chair me-1" style="font-size:.65rem;"></i>
+              Fila {{ detalle.evento_asiento.asiento.fila }} — Asiento {{ detalle.evento_asiento.asiento.numero }}
+            </p>
+            {% else %}
             <p class="text-xs text-gray-500">{{ detalle.cantidad }} entrada{{ detalle.cantidad|pluralize }} × Bs. {{ detalle.precio_unitario }}</p>
+            {% endif %}
           </div>
           <span class="font-bold">Bs. {{ detalle.subtotal }}</span>
         </div>
@@ -123,4 +130,14 @@
 
   </div>
 </div>
+
+<script>
+  // Limpiar el deadline del contador al completar la compra
+  (function() {
+    var keys = Object.keys(localStorage);
+    keys.forEach(function(k) {
+      if (k.indexOf('purchaseDeadline_') === 0) localStorage.removeItem(k);
+    });
+  })();
+</script>
 {% endblock %}

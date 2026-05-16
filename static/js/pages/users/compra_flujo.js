@@ -29,11 +29,16 @@ document.addEventListener('DOMContentLoaded', function () {
     var countdownEl = document.getElementById('countdown');
     if (!countdownEl) return;
 
-    var eventoId = (typeof EVENTO_ID !== 'undefined') ? EVENTO_ID : 'x';
+    // Leer el evento_id desde el atributo data del elemento en el DOM
+    // para garantizar que esté disponible sin importar el orden de los scripts
+    var eventoIdEl = document.getElementById('evento-id-data');
+    var eventoId = eventoIdEl ? eventoIdEl.dataset.eventoId : 'x';
     var deadlineKey = 'purchaseDeadline_' + eventoId;
 
-    // Siempre reiniciar al entrar a la página
-    localStorage.setItem(deadlineKey, String(Date.now() + 15 * 60 * 1000));
+    // Solo crear el deadline si NO existe ya (no reiniciar al recargar)
+    if (!localStorage.getItem(deadlineKey)) {
+      localStorage.setItem(deadlineKey, String(Date.now() + 15 * 60 * 1000));
+    }
 
     function tick() {
       var deadline = Number(localStorage.getItem(deadlineKey) || 0);
@@ -41,6 +46,24 @@ document.addEventListener('DOMContentLoaded', function () {
       var mins = Math.floor(diff / 60000);
       var secs = Math.floor((diff % 60000) / 1000);
       countdownEl.textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
+
+      if (diff === 0) {
+        localStorage.removeItem(deadlineKey);
+        var banner = document.getElementById('timer-container');
+        if (banner) {
+          banner.style.background = 'rgba(239,68,68,0.15)';
+          banner.style.borderColor = 'rgba(239,68,68,0.4)';
+          var timerText = banner.querySelector('.timer-text');
+          if (timerText) timerText.style.color = '#ef4444';
+          countdownEl.style.color = '#ef4444';
+          countdownEl.textContent = 'Expirado';
+        }
+        setTimeout(function() {
+          window.location.href = eventoId !== 'x'
+            ? '/comprar-entrada/' + eventoId + '/'
+            : '/eventos/';
+        }, 2000);
+      }
     }
 
     tick();
@@ -56,23 +79,43 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    console.log('compra_flujo: ' + zones.length + ' zonas encontradas');
+    zones.forEach(function(zone) {
+      zone.style.cursor = 'pointer';
+      zone.addEventListener('click', function () {
+        var zonaId   = zone.dataset.zonaId  || null;
+        var zoneName = zone.dataset.zone     || '';
+        var precio   = Number(zone.dataset.price  || 0);
+        var limite   = Number(zone.dataset.limite || 4);
+        var asientosUrl = zone.dataset.asientosUrl || null;
 
-    for (var i = 0; i < zones.length; i++) {
-      (function (zone) {
-        zone.style.cursor = 'pointer';
-        zone.addEventListener('click', function () {
-          selectedZoneId   = zone.dataset.zonaId  || null;
-          selectedZoneName = zone.dataset.zone     || '';
-          selectedPrice    = Number(zone.dataset.price  || 0);
-          selectedLimite   = Number(zone.dataset.limite || 4);
-          modalQty = 1;
-          actualizarModal();
-          var modal = document.getElementById('quantity-modal');
-          if (modal) modal.classList.remove('hidden');
-        });
-      })(zones[i]);
-    }
+        // Si tiene URL de asientos, redirigir directamente al mapa de asientos
+        if (asientosUrl) {
+          // Animación de transición antes de redirigir
+          var overlay = document.createElement('div');
+          overlay.style.cssText = 'position:fixed;inset:0;background:#0A0E14;z-index:9999;opacity:0;transition:opacity .4s;pointer-events:none;display:flex;align-items:center;justify-content:center;';
+          overlay.innerHTML = '<div style="text-align:center;"><div style="width:48px;height:48px;border:3px solid rgba(255,255,255,.1);border-top-color:' + (zone.style.fill || '#00AEEF') + ';border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem;"></div><p style="color:white;font-weight:700;">Cargando mapa de asientos...</p></div>';
+          var style = document.createElement('style');
+          style.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+          document.head.appendChild(style);
+          document.body.appendChild(overlay);
+          requestAnimationFrame(function() {
+            overlay.style.opacity = '1';
+            setTimeout(function() { window.location.href = asientosUrl; }, 400);
+          });
+          return;
+        }
+
+        // Fallback: modal de cantidad (para zonas sin asientos numerados)
+        selectedZoneId   = zonaId;
+        selectedZoneName = zoneName;
+        selectedPrice    = precio;
+        selectedLimite   = limite;
+        modalQty = 1;
+        actualizarModal();
+        var modal = document.getElementById('quantity-modal');
+        if (modal) modal.classList.remove('hidden');
+      });
+    });
 
     renderResumen();
     initModal();

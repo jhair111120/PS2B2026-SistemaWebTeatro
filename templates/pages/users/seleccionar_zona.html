@@ -7,6 +7,8 @@
 <link rel="stylesheet" href="{% static 'css/pages/users/comprar_entradas.css' %}" />
 
 <div class="min-h-screen py-8 px-4" data-purchase-step="zones">
+  {# Elemento data para que el JS lea el evento_id del DOM sin depender de variables JS inline #}
+  <span id="evento-id-data" data-evento-id="{{ evento.id }}" style="display:none;"></span>
   <div class="max-w-6xl mx-auto">
 
     <div class="mb-6">
@@ -62,7 +64,8 @@
                     data-zona-id="{{ z.id }}"
                     data-zone="{{ z.nombre_display }}"
                     data-price="{{ z.precio }}"
-                    data-limite="{{ z.limite }}" />
+                    data-limite="{{ z.limite }}"
+                    data-asientos-url="{% url 'seleccionar_asientos' evento.id z.id %}" />
               <text x="210" y="297" text-anchor="middle" dominant-baseline="middle" fill="white" font-size="11" font-weight="bold" pointer-events="none">{{ z.nombre_display }}</text>
               {% endwith %}
               {% endif %}
@@ -76,7 +79,8 @@
                     data-zona-id="{{ z.id }}"
                     data-zone="{{ z.nombre_display }}"
                     data-price="{{ z.precio }}"
-                    data-limite="{{ z.limite }}" />
+                    data-limite="{{ z.limite }}"
+                    data-asientos-url="{% url 'seleccionar_asientos' evento.id z.id %}" />
               <text x="210" y="228" text-anchor="middle" dominant-baseline="middle" fill="white" font-size="15" font-weight="bold" pointer-events="none">{{ z.nombre_display }}</text>
               {% endwith %}
               {% endif %}
@@ -90,7 +94,8 @@
                     data-zona-id="{{ z.id }}"
                     data-zone="{{ z.nombre_display }}"
                     data-price="{{ z.precio }}"
-                    data-limite="{{ z.limite }}" />
+                    data-limite="{{ z.limite }}"
+                    data-asientos-url="{% url 'seleccionar_asientos' evento.id z.id %}" />
               <text x="210" y="174" text-anchor="middle" dominant-baseline="middle" fill="white" font-size="16" font-weight="bold" pointer-events="none">{{ z.nombre_display }}</text>
               {% endwith %}
               {% endif %}
@@ -104,7 +109,8 @@
                     data-zona-id="{{ z.id }}"
                     data-zone="{{ z.nombre_display }}"
                     data-price="{{ z.precio }}"
-                    data-limite="{{ z.limite }}" />
+                    data-limite="{{ z.limite }}"
+                    data-asientos-url="{% url 'seleccionar_asientos' evento.id z.id %}" />
               <text x="210" y="110" text-anchor="middle" dominant-baseline="middle" fill="white" font-size="18" font-weight="bold" pointer-events="none">{{ z.nombre_display }}</text>
               {% endwith %}
               {% endif %}

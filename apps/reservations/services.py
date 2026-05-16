@@ -1,6 +1,6 @@
 """
-Servicio de compra: crea Reserva → DetalleReserva → Pago → Venta → Entrada
-en una sola transacción atómica. El pago es simulado (sin pasarela real).
+Servicio de compra: Reserva -> DetalleReserva -> Pago -> Venta -> Entrada
+Soporta asientos numerados (EventoAsiento) y zonas sin numeracion.
 """
 import hashlib
 import uuid
@@ -10,88 +10,88 @@ from decimal import Decimal
 from django.db import transaction
 from django.utils import timezone
 
-from apps.events.models import EventoZona
+from apps.events.models import EventoZona, EventoAsiento
 from apps.payments.models import EstadoPago, MetodoPago, Pago
 from apps.reservations.models import DetalleReserva, EstadoReserva, Reserva
 from apps.tickets.models import CanalVenta, Entrada, EstadoEntrada, EstadoVenta, Venta
 from apps.users.models import Usuario
 
 
-# ─────────────────────────────────────────────
-# HELPERS
-# ─────────────────────────────────────────────
-
 def _get_or_fail(model, **kwargs):
-    """Obtiene un objeto o lanza ValueError con mensaje claro."""
     obj = model.objects.filter(**kwargs).first()
     if not obj:
-        raise ValueError(f'Registro requerido no encontrado: {model.__name__} {kwargs}')
+        raise ValueError(f'Catalogo requerido no encontrado: {model.__name__} {kwargs}')
     return obj
 
 
 def _codigo_reserva():
-    """Genera un código único de reserva tipo RES-XXXXXXXX."""
     return f"RES-{uuid.uuid4().hex[:8].upper()}"
 
 
 def _codigo_qr(codigo_ticket: str) -> str:
-    """Genera un hash HMAC-like para el QR de la entrada."""
     return hashlib.sha256(f"TEATRO-{codigo_ticket}".encode()).hexdigest()[:64]
 
-
-# ─────────────────────────────────────────────
-# SERVICIO PRINCIPAL
-# ─────────────────────────────────────────────
 
 @transaction.atomic
 def procesar_compra(usuario_id: int, evento_id: int, items: list, metodo_pago_nombre: str) -> Venta:
     """
-    Procesa la compra completa en una transacción atómica.
-
-    Parámetros:
-        usuario_id: ID del usuario comprador
-        evento_id: ID del evento
-        items: lista de dicts [{'evento_zona_id': int, 'cantidad': int}]
-        metodo_pago_nombre: nombre del método de pago (ej: 'Tarjeta de Crédito')
-
-    Retorna:
-        Venta creada con todas sus relaciones
+    items puede contener:
+      - {'evento_zona_id': int, 'evento_asiento_ids': [int, ...]}  <- asientos numerados
+      - {'evento_zona_id': int, 'cantidad': int}                   <- zona sin numeracion
     """
     if not items:
-        raise ValueError('No hay ítems en el carrito.')
+        raise ValueError('No hay items en el carrito.')
 
-    usuario = _get_or_fail(Usuario, id=usuario_id)
-    canal_web = _get_or_fail(CanalVenta, nombre__iexact='web')
-    estado_activa = _get_or_fail(EstadoReserva, nombre__iexact='activa')
-    estado_confirmada = _get_or_fail(EstadoReserva, nombre__iexact='confirmada')
-    estado_emitida_venta = _get_or_fail(EstadoVenta, nombre__iexact='emitida')
-    estado_emitida_entrada = _get_or_fail(EstadoEntrada, nombre__iexact='emitida')
-    estado_pago_pagado = _get_or_fail(EstadoPago, nombre__iexact='pagado')
-
-    # Obtener o crear método de pago
+    usuario       = _get_or_fail(Usuario,       id=usuario_id)
+    canal_web     = _get_or_fail(CanalVenta,     nombre__iexact='web')
+    est_activa    = _get_or_fail(EstadoReserva,  nombre__iexact='activa')
+    est_confirm   = _get_or_fail(EstadoReserva,  nombre__iexact='confirmada')
+    est_venta     = _get_or_fail(EstadoVenta,    nombre__iexact='emitida')
+    est_entrada   = _get_or_fail(EstadoEntrada,  nombre__iexact='emitida')
+    est_pagado    = _get_or_fail(EstadoPago,     nombre__iexact='pagado')
     metodo_pago, _ = MetodoPago.objects.get_or_create(nombre=metodo_pago_nombre)
 
-    # Calcular total
+    from apps.events.models import Evento
+    evento = _get_or_fail(Evento, id=evento_id)
+
     total = Decimal('0')
     detalles_prep = []
 
     for item in items:
         ez_id = item.get('evento_zona_id')
-        cantidad = int(item.get('cantidad', 1))
-        if cantidad < 1:
-            continue
+        asiento_ids = item.get('evento_asiento_ids', [])
+        cantidad = int(item.get('cantidad', len(asiento_ids) or 1))
 
-        ez = EventoZona.objects.select_related('evento', 'zona').filter(
+        ez = EventoZona.objects.select_related('zona').filter(
             id=ez_id, evento_id=evento_id, habilitada=True
         ).first()
-
         if not ez:
-            raise ValueError(f'Zona no válida o no habilitada: {ez_id}')
+            raise ValueError(f'Zona no valida: {ez_id}')
 
-        if cantidad > ez.limite_por_usuario:
-            raise ValueError(
-                f'Límite de {ez.limite_por_usuario} entradas por usuario para la zona {ez.zona.nombre}.'
+        if asiento_ids:
+            # Asientos numerados — bloquear con SELECT FOR UPDATE
+            ea_qs = EventoAsiento.objects.select_for_update().filter(
+                id__in=asiento_ids,
+                evento_zona=ez,
+                estado=EventoAsiento.Estado.DISPONIBLE,
             )
+            ea_list = list(ea_qs)
+            if len(ea_list) != len(asiento_ids):
+                raise ValueError(
+                    f'Algunos asientos de {ez.zona.nombre} ya no estan disponibles. '
+                    'Por favor vuelve a seleccionar.'
+                )
+            if len(ea_list) > ez.limite_por_usuario:
+                raise ValueError(
+                    f'Limite de {ez.limite_por_usuario} asientos por usuario en {ez.zona.nombre}.'
+                )
+            cantidad = len(ea_list)
+        else:
+            ea_list = []
+            if cantidad > ez.limite_por_usuario:
+                raise ValueError(
+                    f'Limite de {ez.limite_por_usuario} entradas en {ez.zona.nombre}.'
+                )
 
         precio_unit = ez.precio_base
         subtotal = precio_unit * cantidad
@@ -99,81 +99,99 @@ def procesar_compra(usuario_id: int, evento_id: int, items: list, metodo_pago_no
 
         detalles_prep.append({
             'evento_zona': ez,
+            'ea_list': ea_list,
             'cantidad': cantidad,
             'precio_unitario': precio_unit,
             'subtotal': subtotal,
         })
 
     if total <= 0:
-        raise ValueError('El total de la compra no puede ser cero.')
+        raise ValueError('El total no puede ser cero.')
 
-    # Cargo por servicio (Bs. 5 fijo si hay items)
     cargo_servicio = Decimal('5.00')
-    total_con_cargo = total + cargo_servicio
-
-    # Crear Reserva
-    from apps.events.models import Evento
-    evento = _get_or_fail(Evento, id=evento_id)
+    total_final = total + cargo_servicio
 
     reserva = Reserva.objects.create(
         usuario=usuario,
         evento=evento,
-        estado_reserva=estado_activa,
+        estado_reserva=est_activa,
         canal_venta=canal_web,
         creada_por_usuario=usuario,
         codigo_reserva=_codigo_reserva(),
-        total_reserva=total_con_cargo,
+        total_reserva=total_final,
         fecha_expiracion=timezone.now() + timedelta(minutes=15),
     )
 
-    # Crear DetalleReserva
     detalles_creados = []
     for d in detalles_prep:
-        detalle = DetalleReserva.objects.create(
-            reserva=reserva,
-            evento_zona=d['evento_zona'],
-            evento_asiento=None,  # Zonas sin asiento numerado
-            cantidad=d['cantidad'],
-            precio_unitario=d['precio_unitario'],
-            subtotal=d['subtotal'],
-        )
-        detalles_creados.append(detalle)
+        if d['ea_list']:
+            # Un DetalleReserva por asiento numerado
+            for ea in d['ea_list']:
+                # Marcar asiento como RESERVADO
+                ea.estado = EventoAsiento.Estado.RESERVADO
+                ea.save(update_fields=['estado'])
 
-    # Confirmar reserva (pago simulado = inmediato)
-    reserva.estado_reserva = estado_confirmada
+                detalle = DetalleReserva.objects.create(
+                    reserva=reserva,
+                    evento_zona=d['evento_zona'],
+                    evento_asiento=ea,
+                    cantidad=1,
+                    precio_unitario=d['precio_unitario'],
+                    subtotal=d['precio_unitario'],
+                )
+                detalles_creados.append((detalle, ea))
+        else:
+            detalle = DetalleReserva.objects.create(
+                reserva=reserva,
+                evento_zona=d['evento_zona'],
+                evento_asiento=None,
+                cantidad=d['cantidad'],
+                precio_unitario=d['precio_unitario'],
+                subtotal=d['subtotal'],
+            )
+            detalles_creados.append((detalle, None))
+
+    # Confirmar reserva
+    reserva.estado_reserva = est_confirm
     reserva.save(update_fields=['estado_reserva', 'actualizado_en'])
 
-    # Crear Pago (simulado)
-    pago = Pago.objects.create(
+    # Pago simulado
+    Pago.objects.create(
         reserva=reserva,
         metodo_pago=metodo_pago,
-        estado_pago=estado_pago_pagado,
-        monto=total_con_cargo,
+        estado_pago=est_pagado,
+        monto=total_final,
         fecha_confirmacion=timezone.now(),
-        observacion='Pago simulado — sin pasarela real',
+        observacion='Pago simulado',
     )
 
-    # Crear Venta
     venta = Venta.objects.create(
         reserva=reserva,
         usuario=usuario,
         canal_venta=canal_web,
-        estado_venta=estado_emitida_venta,
-        total=total_con_cargo,
+        estado_venta=est_venta,
+        total=total_final,
     )
 
-    # Crear Entradas (una por unidad de cada detalle)
-    for detalle in detalles_creados:
-        for _ in range(detalle.cantidad):
-            codigo_ticket = str(uuid.uuid4())
-            Entrada.objects.create(
-                venta=venta,
-                detalle_reserva=detalle,
-                estado_entrada=estado_emitida_entrada,
-                codigo_ticket=codigo_ticket,
-                codigo_qr=_codigo_qr(codigo_ticket),
-                descripcion_ubicacion=detalle.evento_zona.zona.nombre,
-                precio_pagado=detalle.precio_unitario,
-            )
+    # Crear entradas y marcar asientos como VENDIDO
+    for detalle, ea in detalles_creados:
+        codigo_ticket = str(uuid.uuid4())
+        zona_nombre = detalle.evento_zona.zona.nombre
+        if ea:
+            ubicacion = f"{zona_nombre} - Fila {ea.asiento.fila}, Asiento {ea.asiento.numero}"
+            ea.estado = EventoAsiento.Estado.VENDIDO
+            ea.save(update_fields=['estado'])
+        else:
+            ubicacion = zona_nombre
+
+        Entrada.objects.create(
+            venta=venta,
+            detalle_reserva=detalle,
+            estado_entrada=est_entrada,
+            codigo_ticket=codigo_ticket,
+            codigo_qr=_codigo_qr(codigo_ticket),
+            descripcion_ubicacion=ubicacion,
+            precio_pagado=detalle.precio_unitario,
+        )
 
     return venta

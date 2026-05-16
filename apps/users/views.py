@@ -102,7 +102,14 @@ def signup_view(request):
 # =========================
 @never_cache
 def login_view(request):
-    if request.session.get('usuario_id'):
+    # Si ya hay sesión activa, redirigir según el rol actual
+    # (no bloquear — permite que un admin logueado como cliente vuelva a loguearse)
+    if request.session.get('usuario_id') and request.method == 'GET':
+        rol = (request.session.get('usuario_rol') or '').strip().lower()
+        if rol == 'administrador':
+            return redirect('admin_panel')
+        elif rol == 'soporte':
+            return redirect('support_dashboard')
         return redirect('/')
 
     if request.method == 'POST':

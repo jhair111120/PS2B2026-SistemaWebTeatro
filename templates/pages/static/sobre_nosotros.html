@@ -1,0 +1,273 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+{% block title %}Sobre Nosotros | Teatro Al Aire Libre{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/pages/users/inicio.css' %}" />
+
+<style>
+  .sn-hero {
+    position: relative;
+    min-height: 420px;
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+  }
+  .sn-hero-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+  .sn-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(10,14,20,0.45) 0%, rgba(10,14,20,0.92) 100%);
+  }
+  .sn-hero-content {
+    position: relative;
+    z-index: 1;
+    padding: 3rem 2rem 3.5rem;
+    max-width: 700px;
+  }
+  .sn-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(0,174,239,0.15);
+    border: 1px solid rgba(0,174,239,0.35);
+    color: #00AEEF;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    margin-bottom: 1.25rem;
+  }
+  .sn-section { padding: 5rem 1.5rem; background: #0A0E14; }
+  .sn-card {
+    background: #151920;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 1.25rem;
+    padding: 2rem;
+    transition: border-color 0.3s, transform 0.3s;
+  }
+  .sn-card:hover {
+    border-color: rgba(0,174,239,0.35);
+    transform: translateY(-4px);
+  }
+  .sn-icon-box {
+    width: 52px;
+    height: 52px;
+    border-radius: 0.875rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    margin-bottom: 1.25rem;
+    flex-shrink: 0;
+  }
+  .sn-stat-card {
+    background: #151920;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 1.25rem;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    transition: border-color 0.3s;
+  }
+  .sn-stat-card:hover { border-color: rgba(0,174,239,0.4); }
+  .sn-stat-num {
+    font-size: 2.75rem;
+    font-weight: 800;
+    color: #00AEEF;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+  .sn-stat-label { color: #9CA3AF; font-size: 0.85rem; font-weight: 500; }
+  .sn-divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
+    margin: 0;
+  }
+</style>
+
+<!-- HERO con imagen del teatro -->
+<div class="sn-hero">
+  <img src="{% static 'img/hero-bg.jpg' %}"
+       onerror="this.src='https://via.placeholder.com/1400x420/0A0E14/00AEEF?text=Teatro+Al+Aire+Libre'"
+       alt="Teatro al Aire Libre" class="sn-hero-img">
+  <div class="sn-hero-overlay"></div>
+  <div class="sn-hero-content">
+    <div class="sn-badge"><i class="fas fa-theater-masks"></i> Teatro al Aire Libre</div>
+    <h1 style="font-size:clamp(2.2rem,5vw,3.5rem);font-weight:800;color:white;line-height:1.15;margin-bottom:1rem;">
+      Sobre Nosotros
+    </h1>
+    <p style="color:#D1D5DB;font-size:1.1rem;line-height:1.7;max-width:560px;">
+      El espacio cultural más emblemático de La Paz, Bolivia. Décadas de historia,
+      arte y espectáculos bajo las estrellas.
+    </p>
+  </div>
+</div>
+
+<!-- HISTORIA -->
+<section class="sn-section">
+  <div style="max-width:1100px;margin:0 auto;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center;"
+         class="responsive-grid-1">
+      <div>
+        <div class="sn-badge" style="margin-bottom:1.5rem;"><i class="fas fa-book-open"></i> Nuestra Historia</div>
+        <h2 style="font-size:2rem;font-weight:800;color:white;margin-bottom:1.25rem;line-height:1.2;">
+          Un legado cultural que trasciende generaciones
+        </h2>
+        <p style="color:#9CA3AF;line-height:1.85;margin-bottom:1rem;font-size:0.97rem;">
+          El Teatro al Aire Libre "Jaime Laredo" es uno de los espacios culturales más emblemáticos
+          de La Paz, Bolivia. Fundado con el propósito de democratizar el acceso a la cultura,
+          este recinto ha sido escenario de los espectáculos más importantes del país durante décadas.
+        </p>
+        <p style="color:#9CA3AF;line-height:1.85;font-size:0.97rem;">
+          Nombrado en honor al reconocido violinista boliviano Jaime Laredo, el teatro representa
+          el orgullo cultural de La Paz y un punto de encuentro para artistas nacionales e
+          internacionales que llenan de vida y emoción cada rincón del recinto.
+        </p>
+      </div>
+      <div style="border-radius:1.25rem;overflow:hidden;border:1px solid rgba(255,255,255,0.1);aspect-ratio:4/3;">
+        <img src="{% static 'img/hero-bg.jpg' %}"
+             onerror="this.src='https://via.placeholder.com/600x450/151920/00AEEF?text=Teatro'"
+             alt="Teatro al Aire Libre"
+             style="width:100%;height:100%;object-fit:cover;display:block;">
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sn-divider"></div>
+
+<!-- ESTADÍSTICAS -->
+<section class="sn-section" style="padding-top:4rem;padding-bottom:4rem;">
+  <div style="max-width:1100px;margin:0 auto;">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem;" class="responsive-grid-2">
+      {% for stat in stats %}
+      <div class="sn-stat-card">
+        <div class="sn-stat-num">{{ stat.valor }}</div>
+        <div class="sn-stat-label">{{ stat.label }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<div class="sn-divider"></div>
+
+<!-- MISIÓN Y VISIÓN -->
+<section class="sn-section">
+  <div style="max-width:1100px;margin:0 auto;">
+    <div style="text-align:center;margin-bottom:3rem;">
+      <h2 style="font-size:2rem;font-weight:800;color:white;margin-bottom:0.75rem;">Misión y Visión</h2>
+      <p style="color:#9CA3AF;max-width:520px;margin:0 auto;font-size:0.97rem;">
+        Los principios que guían cada decisión y espectáculo en nuestro teatro.
+      </p>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;" class="responsive-grid-1">
+      <div class="sn-card">
+        <div class="sn-icon-box" style="background:rgba(0,174,239,0.12);">
+          <i class="fas fa-bullseye" style="color:#00AEEF;"></i>
+        </div>
+        <h3 style="font-size:1.2rem;font-weight:700;color:white;margin-bottom:0.75rem;">Nuestra Misión</h3>
+        <p style="color:#9CA3AF;line-height:1.8;font-size:0.93rem;">
+          Promover y difundir la cultura boliviana e internacional, ofreciendo un espacio de calidad
+          para espectáculos artísticos que enriquezcan la vida cultural de La Paz y sus visitantes.
+        </p>
+      </div>
+      <div class="sn-card">
+        <div class="sn-icon-box" style="background:rgba(0,255,209,0.1);">
+          <i class="fas fa-eye" style="color:#00FFD1;"></i>
+        </div>
+        <h3 style="font-size:1.2rem;font-weight:700;color:white;margin-bottom:0.75rem;">Nuestra Visión</h3>
+        <p style="color:#9CA3AF;line-height:1.8;font-size:0.93rem;">
+          Ser el principal referente cultural de Bolivia, reconocido por la excelencia de sus
+          producciones, la accesibilidad de sus espacios y su compromiso con el desarrollo artístico nacional.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sn-divider"></div>
+
+<!-- VALORES -->
+<section class="sn-section">
+  <div style="max-width:1100px;margin:0 auto;">
+    <div style="text-align:center;margin-bottom:3rem;">
+      <h2 style="font-size:2rem;font-weight:800;color:white;margin-bottom:0.75rem;">Nuestros Valores</h2>
+      <p style="color:#9CA3AF;max-width:480px;margin:0 auto;font-size:0.97rem;">
+        Los pilares que sostienen nuestra identidad y compromiso con la cultura.
+      </p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;" class="responsive-grid-3">
+      <div class="sn-card" style="text-align:center;">
+        <div class="sn-icon-box" style="background:rgba(250,204,21,0.1);margin:0 auto 1.25rem;">
+          <i class="fas fa-star" style="color:#FACC15;"></i>
+        </div>
+        <h4 style="font-weight:700;color:white;margin-bottom:0.5rem;">Excelencia</h4>
+        <p style="color:#9CA3AF;font-size:0.88rem;line-height:1.7;">
+          Comprometidos con la más alta calidad en cada espectáculo y servicio que ofrecemos.
+        </p>
+      </div>
+      <div class="sn-card" style="text-align:center;">
+        <div class="sn-icon-box" style="background:rgba(0,174,239,0.12);margin:0 auto 1.25rem;">
+          <i class="fas fa-users" style="color:#00AEEF;"></i>
+        </div>
+        <h4 style="font-weight:700;color:white;margin-bottom:0.5rem;">Inclusión</h4>
+        <p style="color:#9CA3AF;font-size:0.88rem;line-height:1.7;">
+          La cultura es para todos, sin distinción de edad, origen o condición social.
+        </p>
+      </div>
+      <div class="sn-card" style="text-align:center;">
+        <div class="sn-icon-box" style="background:rgba(52,211,153,0.1);margin:0 auto 1.25rem;">
+          <i class="fas fa-leaf" style="color:#34D399;"></i>
+        </div>
+        <h4 style="font-weight:700;color:white;margin-bottom:0.5rem;">Sostenibilidad</h4>
+        <p style="color:#9CA3AF;font-size:0.88rem;line-height:1.7;">
+          Cuidamos nuestro entorno natural y cultural para las generaciones que vienen.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section style="background:#151920;padding:4rem 1.5rem;">
+  <div style="max-width:700px;margin:0 auto;text-align:center;">
+    <h3 style="font-size:1.75rem;font-weight:800;color:white;margin-bottom:0.75rem;">
+      ¿Listo para vivir la experiencia?
+    </h3>
+    <p style="color:#9CA3AF;margin-bottom:2rem;font-size:0.97rem;">
+      Descubre los próximos eventos y reserva tus entradas hoy mismo.
+    </p>
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+      <a href="{% url 'eventos' %}"
+         style="background:#00AEEF;color:white;text-decoration:none;padding:0.85rem 2.5rem;border-radius:999px;font-weight:700;font-size:0.97rem;transition:background 0.2s;"
+         onmouseover="this.style.background='#0099d1'" onmouseout="this.style.background='#00AEEF'">
+        Ver Eventos
+      </a>
+      <a href="{% url 'contacto' %}"
+         style="background:transparent;color:white;text-decoration:none;padding:0.85rem 2.5rem;border-radius:999px;font-weight:700;font-size:0.97rem;border:1px solid rgba(255,255,255,0.2);transition:border-color 0.2s;"
+         onmouseover="this.style.borderColor='rgba(255,255,255,0.5)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.2)'">
+        Contáctanos
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+@media (max-width: 768px) {
+  .responsive-grid-1 { grid-template-columns: 1fr !important; gap: 2rem !important; }
+  .responsive-grid-2 { grid-template-columns: 1fr 1fr !important; }
+  .responsive-grid-3 { grid-template-columns: 1fr !important; }
+}
+</style>
+
+{% endblock %}

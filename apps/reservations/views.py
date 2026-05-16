@@ -1,32 +1,32 @@
 """
 Vistas del flujo de compra para el cliente:
-  seleccionar_zona → finalizar_compra → compra_exitosa
+  seleccionar_zona → seleccionar_asientos → finalizar_compra → compra_exitosa
 """
 import json
 from decimal import Decimal
 
 from django.contrib import messages
-from django.db.models import Min, Sum
+from django.db.models import Min, Sum, Count, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 
-from apps.events.models import Evento, EventoZona
+from apps.events.models import Evento, EventoZona, EventoAsiento, Asiento
 from apps.tickets.models import Entrada, Venta
 
 from .services import procesar_compra
 
 
 # ─────────────────────────────────────────────
-# GUARD: requiere sesión de cliente
+# GUARD
 # ─────────────────────────────────────────────
 
 def _require_login(request, next_url=None):
     if not request.session.get('usuario_id'):
         messages.error(request, 'Debes iniciar sesión para comprar entradas.')
-        dest = f'/?action=login'
+        dest = '/?action=login'
         if next_url:
             dest += f'&next={next_url}'
         return redirect(dest)
@@ -55,11 +55,14 @@ def seleccionar_zona_view(request, evento_id):
         evento.eventozona_set
         .select_related('zona')
         .filter(habilitada=True)
-        .order_by('-precio_base')  # más cara primero → va al centro del mapa
+        .order_by('-precio_base')
     )
 
     zonas_data = []
     for ez in zonas:
+        disponibles = EventoAsiento.objects.filter(
+            evento_zona=ez, estado=EventoAsiento.Estado.DISPONIBLE
+        ).count()
         zonas_data.append({
             'id': ez.id,
             'nombre': ez.zona.nombre.upper(),
@@ -67,6 +70,8 @@ def seleccionar_zona_view(request, evento_id):
             'precio': float(ez.precio_base),
             'limite': ez.limite_por_usuario,
             'color': ez.zona.codigo_color or '#1E293B',
+            'capacidad': ez.capacidad_evento or 0,
+            'disponibles': disponibles,
         })
 
     return render(request, 'pages/users/seleccionar_zona.html', {
@@ -77,7 +82,102 @@ def seleccionar_zona_view(request, evento_id):
 
 
 # ─────────────────────────────────────────────
-# PASO 3: FINALIZAR COMPRA
+# PASO 2b: SELECCIONAR ASIENTOS (nueva vista)
+# ─────────────────────────────────────────────
+
+@never_cache
+def seleccionar_asientos_view(request, evento_id, evento_zona_id):
+    guard = _require_login(request, next_url=f'/comprar-entrada/{evento_id}/')
+    if guard:
+        return guard
+
+    hoy = timezone.localdate()
+    evento = get_object_or_404(
+        Evento.objects.select_related('estado_evento'),
+        pk=evento_id,
+        estado_evento__nombre__icontains='activ',
+        fecha_evento__gte=hoy,
+    )
+    ez = get_object_or_404(
+        EventoZona.objects.select_related('zona'),
+        pk=evento_zona_id,
+        evento=evento,
+        habilitada=True,
+    )
+
+    # Obtener todos los asientos con su estado
+    evento_asientos = (
+        EventoAsiento.objects
+        .select_related('asiento')
+        .filter(evento_zona=ez)
+        .order_by('asiento__fila', 'asiento__numero')
+    )
+
+    # Agrupar por fila
+    filas = {}
+    for ea in evento_asientos:
+        fila = ea.asiento.fila
+        if fila not in filas:
+            filas[fila] = []
+        filas[fila].append({
+            'id': ea.id,
+            'fila': fila,
+            'numero': ea.asiento.numero,
+            'estado': ea.estado,
+            'disponible': ea.estado == EventoAsiento.Estado.DISPONIBLE,
+        })
+
+    filas_ordenadas = sorted(filas.items())
+    asientos_json = json.dumps([
+        {
+            'id': ea.id,
+            'fila': ea.asiento.fila,
+            'numero': ea.asiento.numero,
+            'estado': ea.estado,
+        }
+        for ea in evento_asientos
+    ])
+
+    return render(request, 'pages/users/seleccionar_asientos.html', {
+        'evento': evento,
+        'ez': ez,
+        'filas': filas_ordenadas,
+        'asientos_json': asientos_json,
+        'limite': ez.limite_por_usuario,
+        'precio': ez.precio_base,
+        'color': ez.zona.codigo_color or '#1E293B',
+    })
+
+
+# ─────────────────────────────────────────────
+# API: ASIENTOS DISPONIBLES (JSON)
+# ─────────────────────────────────────────────
+
+@require_GET
+def api_asientos_view(request, evento_id, evento_zona_id):
+    if not request.session.get('usuario_id'):
+        return JsonResponse({'error': 'No autenticado'}, status=401)
+
+    ez = get_object_or_404(EventoZona, pk=evento_zona_id, evento_id=evento_id)
+    asientos = (
+        EventoAsiento.objects
+        .select_related('asiento')
+        .filter(evento_zona=ez)
+        .order_by('asiento__fila', 'asiento__numero')
+    )
+
+    data = [
+        {
+            'id': ea.id,
+            'fila': ea.asiento.fila,
+            'numero': ea.asiento.numero,
+            'estado': ea.estado,
+            'disponible': ea.estado == EventoAsiento.Estado.DISPONIBLE,
+        }
+        for ea in asientos
+    ]
+    return JsonResponse({'asientos': data, 'limite': ez.limite_por_usuario})
+
 # ─────────────────────────────────────────────
 
 @never_cache
@@ -118,15 +218,28 @@ def finalizar_compra_view(request, evento_id):
                 id=item.get('zona_id'), evento_id=evento_id
             ).first()
             if ez:
-                qty = int(item.get('qty', 1))
+                asiento_ids = item.get('asiento_ids', [])
+                qty = len(asiento_ids) if asiento_ids else int(item.get('qty', 1))
                 item_subtotal = ez.precio_base * qty
                 subtotal += item_subtotal
+
+                # Obtener info de asientos si los hay
+                asientos_info = []
+                if asiento_ids:
+                    from apps.events.models import EventoAsiento
+                    eas = EventoAsiento.objects.select_related('asiento').filter(
+                        id__in=asiento_ids, evento_zona=ez
+                    )
+                    asientos_info = [f"Fila {ea.asiento.fila}-{ea.asiento.numero}" for ea in eas]
+
                 carrito_enriquecido.append({
                     'zona_id': ez.id,
                     'zona_nombre': ez.zona.nombre,
                     'precio': ez.precio_base,
                     'qty': qty,
                     'subtotal': item_subtotal,
+                    'asientos_info': asientos_info,
+                    'asiento_ids': asiento_ids,
                 })
 
         cargo_servicio = Decimal('5.00') if carrito_enriquecido else Decimal('0')
@@ -167,7 +280,11 @@ def confirmar_compra_view(request, evento_id):
     metodo_pago = request.POST.get('metodo_pago', 'Tarjeta de Crédito')
 
     items = [
-        {'evento_zona_id': item.get('zona_id'), 'cantidad': item.get('qty', 1)}
+        {
+            'evento_zona_id': item.get('zona_id'),
+            'evento_asiento_ids': item.get('asiento_ids', []),
+            'cantidad': item.get('qty', 1),
+        }
         for item in carrito_raw
     ]
 

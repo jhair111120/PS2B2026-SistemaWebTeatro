@@ -69,122 +69,106 @@ def mis_tickets_view(request):
         'pasadas': pasadas,
     })
 
-# --- NUEVAS VISTAS PARA BOLETERÍA ---
+# --- VISTAS DE BOLETERÍA (venta presencial) ---
+
+from django.views.decorators.http import require_POST as _require_post_bole
+from apps.reservations.services import procesar_compra as _procesar_compra
+from datetime import timedelta as _timedelta
+import uuid as _uuid
 
 def boleteria_view(request):
-    """Muestra la interfaz principal de boletería con eventos activos."""
-    # Filtrar eventos que no han pasado y están publicados
-    eventos = Evento.objects.filter(
-        fecha_evento__gte=timezone.localdate(),
-        estado_evento__nombre__in=['Publicado', 'Activo']
-    ).order_by('fecha_evento')
+    """Interfaz principal de boletería — solo para empleados/admin."""
+    if not request.session.get('usuario_id'):
+        return redirect('/?action=login')
+    rol = (request.session.get('usuario_rol') or '').strip().lower()
+    if rol not in ('administrador', 'empleado'):
+        messages.error(request, 'Acceso restringido al personal del teatro.')
+        return redirect('inicio')
 
-    return render(request, 'pages/tickets/boleteria.html', {
-        'eventos': eventos
-    })
+    hoy = timezone.localdate()
+    eventos = (
+        Evento.objects
+        .select_related('estado_evento')
+        .filter(
+            estado_evento__nombre__icontains='activ',
+            fecha_evento__gte=hoy,
+        )
+        .order_by('fecha_evento', 'hora_evento')
+    )
+    return render(request, 'pages/tickets/boleteria.html', {'eventos': eventos})
+
 
 def api_get_zonas(request, evento_id):
-    """Endpoint para cargar las zonas del evento vía AJAX."""
-    zonas_evento = EventoZona.objects.filter(evento_id=evento_id)
+    """Endpoint AJAX — devuelve las zonas habilitadas de un evento."""
+    if not request.session.get('usuario_id'):
+        return JsonResponse({'error': 'No autenticado'}, status=401)
+
+    zonas_qs = (
+        EventoZona.objects
+        .select_related('zona')
+        .filter(evento_id=evento_id, habilitada=True)
+        .order_by('-precio_base')
+    )
     data = {
         'zonas': [
             {
-                'id': z.id,
+                'id':     z.id,
                 'nombre': z.zona.nombre,
-                'precio': float(z.precio),
-                'limite': 10,  # Máximo por transacción en ventanilla
-                'color': z.color_hex or '#00FFD1'
-            } for z in zonas_evento
+                'precio': float(z.precio_base),
+                'limite': z.limite_por_usuario,
+                'color':  z.zona.codigo_color or '#1E293B',
+            }
+            for z in zonas_qs
         ]
     }
     return JsonResponse(data)
 
+
 @transaction.atomic
 def boleteria_confirmar_view(request):
-    """Procesa el POST del formulario, crea la venta y las entradas."""
-    if request.method == 'POST':
-        try:
-            evento_id = request.POST.get('evento_id')
-            carrito_json = request.POST.get('carrito_json')
-            metodo_pago_nombre = request.POST.get('metodo_pago', 'Efectivo')
-            carrito = json.loads(carrito_json)
+    """Procesa la venta presencial usando el mismo servicio que la web."""
+    if request.method != 'POST':
+        return redirect('boleteria')
 
-            if not carrito:
-                messages.error(request, "El carrito está vacío.")
-                return redirect('boleteria')
+    if not request.session.get('usuario_id'):
+        return redirect('/?action=login')
 
-            evento = Evento.objects.get(id=evento_id)
-            
-            # 1. Crear la Reserva
-            reserva = Reserva.objects.create(
-                evento=evento,
-                usuario_id=None, # Es venta presencial, no requiere usuario cliente
-                codigo_reserva=f"BOL-{timezone.now().strftime('%H%M%S')}",
-                fecha_reserva=timezone.now(),
-                expiracion=timezone.now() + timezone.timedelta(minutes=10)
-            )
+    try:
+        carrito_json    = request.POST.get('carrito_json', '[]')
+        metodo_pago     = request.POST.get('metodo_pago', 'Efectivo')
+        evento_id       = int(request.POST.get('evento_id', 0))
+        carrito_raw     = json.loads(carrito_json)
 
-            total_venta = 0
-            entradas_creadas = []
-
-            # 2. Procesar Carrito (Detalles y Entradas)
-            estado_ent = EstadoEntrada.objects.get(nombre='Válida')
-            
-            for item in carrito:
-                ez = EventoZona.objects.get(id=item['evento_zona_id'])
-                cantidad = int(item['cantidad'])
-                subtotal = ez.precio * cantidad
-                total_venta += subtotal
-
-                # Crear detalle de reserva
-                detalle = DetalleReserva.objects.create(
-                    reserva=reserva,
-                    evento_zona=ez,
-                    cantidad=cantidad,
-                    precio_unitario=ez.precio,
-                    subtotal=subtotal
-                )
-
-                # Crear las entradas físicas (un registro por cada una)
-                for _ in range(cantidad):
-                    ticket = Entrada.objects.create(
-                        detalle_reserva=detalle,
-                        codigo_ticket=f"TKT-{timezone.now().timestamp()}",
-                        descripcion_ubicacion=ez.zona.nombre,
-                        precio_pagado=ez.precio,
-                        estado_entrada=estado_ent
-                    )
-                    entradas_creadas.append(ticket)
-
-            # 3. Registrar el Pago
-            metodo = MetodoPago.objects.get(nombre__iexact=metodo_pago_nombre)
-            pago = Pago.objects.create(
-                reserva=reserva,
-                metodo_pago=metodo,
-                monto=total_venta,
-                fecha_pago=timezone.now(),
-                referencia_transaccion="VENTA_VENTANILLA",
-                estado_pago='Completado'
-            )
-
-            # 4. Crear la Venta final
-            estado_v = EstadoVenta.objects.get(nombre='Completado')
-            venta = Venta.objects.create(
-                reserva=reserva,
-                total=total_venta,
-                fecha_venta=timezone.now(),
-                estado_venta=estado_v,
-                # empleado=request.user.empleado (si tienes relación con empleado)
-            )
-
-            return render(request, 'pages/tickets/venta_exitosa.html', {
-                'venta': venta,
-                'entradas': entradas_creadas,
-                'primer_pago': pago
-            })
-
-        except Exception as e:
-            messages.error(request, f"Error al procesar la venta: {str(e)}")
+        if not carrito_raw or not evento_id:
+            messages.error(request, 'Carrito vacío o evento no seleccionado.')
             return redirect('boleteria')
+
+        # Convertir formato del carrito de boletería al formato de procesar_compra
+        items = [
+            {
+                'evento_zona_id':    item.get('evento_zona_id'),
+                'evento_asiento_ids': [],
+                'cantidad':          int(item.get('cantidad', 1)),
+            }
+            for item in carrito_raw
+        ]
+
+        venta = _procesar_compra(
+            usuario_id=request.session['usuario_id'],
+            evento_id=evento_id,
+            items=items,
+            metodo_pago_nombre=metodo_pago,
+        )
+
+        return render(request, 'pages/tickets/boleteria_exitosa.html', {
+            'venta':       venta,
+            'entradas':    venta.entradas.all(),
+            'primer_pago': venta.reserva.pagos.select_related('metodo_pago').first(),
+        })
+
+    except ValueError as e:
+        messages.error(request, str(e))
+    except Exception as e:
+        messages.error(request, f'Error al procesar la venta: {e}')
 
     return redirect('boleteria')

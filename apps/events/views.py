@@ -214,7 +214,13 @@ def _save_event_and_zonas(ev, payload):
 
 @never_cache
 def inicio_view(request):
-    """Página de inicio con los próximos 3 eventos activos."""
+    """Página de inicio. Redirige a admins/soporte a su panel."""
+    rol = (request.session.get('usuario_rol') or '').strip().lower()
+    if rol == 'administrador':
+        return redirect('admin_panel')
+    if rol == 'soporte':
+        return redirect('support_dashboard')
+
     hoy = timezone.localdate()
     eventos = (
         Evento.objects.select_related('estado_evento')

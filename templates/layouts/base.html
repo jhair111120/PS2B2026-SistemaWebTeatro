@@ -72,10 +72,10 @@
             <li><a href="{% url 'mis_tickets' %}"
                 style="color: #D1D5DB; text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.3s;"
                 onmouseover="this.style.color='white'" onmouseout="this.style.color='#D1D5DB'">Mis entradas</a></li>
-            <li><a href="#"
+            <li><a href="{% url 'sobre_nosotros' %}"
                 style="color: #D1D5DB; text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.3s;"
                 onmouseover="this.style.color='white'" onmouseout="this.style.color='#D1D5DB'">Sobre Nosotros</a></li>
-            <li><a href="#"
+            <li><a href="{% url 'contacto' %}"
                 style="color: #D1D5DB; text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.3s;"
                 onmouseover="this.style.color='white'" onmouseout="this.style.color='#D1D5DB'">Contacto</a></li>
           </ul>
@@ -118,9 +118,9 @@
         style="margin-top: 40px; padding-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; color: #D1D5DB; font-size: 13px; font-weight: 500;">
         <span>© 2026 Teatro al Aire Libre La Paz. Todos los derechos reservados.</span>
         <div style="display: flex; gap: 25px;">
-          <a href="#" style="color: #D1D5DB; text-decoration: none; transition: color 0.3s;"
+          <a href="{% url 'terminos' %}" style="color: #D1D5DB; text-decoration: none; transition: color 0.3s;"
             onmouseover="this.style.color='white'" onmouseout="this.style.color='#D1D5DB'">Términos y Condiciones</a>
-          <a href="#" style="color: #D1D5DB; text-decoration: none; transition: color 0.3s;"
+          <a href="{% url 'privacidad' %}" style="color: #D1D5DB; text-decoration: none; transition: color 0.3s;"
             onmouseover="this.style.color='white'" onmouseout="this.style.color='#D1D5DB'">Política de Privacidad</a>
         </div>
       </div>

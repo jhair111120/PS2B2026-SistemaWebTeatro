@@ -129,6 +129,12 @@
                 <div>
                   <p class="font-bold text-sm">{{ item.zona_nombre }}</p>
                   <p class="text-xs text-gray-500">{{ item.qty }} entrada{{ item.qty|pluralize }} × Bs. {{ item.precio }}</p>
+                  {% if item.asientos_info %}
+                  <p class="text-xs mt-1" style="color:#7dd3fc;">
+                    <i class="fas fa-chair me-1" style="font-size:.65rem;"></i>
+                    {{ item.asientos_info|join:", " }}
+                  </p>
+                  {% endif %}
                 </div>
                 <span class="font-bold">Bs. {{ item.subtotal }}</span>
               </div>
