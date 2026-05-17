@@ -2,31 +2,71 @@ import calendar
 import csv
 import io
 import re
+import pyotp
+import qrcode
+import base64
+from io import BytesIO
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 from decimal import Decimal
+
 from django.contrib import messages
-from django.views.decorators.cache import never_cache
-from django.db import transaction
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.sessions.models import Session
+from django.core.mail import send_mail
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.db.models import Count, Prefetch, Q, Sum
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.utils.timesince import timesince
+from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 
-from .models import Usuario, Rol
+from .models import Usuario, Rol, SesionDispositivo
 from apps.events.models import Evento, EventoAsiento, EventoZona, Zona
-from apps.payments.models import EstadoPago, MetodoPago, Pago
+from apps.payments.models import EstadoPago, MetodoPago, Pago, MetodoPagoGuardado
 from apps.reservations.models import DetalleReserva, EstadoReserva, Reserva
 from apps.support.models import EstadoSoporte, Soporte, SoporteMensaje
 from apps.tickets.models import CanalVenta, Entrada, EstadoVenta, Venta
 
 
-# =========================
-# 🔐 REGISTRO
-# =========================
+def _registrar_sesion_dispositivo(request, usuario):
+    if not request.session.session_key:
+        request.session.create()
+    
+    session_key = request.session.session_key
+    ip = request.META.get('REMOTE_ADDR')
+    user_agent = request.META.get('HTTP_USER_AGENT', '')
+    
+    navegador = "Desconocido"
+    sistema = "Desconocido"
+    
+    if "Chrome" in user_agent: navegador = "Chrome"
+    elif "Safari" in user_agent and "Chrome" not in user_agent: navegador = "Safari"
+    elif "Firefox" in user_agent: navegador = "Firefox"
+    elif "Edge" in user_agent: navegador = "Edge"
+    
+    if "Windows" in user_agent: sistema = "Windows"
+    elif "Mac OS" in user_agent: sistema = "MacOS"
+    elif "Linux" in user_agent: sistema = "Linux"
+    elif "Android" in user_agent: sistema = "Android"
+    elif "iPhone" in user_agent or "iPad" in user_agent: sistema = "iOS"
+
+    SesionDispositivo.objects.filter(session_key=session_key).delete()
+    SesionDispositivo.objects.create(
+        usuario=usuario,
+        session_key=session_key,
+        ip_address=ip,
+        navegador=navegador,
+        sistema_operativo=sistema
+    )
+
+
 @never_cache
 def signup_view(request):
     if request.session.get('usuario_id'):
@@ -39,7 +79,6 @@ def signup_view(request):
         password = request.POST.get('password', '')
         telefono = request.POST.get('telefono', '').strip() or None
 
-        # Validaciones (Combinación Nuevo y Antiguo para mantener máxima seguridad)
         if not re.match(r'^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}$', correo or ''):
             messages.error(request, "Correo electrónico no válido.")
             return redirect('/?action=signup')
@@ -61,11 +100,11 @@ def signup_view(request):
             return redirect('/?action=signup')
 
         if Usuario.objects.filter(correo=correo).exists():
-            messages.error(request, "Este correo ya está registrado.")
+            messages.error(request, "Este correo electrónico ya está registrado.")
             return redirect('/?action=signup')
 
         if telefono and Usuario.objects.filter(telefono=telefono).exists():
-            messages.error(request, "Este teléfono ya está en uso.")
+            messages.error(request, "Este número de teléfono ya está en uso.")
             return redirect('/?action=signup')
 
         rol_cliente, _ = Rol.objects.get_or_create(nombre='cliente')
@@ -97,13 +136,8 @@ def signup_view(request):
     return redirect('/')
 
 
-# =========================
-# 🔑 LOGIN
-# =========================
 @never_cache
 def login_view(request):
-    # Si ya hay sesión activa, redirigir según el rol actual
-    # (no bloquear — permite que un admin logueado como cliente vuelva a loguearse)
     if request.session.get('usuario_id') and request.method == 'GET':
         rol = (request.session.get('usuario_rol') or '').strip().lower()
         if rol == 'administrador':
@@ -120,10 +154,6 @@ def login_view(request):
             messages.error(request, "Ingresa tu correo y contraseña.")
             return redirect('/?action=login')
 
-        if not re.match(r'^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}$', correo or ''):
-            messages.error(request, "Correo electrónico no válido.")
-            return redirect('/?action=login')
-
         try:
             usuario = Usuario.objects.select_related('rol').get(correo=correo)
 
@@ -132,19 +162,22 @@ def login_view(request):
                 return redirect('/?action=login')
 
             if usuario.check_password(password):
+                if usuario.is_2fa_enabled:
+                    request.session['temp_2fa_user_id'] = usuario.id
+                    return redirect('verify_2fa')
+
                 request.session.flush()
+                _registrar_sesion_dispositivo(request, usuario)
 
                 request.session['usuario_id'] = usuario.id
                 request.session['usuario_nombre'] = usuario.nombre
                 request.session['usuario_nombre_completo'] = str(usuario)
                 request.session['usuario_correo'] = usuario.correo
                 request.session['usuario_rol'] = usuario.rol.nombre
-
                 request.session.set_expiry(60 * 60 * 4)
 
                 messages.success(request, f"Bienvenido {usuario.nombre}")
 
-                # 🔥 REDIRECCIÓN POR ROL
                 rol = (usuario.rol.nombre or '').strip().lower()
                 if rol == 'administrador':
                     return redirect('admin_panel')
@@ -152,30 +185,132 @@ def login_view(request):
                     return redirect('support_dashboard')
                 else:
                     return redirect('/')
-
             else:
                 messages.error(request, "Credenciales incorrectas.")
-
         except Usuario.DoesNotExist:
             messages.error(request, "Credenciales incorrectas.")
 
         return redirect('/?action=login')
-
     return redirect('/')
 
 
-# =========================
-# 🚪 LOGOUT
-# =========================
+@never_cache
+def verify_2fa_view(request):
+    temp_user_id = request.session.get('temp_2fa_user_id')
+    if not temp_user_id:
+        return redirect('/?action=login')
+    
+    usuario = get_object_or_404(Usuario, id=temp_user_id)
+
+    if request.method == 'POST':
+        codigo = request.POST.get('codigo', '').strip()
+        totp = pyotp.TOTP(usuario.totp_secret)
+        
+        if totp.verify(codigo):
+            request.session.flush()
+            _registrar_sesion_dispositivo(request, usuario)
+            
+            request.session['usuario_id'] = usuario.id
+            request.session['usuario_nombre'] = usuario.nombre
+            request.session['usuario_nombre_completo'] = str(usuario)
+            request.session['usuario_correo'] = usuario.correo
+            request.session['usuario_rol'] = usuario.rol.nombre
+            request.session.set_expiry(60 * 60 * 4)
+
+            messages.success(request, f"Bienvenido {usuario.nombre}")
+            
+            rol = (usuario.rol.nombre or '').strip().lower()
+            if rol == 'administrador':
+                return redirect('admin_panel')
+            elif rol == 'soporte':
+                return redirect('support_dashboard')
+            return redirect('/')
+        else:
+            messages.error(request, "Código 2FA incorrecto.")
+            
+    return render(request, 'pages/users/verify_2fa.html')
+
+
+def forgot_password_view(request):
+    if request.method == 'POST':
+        correo = request.POST.get('correo', '').strip().lower()
+        usuario = Usuario.objects.filter(correo=correo).first()
+        if usuario:
+            token = default_token_generator.make_token(usuario)
+            uid = urlsafe_base64_encode(force_bytes(usuario.pk))
+            enlace = request.build_absolute_uri(reverse('reset_password', kwargs={'uidb64': uid, 'token': token}))
+            
+            send_mail(
+                'Recuperación de contraseña - Teatro La Paz',
+                f'Hola {usuario.nombre},\nUsa este enlace para restablecer tu contraseña:\n{enlace}',
+                'noreply@teatrolapaz.bo',
+                [usuario.correo],
+                fail_silently=False,
+            )
+        messages.success(request, "Si el correo existe, hemos enviado un enlace de recuperación.")
+        return redirect('/?action=login')
+    return render(request, 'pages/users/forgot_password.html')
+
+
+def reset_password_view(request, uidb64, token):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        usuario = Usuario.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, Usuario.DoesNotExist):
+        usuario = None
+
+    if usuario is not None and default_token_generator.check_token(usuario, token):
+        if request.method == 'POST':
+            password = request.POST.get('password')
+            if not re.match(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.-])[A-Za-z\d@$!%*?&.-]{8,}$', password):
+                messages.error(request, "La contraseña no cumple con el formato seguro.")
+            else:
+                usuario.set_password(password)
+                usuario.save()
+                messages.success(request, "Tu contraseña ha sido restablecida.")
+                return redirect('/?action=login')
+        return render(request, 'pages/users/reset_password.html')
+    else:
+        messages.error(request, "El enlace de recuperación es inválido o ha expirado.")
+        return redirect('/?action=login')
+
+
 def logout_view(request):
+    if request.session.session_key:
+        SesionDispositivo.objects.filter(session_key=request.session.session_key).delete()
     request.session.flush()
     messages.success(request, "Sesión cerrada correctamente.")
     return redirect('/')
 
 
-# =========================
-# 👤 PERFIL
-# =========================
+@never_cache
+def api_active_sessions(request):
+    usuario_id = request.session.get('usuario_id')
+    if not usuario_id:
+        return JsonResponse({'error': 'No autorizado'}, status=401)
+    
+    current_session_key = request.session.session_key
+    sesiones = SesionDispositivo.objects.filter(usuario_id=usuario_id).order_by('-ultimo_acceso')
+    
+    data = []
+    for s in sesiones:
+        try:
+            tiempo = f'Hace {timesince(s.ultimo_acceso)}'
+        except:
+            tiempo = 'Recientemente'
+
+        data.append({
+            'session_key': s.session_key,
+            'sistema_operativo': s.sistema_operativo or 'Desconocido',
+            'navegador': s.navegador or 'Desconocido',
+            'ip_address': s.ip_address if s.ip_address else 'Desconocido',
+            'is_current': s.session_key == current_session_key,
+            'tiempo_str': 'Activo ahora' if s.session_key == current_session_key else tiempo
+        })
+        
+    return JsonResponse(data, safe=False)
+
+
 @never_cache
 def perfil_view(request):
     usuario_id = request.session.get('usuario_id')
@@ -184,24 +319,46 @@ def perfil_view(request):
         messages.error(request, "Debes iniciar sesión.")
         return redirect('/?action=login')
 
-    try:
-        usuario = Usuario.objects.get(id=usuario_id)
-    except Usuario.DoesNotExist:
-        request.session.flush()
-        return redirect('/')
+    usuario = get_object_or_404(Usuario, id=usuario_id)
+
+    qr_base64 = None
+    if not usuario.is_2fa_enabled:
+        temp_secret = request.session.get('temp_totp_secret')
+        if not temp_secret:
+            temp_secret = pyotp.random_base32()
+            request.session['temp_totp_secret'] = temp_secret
+        
+        totp_uri = pyotp.totp.TOTP(temp_secret).provisioning_uri(name=usuario.correo, issuer_name="Teatro La Paz")
+        qr = qrcode.make(totp_uri)
+        buffer = BytesIO()
+        qr.save(buffer, format="PNG")
+        qr_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+    sesiones = SesionDispositivo.objects.filter(usuario=usuario)
+    metodos_pago = MetodoPagoGuardado.objects.filter(usuario=usuario)
+    historial_compras = Venta.objects.filter(usuario=usuario).select_related('reserva__evento', 'estado_venta').order_by('-fecha_venta')
 
     if request.method == 'POST':
         action = request.POST.get('action')
 
-        # -------------------------
-        # 🧾 ACTUALIZAR PERFIL
-        # -------------------------
         if action == 'update_profile':
             nombre = request.POST.get('nombre', '').strip()
             apellido = request.POST.get('apellido', '').strip()
             nuevo_correo = request.POST.get('correo', '').strip().lower()
             telefono = request.POST.get('telefono', '').strip() or None
             dni = request.POST.get('dni', '').strip() or None
+
+            if nuevo_correo != usuario.correo and Usuario.objects.exclude(pk=usuario.pk).filter(correo=nuevo_correo).exists():
+                messages.error(request, "Ese correo ya está registrado por otro usuario.")
+                return redirect('perfil')
+
+            if telefono and telefono != usuario.telefono and Usuario.objects.exclude(pk=usuario.pk).filter(telefono=telefono).exists():
+                messages.error(request, "Este teléfono ya está en uso por otra cuenta.")
+                return redirect('perfil')
+
+            if dni and dni != usuario.dni and Usuario.objects.exclude(pk=usuario.pk).filter(dni=dni).exists():
+                messages.error(request, "Este DNI ya está registrado en el sistema.")
+                return redirect('perfil')
 
             if not re.match(r'^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(\s[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*$', nombre):
                 messages.error(request, "El nombre debe empezar con mayúscula y no tener mayúsculas dobles.")
@@ -223,11 +380,6 @@ def perfil_view(request):
             usuario.apellido = apellido
             usuario.telefono = telefono
             usuario.dni = dni
-
-            if nuevo_correo != usuario.correo and Usuario.objects.filter(correo=nuevo_correo).exists():
-                messages.error(request, "Ese correo ya está en uso.")
-                return redirect('perfil')
-
             usuario.correo = nuevo_correo
 
             try:
@@ -237,7 +389,6 @@ def perfil_view(request):
                 request.session['usuario_nombre'] = usuario.nombre
                 request.session['usuario_nombre_completo'] = str(usuario)
                 request.session['usuario_correo'] = usuario.correo
-
                 messages.success(request, "Perfil actualizado correctamente.")
 
             except ValidationError as e:
@@ -245,23 +396,15 @@ def perfil_view(request):
 
             return redirect('perfil')
 
-        # -------------------------
-        # 🔔 ACTUALIZAR NOTIFICACIONES
-        # -------------------------
         elif action == 'update_notifications':
             usuario.notif_eventos = request.POST.get('notif_eventos') == 'on'
             usuario.notif_promociones = request.POST.get('notif_promociones') == 'on'
             usuario.notif_recordatorios = request.POST.get('notif_recordatorios') == 'on'
             usuario.notif_push = request.POST.get('notif_push') == 'on'
-            
             usuario.save()
             messages.success(request, "Preferencias de notificaciones actualizadas.")
-            
             return redirect('perfil')
 
-        # -------------------------
-        # 🔐 CAMBIAR PASSWORD
-        # -------------------------
         elif action == 'update_password':
             current_password = request.POST.get('current_password', '')
             new_password = request.POST.get('new_password', '')
@@ -269,26 +412,59 @@ def perfil_view(request):
 
             if not usuario.check_password(current_password):
                 messages.error(request, "Contraseña actual incorrecta.")
-
             elif new_password != confirm_password:
                 messages.error(request, "Las contraseñas no coinciden.")
-
             elif not re.match(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.-])[A-Za-z\d@$!%*?&.-]{8,}$', new_password):
                 messages.error(request, "La nueva contraseña no cumple con el formato seguro requerido.")
-
             else:
                 usuario.set_password(new_password)
                 usuario.save()
-                messages.success(request, "Contraseña actualizada.")
-
+                messages.success(request, "Contraseña actualizada exitosamente.")
             return redirect('perfil')
 
-    return render(request, 'pages/users/perfil.html', {'usuario': usuario})
+        elif action == 'verify_2fa_setup':
+            codigo = request.POST.get('codigo_2fa', '').strip()
+            temp_secret = request.session.get('temp_totp_secret')
+            if temp_secret and pyotp.TOTP(temp_secret).verify(codigo):
+                usuario.totp_secret = temp_secret
+                usuario.is_2fa_enabled = True
+                usuario.save()
+                del request.session['temp_totp_secret']
+                messages.success(request, "Autenticación de 2 Factores activada.")
+            else:
+                messages.error(request, "Código incorrecto.")
+            return redirect('perfil')
+
+        elif action == 'disable_2fa':
+            usuario.totp_secret = None
+            usuario.is_2fa_enabled = False
+            usuario.save()
+            messages.success(request, "Autenticación de 2 Factores desactivada.")
+            return redirect('perfil')
+
+        elif action == 'close_session':
+            session_key_to_close = request.POST.get('session_key')
+            Session.objects.filter(session_key=session_key_to_close).delete()
+            SesionDispositivo.objects.filter(session_key=session_key_to_close).delete()
+            messages.success(request, "Sesión cerrada con éxito en el dispositivo seleccionado.")
+            return redirect('perfil')
+
+        elif action == 'delete_payment_method':
+            metodo_id = request.POST.get('metodo_id')
+            MetodoPagoGuardado.objects.filter(id=metodo_id, usuario=usuario).delete()
+            messages.success(request, "Método de pago eliminado.")
+            return redirect('perfil')
+
+    return render(request, 'pages/users/perfil.html', {
+        'usuario': usuario,
+        'qr_base64': qr_base64,
+        'sesiones': sesiones,
+        'metodos_pago': metodos_pago,
+        'historial_compras': historial_compras,
+        'current_session_key': request.session.session_key
+    })
 
 
-# =========================
-# 🛠️ PANEL ADMIN (CÓDIGO DE TUS COMPAÑEROS INTACTO)
-# =========================
 def _seat_stats_dict(event_ids):
     if not event_ids:
         return {}
@@ -363,7 +539,6 @@ def admin_usuario_action(request):
 
     current_admin_id = request.session.get('usuario_id')
 
-    # No permitir acciones destructivas sobre sí mismo
     if current_admin_id and int(current_admin_id) == usuario.id and action in ('desactivar', 'eliminar'):
         messages.warning(request, 'No puedes desactivarte o eliminarte a ti mismo.')
         return redirect(reverse('admin_panel') + f'?tab={next_tab}')
@@ -380,7 +555,6 @@ def admin_usuario_action(request):
         if not usuario.activo:
             messages.info(request, 'La cuenta ya está desactivada.')
         else:
-            # Evitar desactivar el último administrador activo
             rol_nombre = (usuario.rol.nombre or '').strip().lower()
             if rol_nombre == 'administrador':
                 admins_activos = Usuario.objects.filter(rol__nombre__iexact='administrador', activo=True).count()
@@ -404,7 +578,6 @@ def admin_usuario_action(request):
             messages.error(request, 'Rol no encontrado.')
             return redirect(reverse('admin_panel') + f'?tab={next_tab}')
 
-        # Evitar quitar rol admin al último admin activo
         if (usuario.rol.nombre or '').strip().lower() == 'administrador' and (nuevo_rol.nombre or '').strip().lower() != 'administrador':
             admins_activos = Usuario.objects.filter(rol__nombre__iexact='administrador', activo=True).count()
             if usuario.activo and admins_activos <= 1:
@@ -416,7 +589,6 @@ def admin_usuario_action(request):
         messages.success(request, 'Rol actualizado.')
 
     elif action == 'eliminar':
-        # Evitar borrar el último administrador activo
         rol_nombre = (usuario.rol.nombre or '').strip().lower()
         if rol_nombre == 'administrador' and usuario.activo:
             admins_activos = Usuario.objects.filter(rol__nombre__iexact='administrador', activo=True).count()
@@ -448,6 +620,7 @@ def admin_usuario_create(request):
     password = request.POST.get('password', '')
     password2 = request.POST.get('password_confirm', '')
     telefono = request.POST.get('telefono', '').strip() or None
+    dni = request.POST.get('dni', '').strip() or None
     rol_id = request.POST.get('rol_id')
     activo = request.POST.get('activo') == 'on'
 
@@ -479,12 +652,20 @@ def admin_usuario_create(request):
         messages.error(request, 'El celular en Bolivia debe empezar con 6 o 7 y tener 8 dígitos.')
         return redirect(back)
 
+    if dni and not re.match(r'^\d{7,8}(-[A-Z0-9]{1,3})?$', dni):
+        messages.error(request, 'Formato de DNI inválido. Ej: 1234567 o 12345678-1B')
+        return redirect(back)
+
     if Usuario.objects.filter(correo=correo).exists():
         messages.error(request, 'Este correo ya está registrado.')
         return redirect(back)
 
     if telefono and Usuario.objects.filter(telefono=telefono).exists():
         messages.error(request, 'Este teléfono ya está en uso.')
+        return redirect(back)
+
+    if dni and Usuario.objects.filter(dni=dni).exists():
+        messages.error(request, 'Este DNI ya está registrado en el sistema.')
         return redirect(back)
 
     try:
@@ -508,6 +689,7 @@ def admin_usuario_create(request):
                 apellido=apellido,
                 correo=correo,
                 telefono=telefono,
+                dni=dni,
                 rol=rol,
                 activo=activo,
                 is_staff=is_staff,
@@ -816,6 +998,10 @@ def admin_config_general_save(request):
         messages.error(request, 'Ese correo ya está en uso.')
         return redirect(reverse('admin_panel') + '?tab=configuracion&cfg_tab=general')
 
+    if telefono and Usuario.objects.exclude(pk=usuario.pk).filter(telefono=telefono).exists():
+        messages.error(request, 'Ese teléfono ya está en uso.')
+        return redirect(reverse('admin_panel') + '?tab=configuracion&cfg_tab=general')
+
     usuario.correo = nuevo_correo
     usuario.telefono = telefono
     usuario.save(update_fields=['nombre', 'apellido', 'correo', 'telefono', 'actualizado_en'])
@@ -912,7 +1098,6 @@ def admin_panel(request):
         estado_evento__nombre__icontains='activ'
     ).filter(fecha_evento__gte=hoy).count()
 
-    # Gráficos: ventas últimos 7 días por día civil local
     inicio_week = timezone.localtime(now, tz).date()
     dias = [(inicio_week - timedelta(days=6)) + timedelta(days=i) for i in range(7)]
     etiquetas_sem = []
@@ -961,7 +1146,6 @@ def admin_panel(request):
         pie_labels = ['Sin datos']
         pie_data = [0]
 
-    # Tendencia: últimos 3 meses naturales / calendario
     def subtract_month(y, mo, backward):
         mo -= backward
         while mo <= 0:
@@ -1048,7 +1232,6 @@ def admin_panel(request):
         Zona.objects.annotate(num_asientos=Count('asiento')).order_by('orden_visual', 'nombre')
     )
 
-    # ——— Reservas / Ventas / Reportes (BD) ———
     res_q = (request.GET.get('res_q') or '').strip()
     res_estado = (request.GET.get('res_estado') or '').strip()
     vta_q = (request.GET.get('vta_q') or '').strip()
@@ -1266,7 +1449,6 @@ def admin_panel(request):
         'zonas_data': rep_zonas_data,
     }
 
-    # ——— Soporte / Transacciones / Configuración (BD) ———
     sup_q = (request.GET.get('sup_q') or '').strip()
     sup_estado = (request.GET.get('sup_estado') or '').strip()
     sup_id = request.GET.get('sup_id')
@@ -1328,9 +1510,8 @@ def admin_panel(request):
     estados_pago = list(EstadoPago.objects.all().order_by('nombre'))
     metodos_pago = list(MetodoPago.objects.all().order_by('nombre'))
 
-    # ——— Cuentas (BD) ———
     usr_q = (request.GET.get('usr_q') or '').strip()
-    usr_estado = (request.GET.get('usr_estado') or '').strip().lower()  # activo|inactivo|''
+    usr_estado = (request.GET.get('usr_estado') or '').strip().lower()
     usr_rol = (request.GET.get('usr_rol') or '').strip().lower()
 
     usuarios_qs = Usuario.objects.select_related('rol').order_by('-fecha_creacion')

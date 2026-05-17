@@ -3,15 +3,17 @@ URL configuration for config project.
 """
 from django.contrib import admin
 from django.urls import path
+from django.views.generic import TemplateView
 
 # ── Auth & perfil ─────────────────────────────────────────────────────────────
 from apps.users.views import (
-    signup_view, login_view, logout_view, perfil_view,
+    signup_view, login_view, logout_view, perfil_view, api_active_sessions,
     admin_panel,
     admin_reserva_action, admin_report_export, admin_venta_detalle,
     admin_soporte_reply, admin_soporte_close,
     admin_config_general_save, admin_config_security_save,
     admin_usuario_action, admin_usuario_create,
+    verify_2fa_view, forgot_password_view, reset_password_view,
 )
 
 # ── Eventos (públicas + admin CRUD) ───────────────────────────────────────────
@@ -72,8 +74,12 @@ urlpatterns = [
 
     # ── PERFIL Y AUTH ─────────────────────────────────────────────────────────
     path('perfil/', perfil_view, name='perfil'),
+    path('perfil/api/sesiones/', api_active_sessions, name='api_active_sessions'),
     path('signup/', signup_view, name='signup'),
     path('login/', login_view, name='login'),
+    path('login/2fa/', verify_2fa_view, name='verify_2fa'),
+    path('recuperar-password/', forgot_password_view, name='forgot_password'),
+    path('reset/<uidb64>/<token>/', reset_password_view, name='reset_password'),
     path('logout/', logout_view, name='logout'),
 
     # ── MIS ENTRADAS ──────────────────────────────────────────────────────────
@@ -98,6 +104,10 @@ urlpatterns = [
     path('admin-panel/config/security/', admin_config_security_save, name='admin_config_security_save'),
     path('admin-panel/usuarios/action/', admin_usuario_action, name='admin_usuario_action'),
     path('admin-panel/usuarios/nuevo/', admin_usuario_create, name='admin_usuario_create'),
+
+    # ── RUTAS DE MÓDULOS ──────────────────────────────────────────────────────
+    path('reservas/', TemplateView.as_view(template_name='pages/reservations/reservas.html'), name='reservas'),
+    path('pagos/', TemplateView.as_view(template_name='pages/payments/pagos.html'), name='pagos'),
 
     # ── SOPORTE (STAFF) ───────────────────────────────────────────────────────
     path('soporte/', support_dashboard, name='support_dashboard'),

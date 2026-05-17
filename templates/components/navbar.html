@@ -42,14 +42,18 @@
             <div class="small" style="color: #94a3b8;">{{ request.session.usuario_correo }}</div>
           </li>
           {% if request.session.usuario_rol == 'administrador' %}
-          <li><a class="user-dropdown-item" href="{% url 'admin_panel' %}"><i class="fas fa-tachometer-alt"></i> Panel Admin</a></li>
+          <li><a class="user-dropdown-item" href="{% url 'admin_panel' %}"><i class="fas fa-tachometer-alt"></i> Panel
+              Admin</a></li>
           {% elif request.session.usuario_rol == 'soporte' %}
-          <li><a class="user-dropdown-item" href="{% url 'support_dashboard' %}"><i class="fas fa-headset"></i> Panel Soporte</a></li>
+          <li><a class="user-dropdown-item" href="{% url 'support_dashboard' %}"><i class="fas fa-headset"></i> Panel
+              Soporte</a></li>
           {% else %}
-          <li><a class="user-dropdown-item" href="{% url 'mis_tickets' %}"><i class="fas fa-ticket-alt"></i> Mis Entradas</a></li>
+          <li><a class="user-dropdown-item" href="{% url 'mis_tickets' %}"><i class="fas fa-ticket-alt"></i> Mis
+              Entradas</a></li>
           <li><a class="user-dropdown-item" href="{% url 'perfil' %}"><i class="far fa-user"></i> Mi Perfil</a></li>
           {% endif %}
-          <li><a class="user-dropdown-item logout" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
+          <li><a class="user-dropdown-item logout" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Cerrar
+              Sesión</a></li>
         </ul>
       </div>
       {% else %}
