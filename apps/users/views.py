@@ -503,6 +503,116 @@ def _cap_publicada_dict(event_ids):
     }
 
 
+def _calc_zonas_ocupacion(fecha_desde=None, fecha_hasta=None):
+    """
+    Ocupación por zona en un rango de fechas de función.
+    Usa EventoAsiento si existe; si no, capacidad_evento + detalles de ventas confirmadas/emitidas.
+    """
+    ez_qs = EventoZona.objects.filter(habilitada=True).select_related('zona', 'evento')
+    if fecha_desde is not None:
+        ez_qs = ez_qs.filter(evento__fecha_evento__gte=fecha_desde)
+    if fecha_hasta is not None:
+        ez_qs = ez_qs.filter(evento__fecha_evento__lte=fecha_hasta)
+
+    ez_list = list(ez_qs)
+    if not ez_list:
+        return {
+            'labels': [],
+            'data': [],
+            'ocupados': [],
+            'totales': [],
+            'pct_global': 0,
+            'ocup_global': 0,
+            'tot_global': 0,
+            'sin_datos': True,
+            'resumen': 'No hay zonas habilitadas en eventos del rango seleccionado.',
+        }
+
+    ez_ids = [ez.id for ez in ez_list]
+
+    ea_stats = {}
+    if ez_ids:
+        for row in (
+            EventoAsiento.objects.filter(evento_zona_id__in=ez_ids)
+            .values('evento_zona_id')
+            .annotate(
+                tot=Count('id'),
+                ocup=Count('id', filter=~Q(estado='DISPONIBLE')),
+            )
+        ):
+            ea_stats[row['evento_zona_id']] = {
+                'tot': row['tot'] or 0,
+                'ocup': row['ocup'] or 0,
+            }
+
+    vend_stats = {}
+    if ez_ids:
+        for row in (
+            DetalleReserva.objects.filter(evento_zona_id__in=ez_ids)
+            .filter(
+                Q(reserva__venta__estado_venta__nombre__icontains='emitida')
+                | Q(reserva__estado_reserva__nombre__icontains='confirm')
+            )
+            .values('evento_zona_id')
+            .annotate(vend=Sum('cantidad'))
+        ):
+            vend_stats[row['evento_zona_id']] = int(row['vend'] or 0)
+
+    zone_totals = defaultdict(lambda: {'nombre': '—', 'tot': 0, 'ocup': 0})
+
+    for ez in ez_list:
+        zid = ez.zona_id
+        zone_totals[zid]['nombre'] = ez.zona.nombre or '—'
+        ea = ea_stats.get(ez.id)
+        if ea and ea['tot'] > 0:
+            tot = ea['tot']
+            ocup = ea['ocup']
+        else:
+            tot = int(ez.capacidad_evento or 0)
+            ocup = vend_stats.get(ez.id, 0)
+        zone_totals[zid]['tot'] += tot
+        zone_totals[zid]['ocup'] += min(ocup, tot) if tot else ocup
+
+    rows_sorted = sorted(zone_totals.values(), key=lambda x: (-x['tot'], x['nombre']))
+    labels, data, ocupados, totales = [], [], [], []
+    for s in rows_sorted[:12]:
+        if s['tot'] <= 0:
+            continue
+        labels.append(s['nombre'])
+        totales.append(s['tot'])
+        ocupados.append(s['ocup'])
+        data.append(round(100 * s['ocup'] / s['tot']))
+
+    tot_global = sum(s['tot'] for s in zone_totals.values())
+    ocup_global = sum(s['ocup'] for s in zone_totals.values())
+    pct_global = round(100 * ocup_global / tot_global) if tot_global else 0
+
+    if not labels:
+        return {
+            'labels': [],
+            'data': [],
+            'ocupados': [],
+            'totales': [],
+            'pct_global': 0,
+            'ocup_global': 0,
+            'tot_global': 0,
+            'sin_datos': True,
+            'resumen': 'Sin capacidad ni ventas registradas en el rango.',
+        }
+
+    return {
+        'labels': labels,
+        'data': data,
+        'ocupados': ocupados,
+        'totales': totales,
+        'pct_global': pct_global,
+        'ocup_global': ocup_global,
+        'tot_global': tot_global,
+        'sin_datos': False,
+        'resumen': f'{ocup_global} / {tot_global} asientos ({pct_global}%)',
+    }
+
+
 def _ventas_emitidas_qs():
     return Venta.objects.filter(estado_venta__nombre__icontains='emitida')
 
@@ -1089,10 +1199,10 @@ def admin_panel(request):
         estado_reserva__nombre__icontains='activa'
     ).count()
 
-    asientos_prog = EventoAsiento.objects.filter(evento_zona__evento__fecha_evento__gte=hoy)
-    tot_asientos = asientos_prog.count()
-    ocup_asientos = asientos_prog.exclude(estado='DISPONIBLE').count()
-    kpi_ocupacion_pct = round(100 * ocup_asientos / tot_asientos) if tot_asientos else 0
+    dash_ocup = _calc_zonas_ocupacion(fecha_desde=hoy, fecha_hasta=None)
+    kpi_ocupacion_pct = dash_ocup['pct_global']
+    dash_zonas_resumen = dash_ocup['resumen']
+    dash_zonas_sin_datos = dash_ocup['sin_datos']
 
     kpi_eventos_activos = Evento.objects.filter(
         estado_evento__nombre__icontains='activ'
@@ -1124,27 +1234,8 @@ def admin_panel(request):
         valores_sem.append(float(day_sum.get(di, Decimal('0'))))
     vmax = max(valores_sem + [1.0])
 
-    zonas_agg = (
-        EventoAsiento.objects.filter(evento_zona__evento__fecha_evento__gte=hoy)
-        .values('evento_zona__zona__nombre')
-        .annotate(
-            tot=Count('id'),
-            no_lib=Count('id', filter=~Q(estado='DISPONIBLE')),
-        )
-        .order_by('-tot')[:12]
-    )
-    pie_labels = []
-    pie_data = []
-    for z in zonas_agg:
-        nombre_z = z['evento_zona__zona__nombre'] or '—'
-        t = z['tot'] or 1
-        oc = z['no_lib'] or 0
-        pie_labels.append(nombre_z)
-        pie_data.append(round(100 * oc / t) if t else 0)
-
-    if not pie_labels:
-        pie_labels = ['Sin datos']
-        pie_data = [0]
+    pie_labels = dash_ocup['labels']
+    pie_data = dash_ocup['data']
 
     def subtract_month(y, mo, backward):
         mo -= backward
@@ -1224,6 +1315,9 @@ def admin_panel(request):
         'ventas_semana_ymax': max(round(vmax * 1.1, 2), 1000.0),
         'zonas_labels': pie_labels,
         'zonas_data': pie_data,
+        'zonas_ocupados': dash_ocup.get('ocupados', []),
+        'zonas_totales': dash_ocup.get('totales', []),
+        'zonas_sin_datos': dash_ocup['sin_datos'],
         'mensual_labels': mes_etiquetas,
         'mensual_vals': mes_valores,
     }
@@ -1380,13 +1474,10 @@ def admin_panel(request):
         venta__fecha_venta__lt=rep_hasta_dt,
     ).count()
 
-    as_rep = EventoAsiento.objects.filter(
-        evento_zona__evento__fecha_evento__gte=rep_desde,
-        evento_zona__evento__fecha_evento__lte=rep_hasta,
-    )
-    trp = as_rep.count()
-    orp = as_rep.exclude(estado='DISPONIBLE').count()
-    rep_kpi_ocup = round(100 * orp / trp) if trp else 0
+    rep_ocup = _calc_zonas_ocupacion(fecha_desde=rep_desde, fecha_hasta=rep_hasta)
+    rep_kpi_ocup = rep_ocup['pct_global']
+    rep_ocupacion_resumen = rep_ocup['resumen']
+    rep_zonas_sin_datos = rep_ocup['sin_datos']
     rep_kpi_eventos = Evento.objects.filter(
         fecha_evento__gte=rep_desde, fecha_evento__lte=rep_hasta
     ).count()
@@ -1420,26 +1511,8 @@ def admin_panel(request):
         rep_sem_vals.append(float(day_sum_rep.get(di, Decimal('0'))))
     rep_sem_ymax = max(rep_sem_vals + [1.0]) * 1.1
 
-    zr = (
-        EventoAsiento.objects.filter(
-            evento_zona__evento__fecha_evento__gte=rep_desde,
-            evento_zona__evento__fecha_evento__lte=rep_hasta,
-        )
-        .values('evento_zona__zona__nombre')
-        .annotate(tot=Count('id'), no_lib=Count('id', filter=~Q(estado='DISPONIBLE')))
-        .order_by('-tot')[:12]
-    )
-    rep_zonas_labels = []
-    rep_zonas_data = []
-    for z in zr:
-        nombre_z = z['evento_zona__zona__nombre'] or '—'
-        t = z['tot'] or 1
-        oc = z['no_lib'] or 0
-        rep_zonas_labels.append(nombre_z)
-        rep_zonas_data.append(round(100 * oc / t) if t else 0)
-    if not rep_zonas_labels:
-        rep_zonas_labels = ['Sin datos']
-        rep_zonas_data = [0]
+    rep_zonas_labels = rep_ocup['labels']
+    rep_zonas_data = rep_ocup['data']
 
     reportes_chart_payload = {
         'sem_labels': rep_sem_labels,
@@ -1447,6 +1520,9 @@ def admin_panel(request):
         'sem_ymax': max(round(rep_sem_ymax, 2), 500.0),
         'zonas_labels': rep_zonas_labels,
         'zonas_data': rep_zonas_data,
+        'zonas_ocupados': rep_ocup.get('ocupados', []),
+        'zonas_totales': rep_ocup.get('totales', []),
+        'zonas_sin_datos': rep_ocup['sin_datos'],
     }
 
     sup_q = (request.GET.get('sup_q') or '').strip()
@@ -1553,6 +1629,8 @@ def admin_panel(request):
             'kpi_total_ventas': kpi_total_ventas,
             'kpi_reservas_activas': kpi_reservas_activas,
             'kpi_ocupacion_pct': kpi_ocupacion_pct,
+            'dash_zonas_resumen': dash_zonas_resumen,
+            'dash_zonas_sin_datos': dash_zonas_sin_datos,
             'kpi_eventos_activos': kpi_eventos_activos,
             'zonas_lista': zonas_lista,
             'chart_payload': chart_payload,
@@ -1576,6 +1654,8 @@ def admin_panel(request):
             'rep_kpi_ingresos': rep_kpi_ingresos,
             'rep_kpi_tickets': rep_kpi_tickets,
             'rep_kpi_ocup': rep_kpi_ocup,
+            'rep_ocupacion_resumen': rep_ocupacion_resumen,
+            'rep_zonas_sin_datos': rep_zonas_sin_datos,
             'rep_kpi_eventos': rep_kpi_eventos,
             'reportes_chart_payload': reportes_chart_payload,
             'sup_q': sup_q,

@@ -43,6 +43,7 @@
         <div>
           <p class="admin-kpi-card__label">Ocupación próximos eventos</p>
           <p class="admin-kpi-card__value">{{ kpi_ocupacion_pct }}&nbsp;%</p>
+          <p class="cell-xs cell-muted" style="margin:0.35rem 0 0;">{{ dash_zonas_resumen }}</p>
         </div>
         <span class="admin-kpi-card__icon admin-kpi-card__icon--violet"><i class="fas fa-arrow-trend-up"></i></span>
       </div>
@@ -68,7 +69,7 @@
     </div>
     <div class="admin-card">
       <h3 class="admin-card__title">Ocupación por zonas</h3>
-      <p class="admin-card__subtitle">Porcentaje de ocupación actual</p>
+      <p class="admin-card__subtitle">Próximos eventos · {{ dash_zonas_resumen }}</p>
       <div class="admin-chart-box admin-chart-box--pie">
         <canvas id="chart-ocupacion-zonas" aria-label="Gráfico de ocupación por zona"></canvas>
       </div>
@@ -526,7 +527,7 @@
     <div class="admin-card">
       <p class="admin-kpi-card__label">Ocupación asientos (eventos en rango)</p>
       <p class="admin-kpi-card__value">{{ rep_kpi_ocup }}%</p>
-      <p class="cell-xs cell-muted">No DISPONIBLE / total asientos programados</p>
+      <p class="cell-xs cell-muted">{{ rep_ocupacion_resumen }}</p>
     </div>
   </div>
   <div class="admin-grid-2">
@@ -537,7 +538,7 @@
     </div>
     <div class="admin-card">
       <h3 class="admin-card__title">Ocupación por zona</h3>
-      <p class="admin-card__subtitle">Eventos con fecha de función en el rango</p>
+      <p class="admin-card__subtitle">Eventos en el rango · {{ rep_ocupacion_resumen }}</p>
       <div class="admin-chart-box admin-chart-box--sm"><canvas id="chart-reportes-zonas-h"></canvas></div>
     </div>
   </div>
@@ -1210,6 +1211,9 @@
 
       var pieLabs = P && Array.isArray(P.zonas_labels) ? P.zonas_labels : [];
       var pieDat = P && Array.isArray(P.zonas_data) ? P.zonas_data : [];
+      var pieOcup = P && Array.isArray(P.zonas_ocupados) ? P.zonas_ocupados : [];
+      var pieTot = P && Array.isArray(P.zonas_totales) ? P.zonas_totales : [];
+      var pieSinDatos = P && P.zonas_sin_datos === true;
 
       var lineLabs = P && Array.isArray(P.mensual_labels) ? P.mensual_labels : [];
       var lineVals = P && Array.isArray(P.mensual_vals) ? P.mensual_vals : [];
@@ -1242,7 +1246,7 @@
       }
 
       var ctxPie = document.getElementById('chart-ocupacion-zonas');
-      if (ctxPie) {
+      if (ctxPie && !pieSinDatos && pieLabs.length) {
         new Chart(ctxPie.getContext('2d'), {
           type: 'doughnut',
           data: {
@@ -1261,8 +1265,14 @@
               tooltip: {
                 callbacks: {
                   label: function (ctx) {
-                    var v = ctx.parsed;
-                    return (ctx.label || '') + ': ' + v + '%';
+                    var i = ctx.dataIndex;
+                    var pct = ctx.parsed;
+                    var o = pieOcup[i];
+                    var t = pieTot[i];
+                    if (o != null && t != null) {
+                      return (ctx.label || '') + ': ' + pct + '% (' + o + ' / ' + t + ')';
+                    }
+                    return (ctx.label || '') + ': ' + pct + '%';
                   },
                 },
               },
@@ -1320,6 +1330,9 @@
       var ymax = P && typeof P.sem_ymax === 'number' ? P.sem_ymax : 500;
       var zLabs = P && Array.isArray(P.zonas_labels) ? P.zonas_labels : [];
       var zDat = P && Array.isArray(P.zonas_data) ? P.zonas_data : [];
+      var zOcup = P && Array.isArray(P.zonas_ocupados) ? P.zonas_ocupados : [];
+      var zTot = P && Array.isArray(P.zonas_totales) ? P.zonas_totales : [];
+      var zSinDatos = P && P.zonas_sin_datos === true;
 
       var c1 = document.getElementById('chart-reportes-semanal');
       if (c1) {
@@ -1347,7 +1360,7 @@
       }
 
       var c2 = document.getElementById('chart-reportes-zonas-h');
-      if (c2) {
+      if (c2 && !zSinDatos && zLabs.length) {
         new Chart(c2.getContext('2d'), {
           type: 'bar',
           data: {
@@ -1368,7 +1381,14 @@
               tooltip: {
                 callbacks: {
                   label: function (ctx) {
-                    return (ctx.label || '') + ': ' + ctx.parsed.x + '%';
+                    var i = ctx.dataIndex;
+                    var pct = ctx.parsed.x;
+                    var o = zOcup[i];
+                    var t = zTot[i];
+                    if (o != null && t != null) {
+                      return (ctx.label || '') + ': ' + pct + '% (' + o + ' / ' + t + ')';
+                    }
+                    return (ctx.label || '') + ': ' + pct + '%';
                   },
                 },
               },
