@@ -156,13 +156,25 @@ def procesar_compra(usuario_id: int, evento_id: int, items: list, metodo_pago_no
     reserva.save(update_fields=['estado_reserva', 'actualizado_en'])
 
     # Pago simulado
+    transaccion_id = uuid.uuid4()
+    qr_dato = None
+    qr_imagen_url = None
+
+    if metodo_pago_nombre == 'QR Bancario':
+        qr_ref = f"PAGO-{transaccion_id.hex[:12].upper()}-MONTO-{total_final}"
+        qr_dato = qr_ref
+        qr_imagen_url = f"https://api.qrserver.com/v1/create-qr-code/?size=256x256&data={qr_ref}"
+
     Pago.objects.create(
         reserva=reserva,
         metodo_pago=metodo_pago,
         estado_pago=est_pagado,
         monto=total_final,
+        transaccion_interna=transaccion_id,
         fecha_confirmacion=timezone.now(),
-        observacion='Pago simulado',
+        observacion='Pago simulado' + (' via QR' if qr_dato else ''),
+        qr_dato=qr_dato,
+        qr_imagen_url=qr_imagen_url,
     )
 
     venta = Venta.objects.create(

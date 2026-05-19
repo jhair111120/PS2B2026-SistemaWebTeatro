@@ -86,6 +86,12 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     )
 
     activo = models.BooleanField(default=True)
+    is_2fa_enabled = models.BooleanField(default=False)
+    totp_secret = models.CharField(max_length=255, blank=True, null=True)
+    admin_notif_reservas = models.BooleanField(default=False)
+    admin_notif_ventas = models.BooleanField(default=False)
+    admin_notif_soporte = models.BooleanField(default=False)
+    admin_notif_reportes = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
     
     # 🔥 RESTAURADO: Los campos para tu vista de Preferencias de Notificaciones

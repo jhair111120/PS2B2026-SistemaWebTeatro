@@ -1,6 +1,7 @@
 import calendar
 import csv
 import io
+import logging
 import re
 from collections import defaultdict
 from datetime import date, datetime, timedelta
@@ -22,6 +23,8 @@ from apps.payments.models import EstadoPago, MetodoPago, Pago
 from apps.reservations.models import DetalleReserva, EstadoReserva, Reserva
 from apps.support.models import EstadoSoporte, Soporte, SoporteMensaje
 from apps.tickets.models import CanalVenta, Entrada, EstadoVenta, Venta
+
+logger = logging.getLogger(__name__)
 
 
 # =========================
@@ -89,8 +92,9 @@ def signup_view(request):
 
         except ValidationError as e:
             messages.error(request, e.messages[0])
-        except Exception:
-            messages.error(request, "Error inesperado al registrarte.")
+        except Exception as e:
+            logger.exception("Error inesperado al registrarse: %s", e)
+            messages.error(request, f"Error inesperado al registrarte: {str(e)}")
 
         return redirect('/?action=signup')
 

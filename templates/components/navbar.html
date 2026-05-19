@@ -43,6 +43,10 @@
           </li>
           {% if request.session.usuario_rol == 'administrador' %}
           <li><a class="user-dropdown-item" href="{% url 'admin_panel' %}"><i class="fas fa-tachometer-alt"></i> Panel Admin</a></li>
+          <li><a class="user-dropdown-item" href="{% url 'validar_entrada' %}"><i class="fas fa-qrcode"></i> Validar Entradas</a></li>
+          {% elif request.session.usuario_rol == 'empleado' %}
+          <li><a class="user-dropdown-item" href="{% url 'boleteria' %}"><i class="fas fa-store"></i> Boletería</a></li>
+          <li><a class="user-dropdown-item" href="{% url 'validar_entrada' %}"><i class="fas fa-qrcode"></i> Validar Entradas</a></li>
           {% elif request.session.usuario_rol == 'soporte' %}
           <li><a class="user-dropdown-item" href="{% url 'support_dashboard' %}"><i class="fas fa-headset"></i> Panel Soporte</a></li>
           {% else %}

@@ -7,36 +7,20 @@
 <link rel="stylesheet" href="{% static 'css/pages/users/comprar_entradas.css' %}" />
 
 <div class="min-h-screen py-8 px-4">
-  <div class="max-w-3xl mx-auto">
+  <div class="max-w-4xl mx-auto">
 
     <div class="success-header">
       <div class="success-icon"><i class="fas fa-check"></i></div>
       <h1 class="text-4xl font-extrabold mb-2">¡Compra Exitosa!</h1>
-      <p class="text-gray-400">Tu entrada ha sido confirmada y registrada en el sistema.</p>
+      <p class="text-gray-400">Tu pago fue verificado y tus entradas han sido confirmadas.</p>
     </div>
 
     <div class="voucher-card">
-      <!-- Código de reserva -->
       <div class="text-center mb-6">
         <p class="text-xs text-gray-500 uppercase tracking-widest mb-1">Código de Reserva</p>
         <p class="text-2xl font-bold text-[#00AEEF]">{{ venta.reserva.codigo_reserva }}</p>
       </div>
 
-      <!-- QR de la primera entrada -->
-      {% with primera_entrada=entradas.first %}
-      {% if primera_entrada %}
-      <div class="qr-code-placeholder">
-        <img
-          src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ primera_entrada.codigo_qr }}"
-          class="w-full h-full"
-          alt="QR Code"
-        >
-      </div>
-      <p class="text-center text-xs text-gray-500 mb-6">{{ primera_entrada.codigo_ticket }}</p>
-      {% endif %}
-      {% endwith %}
-
-      <!-- Totales -->
       <div class="grid grid-cols-2 gap-8 text-center mb-8">
         <div>
           <p class="text-xs text-gray-500 uppercase">Total Pagado</p>
@@ -48,7 +32,6 @@
         </div>
       </div>
 
-      <!-- Resumen del evento -->
       <div class="summary-card mb-6">
         <h4 class="font-bold mb-4">Resumen de tu Compra</h4>
         <div class="event-summary-box mb-4">
@@ -81,7 +64,25 @@
         {% endfor %}
       </div>
 
-      <!-- Aviso -->
+      <!-- TODAS LAS ENTRADAS CON QR -->
+      <div class="mb-8">
+        <h4 class="font-bold text-lg mb-4"><i class="fas fa-ticket-alt text-[#00AEEF] me-2"></i>Tus Entradas ({{ entradas|length }})</h4>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {% for entrada in entradas %}
+          <div class="ticket-mini-card">
+            <div class="ticket-mini-qr">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data={{ entrada.codigo_qr }}" alt="QR">
+            </div>
+            <div class="ticket-mini-info">
+              <p class="font-bold text-sm truncate">{{ entrada.descripcion_ubicacion }}</p>
+              <p class="text-xs text-gray-500 font-mono truncate">{{ entrada.codigo_ticket }}</p>
+              <p class="text-xs text-green-400 font-bold">Bs. {{ entrada.precio_pagado }}</p>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
       <div class="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mb-6">
         <div class="flex gap-3">
           <i class="fas fa-ticket-alt text-blue-500 mt-1"></i>
@@ -89,13 +90,12 @@
             <p class="font-bold text-sm">Entradas Registradas</p>
             <p class="text-xs text-gray-400">
               Tus {{ entradas|length }} entrada{{ entradas|length|pluralize }} han sido registradas.
-              Puedes verlas en "Mis Entradas" en cualquier momento.
+              Presenta el QR en la puerta del teatro para ingresar.
             </p>
           </div>
         </div>
       </div>
 
-      <!-- Info importante -->
       <div class="bg-black/20 rounded-xl p-6 mb-8">
         <h4 class="font-bold text-sm mb-4">Información Importante</h4>
         <ul class="text-xs text-gray-400 flex flex-col gap-3">
@@ -131,8 +131,33 @@
   </div>
 </div>
 
+<style>
+.ticket-mini-card {
+  background: #1E293B;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.ticket-mini-qr {
+  background: white;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  flex-shrink: 0;
+}
+.ticket-mini-qr img {
+  display: block;
+  width: 80px;
+  height: 80px;
+}
+.ticket-mini-info {
+  min-width: 0;
+}
+</style>
+
 <script>
-  // Limpiar el deadline del contador al completar la compra
   (function() {
     var keys = Object.keys(localStorage);
     keys.forEach(function(k) {

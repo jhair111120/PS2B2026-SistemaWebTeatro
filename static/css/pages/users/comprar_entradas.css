@@ -646,10 +646,42 @@ body {
 /* Ajustes Responsive */
 @media (max-width: 1024px) {
   .event-banner-wrapper {
-    aspect-ratio: 4 / 3; /* Un poco más cuadrado en móviles para que no sea tan pequeño */
+    aspect-ratio: 4 / 3;
   }
   
   .lg:sticky {
     position: static !important;
   }
+}
+
+/* ══════════════════════════════
+   QR DE PAGO
+══════════════════════════════ */
+.qr-payment-container {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  padding: 2rem;
+}
+
+.qr-payment-code {
+  background: white;
+  padding: 1.25rem;
+  border-radius: 1rem;
+  display: inline-block;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.qr-payment-code img {
+  display: block;
+  border-radius: 0.5rem;
+}
+
+#pago-step2 {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }

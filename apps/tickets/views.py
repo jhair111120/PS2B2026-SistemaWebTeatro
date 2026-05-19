@@ -69,6 +69,76 @@ def mis_tickets_view(request):
         'pasadas': pasadas,
     })
 
+
+@never_cache
+def validar_entrada_view(request):
+    """Valida una entrada escaneando el QR en la puerta del teatro."""
+    if not request.session.get('usuario_id'):
+        return JsonResponse({'error': 'No autenticado'}, status=401)
+
+    rol = (request.session.get('usuario_rol') or '').strip().lower()
+    if rol not in ('administrador', 'empleado'):
+        return JsonResponse({'error': 'Acceso restringido'}, status=403)
+
+    if request.method == 'GET':
+        return render(request, 'pages/tickets/validar_entrada.html')
+
+    codigo_qr = request.POST.get('codigo_qr', '').strip()
+    if not codigo_qr:
+        return JsonResponse({'valida': False, 'error': 'Código QR requerido'})
+
+    entrada = Entrada.objects.select_related(
+        'venta__reserva__evento',
+        'estado_entrada',
+        'detalle_reserva__evento_zona__zona',
+        'detalle_reserva__evento_asiento__asiento',
+    ).filter(codigo_qr=codigo_qr).first()
+
+    if not entrada:
+        return JsonResponse({'valida': False, 'error': 'Entrada no encontrada'})
+
+    if entrada.usada:
+        return JsonResponse({
+            'valida': False,
+            'error': 'Entrada YA USADA',
+            'entrada': {
+                'codigo': str(entrada.codigo_ticket),
+                'evento': entrada.venta.reserva.evento.nombre,
+                'ubicacion': entrada.descripcion_ubicacion,
+                'fecha_validacion': entrada.fecha_validacion.strftime('%d/%m/%Y %H:%M') if entrada.fecha_validacion else None,
+            }
+        })
+
+    if entrada.estado_entrada.nombre.lower() == 'cancelada':
+        return JsonResponse({'valida': False, 'error': 'Entrada CANCELADA'})
+
+    with transaction.atomic():
+        entrada.usada = True
+        entrada.fecha_validacion = timezone.now()
+        entrada.validado_por_usuario_id = request.session['usuario_id']
+        entrada.save(update_fields=['usada', 'fecha_validacion', 'validado_por_usuario'])
+
+        est_usada = EstadoEntrada.objects.filter(nombre__iexact='usada').first()
+        if est_usada:
+            entrada.estado_entrada = est_usada
+            entrada.save(update_fields=['estado_entrada'])
+
+    ea = entrada.detalle_reserva.evento_asiento
+    return JsonResponse({
+        'valida': True,
+        'entrada': {
+            'codigo': str(entrada.codigo_ticket),
+            'evento': entrada.venta.reserva.evento.nombre,
+            'fecha': entrada.venta.reserva.evento.fecha_evento.strftime('%d/%m/%Y'),
+            'hora': entrada.venta.reserva.evento.hora_evento.strftime('%H:%M') if entrada.venta.reserva.evento.hora_evento else '',
+            'ubicacion': entrada.descripcion_ubicacion,
+            'fila': ea.asiento.fila if ea else None,
+            'asiento': ea.asiento.numero if ea else None,
+            'comprador': entrada.venta.usuario.nombre if entrada.venta.usuario else '',
+        }
+    })
+
+
 # --- VISTAS DE BOLETERÍA (venta presencial) ---
 
 from django.views.decorators.http import require_POST as _require_post_bole

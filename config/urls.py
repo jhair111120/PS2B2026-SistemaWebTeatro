@@ -36,7 +36,7 @@ from apps.reservations.views import (
 
 # ── Mis tickets ───────────────────────────────────────────────────────────────
 from apps.tickets.views import (
-    mis_tickets_view,
+    mis_tickets_view, validar_entrada_view,
     boleteria_view, api_get_zonas, boleteria_confirmar_view,
 )
 
@@ -78,6 +78,7 @@ urlpatterns = [
 
     # ── MIS ENTRADAS ──────────────────────────────────────────────────────────
     path('mis-tickets/', mis_tickets_view, name='mis_tickets'),
+    path('validar-entrada/', validar_entrada_view, name='validar_entrada'),
 
     # ── BOLETERÍA (venta presencial) ──────────────────────────────────────────
     path('boleteria/', boleteria_view, name='boleteria'),
