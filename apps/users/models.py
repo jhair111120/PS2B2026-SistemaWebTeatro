@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
+from datetime import time
 
 class UsuarioManager(BaseUserManager):
     def create_user(self, correo, password=None, **extra):
@@ -156,8 +157,8 @@ class Rol(models.Model):
 class SesionDispositivo(models.Model):
     id = models.BigAutoField(primary_key=True)
     usuario = models.ForeignKey(
-        Usuario, 
-        on_delete=models.CASCADE, 
+        Usuario,
+        on_delete=models.CASCADE,
         related_name='sesiones_dispositivo'
     )
     session_key = models.CharField(max_length=40, unique=True)
@@ -174,3 +175,19 @@ class SesionDispositivo(models.Model):
 
     def __str__(self):
         return f"{self.sistema_operativo} • {self.navegador} ({self.usuario.correo})"
+
+
+class ConfiguracionSistema(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    soporte_humano_hora_inicio = models.TimeField(default=time(8, 0))
+    soporte_humano_hora_fin = models.TimeField(default=time(14, 0))
+    soporte_humano_habilitado = models.BooleanField(default=True)
+
+    class Meta:
+        managed = True
+        db_table = 'configuracion_sistema'
+        verbose_name = 'Configuración del Sistema'
+        verbose_name_plural = 'Configuraciones del Sistema'
+
+    def __str__(self):
+        return f"Configuración del Sistema"

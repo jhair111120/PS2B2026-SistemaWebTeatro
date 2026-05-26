@@ -27,12 +27,13 @@ from django.utils.timesince import timesince
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 
-from .models import Usuario, Rol, SesionDispositivo
+from .models import Usuario, Rol, SesionDispositivo, ConfiguracionSistema
 from apps.events.models import Evento, EventoAsiento, EventoZona, Zona
 from apps.payments.models import EstadoPago, MetodoPago, Pago, MetodoPagoGuardado
 from apps.reservations.models import DetalleReserva, EstadoReserva, Reserva
 from apps.support.models import EstadoSoporte, Soporte, SoporteMensaje
 from apps.tickets.models import CanalVenta, Entrada, EstadoVenta, Venta
+from datetime import time
 
 
 def _registrar_sesion_dispositivo(request, usuario):
@@ -1153,6 +1154,42 @@ def admin_config_security_save(request):
 
 
 @never_cache
+@require_POST
+def admin_config_sistema_save(request):
+    gate = _admin_gate(request)
+    if gate:
+        return gate
+
+    try:
+        config, created = ConfiguracionSistema.objects.get_or_create(pk=1)
+
+        hora_inicio = request.POST.get('soporte_humano_hora_inicio')
+        hora_fin = request.POST.get('soporte_humano_hora_fin')
+        habilitado = request.POST.get('soporte_humano_habilitado') == 'on'
+
+        if hora_inicio:
+            try:
+                hora_inicio_obj = time.fromisoformat(hora_inicio)
+                config.soporte_humano_hora_inicio = hora_inicio_obj
+            except ValueError:
+                pass
+        if hora_fin:
+            try:
+                hora_fin_obj = time.fromisoformat(hora_fin)
+                config.soporte_humano_hora_fin = hora_fin_obj
+            except ValueError:
+                pass
+        config.soporte_humano_habilitado = habilitado
+
+        config.save()
+        messages.success(request, f'Configuración del sistema actualizada. Horario: {config.soporte_humano_hora_inicio} - {config.soporte_humano_hora_fin}')
+    except Exception as e:
+        messages.error(request, f'Error al guardar la configuración: {str(e)}')
+
+    return redirect(reverse('admin_panel') + '?tab=configuracion&cfg_tab=sistema')
+
+
+@never_cache
 def admin_panel(request):
     if not request.session.get('usuario_id'):
         return redirect('login')
@@ -1621,6 +1658,8 @@ def admin_panel(request):
     noti_unread = SoporteMensaje.objects.count()
     canales_count = CanalVenta.objects.count()
 
+    config = ConfiguracionSistema.objects.first()
+
     return render(
         request,
         'pages/admin/dashboard.html',
@@ -1668,6 +1707,7 @@ def admin_panel(request):
             'soporte_list': soporte_list,
             'soporte_activo': soporte_activo,
             'estados_soporte': estados_soporte,
+            'config': config,
             'soporte_total': soporte_total,
             'soporte_pendientes': soporte_pendientes,
             'soporte_cerrados': soporte_cerrados,
