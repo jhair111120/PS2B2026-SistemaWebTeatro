@@ -49,6 +49,16 @@ def _zona_primera_patrones(*keywords):
     return None
 
 
+def _obtener_zonas_catalogo():
+    """Obtiene las zonas del catálogo en orden correcto."""
+    return {
+        'super_vip': Zona.objects.filter(nombre__icontains='SUPER VIP').first(),
+        'vip': Zona.objects.filter(nombre__icontains='VIP').exclude(nombre__icontains='SUPER').first(),
+        'platea': Zona.objects.filter(nombre__icontains='PLATEA').first(),
+        'general': Zona.objects.filter(nombre__icontains='GENERAL').first(),
+    }
+
+
 def _resolver_estados():
     qs = EstadoEvento.objects.all()
     if not qs.exists():
@@ -98,14 +108,13 @@ def _payload_errors(request):
     capacidad_total_raw = request.POST.get('capacidad_total')
 
     precio_specs = []
-    vip = _zona_primera_patrones('VIP', 'Preferencial')
-    graderia = _zona_primera_patrones('Gradería', 'Graderia', 'Preferente')
-    general = _zona_primera_patrones('General', 'Fosa', 'Popular')
+    zonas_cat = _obtener_zonas_catalogo()
 
     for field, zona_obj, label in (
-        ('precio_vip', vip, 'VIP'),
-        ('precio_graderia', graderia, 'Gradería'),
-        ('precio_general', general, 'General'),
+        ('precio_super_vip', zonas_cat['super_vip'], 'SUPER VIP'),
+        ('precio_vip', zonas_cat['vip'], 'VIP'),
+        ('precio_platea', zonas_cat['platea'], 'PLATEA'),
+        ('precio_general', zonas_cat['general'], 'GENERAL'),
     ):
         p = _parse_money(request.POST.get(field))
         if p is None:

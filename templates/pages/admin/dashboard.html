@@ -205,8 +205,9 @@
                   data-nombre="{{ ev.nombre|escape }}"
                   data-fecha="{{ ev.fecha_evento|date:'Y-m-d' }}"
                   data-hora="{{ ev.hora_evento|time:'H:i' }}"
+                  data-psvip="{% if fila.precio_super_vip != None %}{{ fila.precio_super_vip }}{% endif %}"
                   data-pvip="{% if fila.precio_vip != None %}{{ fila.precio_vip }}{% endif %}"
-                  data-pgrad="{% if fila.precio_grad != None %}{{ fila.precio_grad }}{% endif %}"
+                  data-pplatea="{% if fila.precio_platea != None %}{{ fila.precio_platea }}{% endif %}"
                   data-pgen="{% if fila.precio_gen != None %}{{ fila.precio_gen }}{% endif %}"
                   data-cap="{% if fila.cap_total %}{{ fila.cap_total }}{% endif %}"
                   data-activo="{% if fila.es_activo %}1{% else %}0{% endif %}"
@@ -1019,23 +1020,27 @@
         </div>
         <div class="admin-modal__grid admin-modal__grid--2" style="margin-top:1rem;">
           <div class="admin-modal__field">
-            <label for="modal-pvip">Precio VIP (Bs.)</label>
-            <input type="number" step="0.01" min="0" id="modal-pvip" name="precio_vip" placeholder="150" />
+            <label for="modal-psvip">Precio SUPER VIP (Bs.)</label>
+            <input type="number" step="0.01" min="0" id="modal-psvip" name="precio_super_vip" placeholder="200" />
           </div>
           <div class="admin-modal__field">
-            <label for="modal-pgrad">Precio gradería (Bs.)</label>
-            <input type="number" step="0.01" min="0" id="modal-pgrad" name="precio_graderia" placeholder="80" />
+            <label for="modal-pvip">Precio VIP (Bs.)</label>
+            <input type="number" step="0.01" min="0" id="modal-pvip" name="precio_vip" placeholder="150" />
           </div>
         </div>
         <div class="admin-modal__grid admin-modal__grid--2" style="margin-top:1rem;">
           <div class="admin-modal__field">
-            <label for="modal-pgen">Precio general (Bs.)</label>
-            <input type="number" step="0.01" min="0" id="modal-pgen" name="precio_general" placeholder="50" />
+            <label for="modal-pplatea">Precio PLATEA (Bs.)</label>
+            <input type="number" step="0.01" min="0" id="modal-pplatea" name="precio_platea" placeholder="100" />
           </div>
           <div class="admin-modal__field">
-            <label for="modal-cap">Capacidad total</label>
-            <input type="number" min="0" step="1" id="modal-cap" name="capacidad_total" placeholder="2000" />
+            <label for="modal-pgen">Precio GENERAL (Bs.)</label>
+            <input type="number" step="0.01" min="0" id="modal-pgen" name="precio_general" placeholder="50" />
           </div>
+        </div>
+        <div class="admin-modal__field" style="margin-top:1rem;">
+          <label for="modal-cap">Capacidad total</label>
+          <input type="number" min="0" step="1" id="modal-cap" name="capacidad_total" placeholder="2000" />
         </div>
         <div class="admin-modal__row-toggle" style="margin-top:1.15rem;">
           <label class="admin-switch">
@@ -1095,8 +1100,9 @@
       var inputNombre = document.getElementById('modal-nombre-ev');
       var inputFecha = document.getElementById('modal-fecha-ev');
       var inputHora = document.getElementById('modal-hora-ev');
+      var inputSuperVip = document.getElementById('modal-psvip');
       var inputVip = document.getElementById('modal-pvip');
-      var inputGrad = document.getElementById('modal-pgrad');
+      var inputPlatea = document.getElementById('modal-pplatea');
       var inputGen = document.getElementById('modal-pgen');
       var inputCap = document.getElementById('modal-cap');
       var inputActivo = document.getElementById('modal-activo-ev');
@@ -1112,8 +1118,9 @@
         if (inputNombre) inputNombre.value = '';
         if (inputFecha) inputFecha.value = '';
         if (inputHora) inputHora.value = '';
+        if (inputSuperVip) inputSuperVip.value = '';
         if (inputVip) inputVip.value = '';
-        if (inputGrad) inputGrad.value = '';
+        if (inputPlatea) inputPlatea.value = '';
         if (inputGen) inputGen.value = '';
         if (inputCap) inputCap.value = '';
         if (inputActivo) inputActivo.checked = true;
@@ -1132,8 +1139,9 @@
         if (inputNombre) inputNombre.value = btn.getAttribute('data-nombre') || '';
         if (inputFecha) inputFecha.value = btn.getAttribute('data-fecha') || '';
         if (inputHora) inputHora.value = btn.getAttribute('data-hora') || '';
+        if (inputSuperVip) inputSuperVip.value = btn.getAttribute('data-psvip') || '';
         if (inputVip) inputVip.value = btn.getAttribute('data-pvip') || '';
-        if (inputGrad) inputGrad.value = btn.getAttribute('data-pgrad') || '';
+        if (inputPlatea) inputPlatea.value = btn.getAttribute('data-pplatea') || '';
         if (inputGen) inputGen.value = btn.getAttribute('data-pgen') || '';
         if (inputCap) inputCap.value = btn.getAttribute('data-cap') || '';
         if (inputActivo) inputActivo.checked = (btn.getAttribute('data-activo') || '0') === '1';
