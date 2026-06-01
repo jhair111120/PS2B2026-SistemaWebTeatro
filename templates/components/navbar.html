@@ -29,7 +29,10 @@
       </ul>
     </div>
 
-    <div class="d-flex align-items-center">
+    <div class="d-flex align-items-center gap-2">
+      <a href="{% url 'carrito' %}" class="nav-link px-2 position-relative" title="Carrito de compras" style="font-size:1.2rem;color:{% if request.resolver_match.url_name == 'carrito' %}#00AEEF{% else %}#9CA3AF{% endif %};transition:color 0.2s;" onmouseover="this.style.color='#00AEEF'" onmouseout="this.style.color='{% if request.resolver_match.url_name == 'carrito' %}#00AEEF{% else %}#9CA3AF{% endif %}'">
+        <i class="fas fa-shopping-cart"></i>
+      </a>
       {% if request.session.usuario_id %}
       <div class="dropdown">
         <button class="btn-account dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">

@@ -1,0 +1,211 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Carrito de Compras | Teatro Al Aire Libre{% endblock %}
+
+{% block content %}
+<style>
+.cart-page { background: #0A0E14; min-height: 100vh; }
+.cart-container { max-width: 900px; margin: 0 auto; padding: 2rem 1rem; }
+.cart-header { margin-bottom: 2rem; }
+.cart-header h1 { font-size: 2rem; font-weight: 800; color: white; margin: 0; }
+.cart-header p { color: #9CA3AF; margin-top: 0.25rem; }
+
+.cart-card {
+  background: #151920;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.cart-event-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.cart-event-name {
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: white;
+}
+.cart-event-date {
+  font-size: 0.8rem;
+  color: #9CA3AF;
+}
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.cart-item:last-child { border-bottom: none; }
+.cart-item-zone {
+  font-weight: 600;
+  color: white;
+  font-size: 0.95rem;
+}
+.cart-item-detail {
+  font-size: 0.8rem;
+  color: #7dd3fc;
+  margin-top: 0.15rem;
+}
+.cart-item-qty {
+  font-size: 0.8rem;
+  color: #9CA3AF;
+}
+.cart-item-price {
+  font-weight: 700;
+  color: white;
+  text-align: right;
+}
+
+.cart-totals {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.cart-total-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  padding: 0.25rem 0;
+  color: #9CA3AF;
+}
+.cart-total-line.grand {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #00AEEF;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  margin-top: 0.5rem;
+}
+
+.cart-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+.btn-checkout {
+  flex: 1;
+  padding: 0.85rem;
+  border-radius: 0.75rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+.btn-checkout.primary {
+  background: linear-gradient(135deg, #00AEEF, #0095cc);
+  color: white;
+}
+.btn-checkout.primary:hover { filter: brightness(1.1); }
+.btn-checkout.secondary {
+  background: rgba(255,255,255,0.06);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.btn-checkout.secondary:hover { background: rgba(255,255,255,0.1); }
+
+.empty-cart {
+  text-align: center;
+  padding: 5rem 1rem;
+}
+.empty-cart i { font-size: 4rem; color: #374151; margin-bottom: 1.5rem; display: block; }
+.empty-cart h2 { font-size: 1.5rem; font-weight: 700; color: white; margin-bottom: 0.5rem; }
+.empty-cart p { color: #9CA3AF; margin-bottom: 2rem; }
+</style>
+
+<div class="cart-page">
+  <div class="cart-container">
+
+    <div class="cart-header">
+      <h1><i class="fas fa-shopping-cart me-3" style="color:#00AEEF;"></i>Carrito de Compras</h1>
+      <p>{% if cart_count %}{{ cart_count }} entrada{{ cart_count|pluralize:'s' }} en {{ carritos|length }} evento{{ carritos|length|pluralize:'s' }}{% else %}Revisa tus entradas antes de pagar{% endif %}</p>
+    </div>
+
+    {% if carritos %}
+      {% for c in carritos %}
+      <div class="cart-card">
+        <div class="cart-event-header">
+          <div>
+            <div class="cart-event-name">{{ c.evento.nombre }}</div>
+            <div class="cart-event-date">{{ c.evento.fecha_evento|date:"d/m/Y" }} — {{ c.evento.hora_evento|time:"H:i" }}</div>
+          </div>
+          <span style="font-size:0.85rem;color:#9CA3AF;">{{ c.item_count }} entrada{{ c.item_count|pluralize:'s' }}</span>
+        </div>
+
+        {% for item in c.items %}
+        <div class="cart-item">
+          <div>
+            <div class="cart-item-zone">{{ item.zona_nombre }}</div>
+            {% if item.asientos_info %}
+            <div class="cart-item-detail"><i class="fas fa-chair me-1" style="font-size:0.65rem;"></i>{{ item.asientos_info|join:", " }}</div>
+            {% endif %}
+            <div class="cart-item-qty">{{ item.qty }} × Bs. {{ item.precio }}</div>
+          </div>
+          <div class="cart-item-price">Bs. {{ item.subtotal }}</div>
+        </div>
+        {% endfor %}
+
+        <div class="cart-totals">
+          <div class="cart-total-line">
+            <span>Subtotal</span>
+            <span>Bs. {{ c.subtotal }}</span>
+          </div>
+          <div class="cart-total-line">
+            <span>Cargo por servicio</span>
+            <span>Bs. {{ c.cargo_servicio }}</span>
+          </div>
+          <div class="cart-total-line grand">
+            <span>Total</span>
+            <span>Bs. {{ c.total }}</span>
+          </div>
+        </div>
+
+        <div class="cart-actions">
+          <form method="POST" action="{% url 'finalizar_compra' c.evento_id %}" style="flex:1;display:flex;">
+            {% csrf_token %}
+            <input type="hidden" name="carrito_json" value='{{ c.items_json|safe }}'>
+            <button type="submit" class="btn-checkout primary">
+              <i class="fas fa-lock"></i> Ir a Pagar — Bs. {{ c.total }}
+            </button>
+          </form>
+          <a href="{% url 'seleccionar_zona' c.evento_id %}" class="btn-checkout secondary">
+            <i class="fas fa-edit"></i> Modificar
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+
+      {% if carritos|length > 1 %}
+      <div class="text-center mt-4 pt-3" style="color:#9CA3AF;font-size:0.85rem;">
+        <i class="fas fa-info-circle me-1"></i>
+        Tienes compras en {{ carritos|length }} eventos diferentes. Finaliza cada una por separado.
+      </div>
+      {% endif %}
+    {% else %}
+      <div class="cart-card">
+        <div class="empty-cart">
+          <i class="fas fa-shopping-cart"></i>
+          <h2>Tu carrito está vacío</h2>
+          <p>Explora nuestros eventos y agrega entradas a tu carrito para continuar.</p>
+          <a href="{% url 'eventos' %}" class="btn-checkout primary" style="display:inline-flex;width:auto;padding:0.85rem 2.5rem;text-decoration:none;">
+            <i class="fas fa-calendar-alt"></i> Ver Eventos
+          </a>
+        </div>
+      </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

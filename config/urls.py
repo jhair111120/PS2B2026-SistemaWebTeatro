@@ -35,6 +35,7 @@ from apps.reservations.views import (
     confirmar_compra_view,
     compra_exitosa_view,
     guardar_carrito_api,
+    carrito_view,
 )
 
 # ── Mis tickets ───────────────────────────────────────────────────────────────
@@ -84,6 +85,9 @@ urlpatterns = [
     path('recuperar-password/', forgot_password_view, name='forgot_password'),
     path('reset/<uidb64>/<token>/', reset_password_view, name='reset_password'),
     path('logout/', logout_view, name='logout'),
+
+    # ── CARRITO ───────────────────────────────────────────────────────────────
+    path('carrito/', carrito_view, name='carrito'),
 
     # ── MIS ENTRADAS ──────────────────────────────────────────────────────────
     path('mis-tickets/', mis_tickets_view, name='mis_tickets'),

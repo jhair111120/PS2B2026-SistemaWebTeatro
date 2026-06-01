@@ -177,6 +177,81 @@ def api_asientos_view(request, evento_id, evento_zona_id):
 # ─────────────────────────────────────────────
 
 @never_cache
+def carrito_view(request):
+    """Página independiente del carrito de compras."""
+    from decimal import Decimal as _D
+    from apps.events.models import Evento as _Evento, EventoAsiento as _EA
+
+    carritos = []
+    prefix = 'carrito_'
+    for key in list(request.session.keys()):
+        if not key.startswith(prefix):
+            continue
+        evento_id_str = key[len(prefix):]
+        try:
+            evento_id = int(evento_id_str)
+        except ValueError:
+            continue
+        carrito_raw = request.session.get(key, [])
+        if not carrito_raw:
+            continue
+        evento = _Evento.objects.filter(id=evento_id).first()
+        if not evento:
+            continue
+        items = []
+        subtotal = _D('0')
+        for item in carrito_raw:
+            ez = EventoZona.objects.select_related('zona').filter(
+                id=item.get('zona_id'), evento_id=evento_id
+            ).first()
+            if not ez:
+                continue
+            asiento_ids = item.get('asiento_ids', [])
+            qty = len(asiento_ids) if asiento_ids else int(item.get('qty', 1))
+            item_subtotal = ez.precio_base * qty
+            subtotal += item_subtotal
+            asientos_info = []
+            if asiento_ids:
+                eas = _EA.objects.select_related('asiento').filter(
+                    id__in=asiento_ids, evento_zona=ez
+                )
+                asientos_info = [f"F {ea.asiento.fila}-{ea.asiento.numero}" for ea in eas]
+            items.append({
+                'zona_id': ez.id,
+                'zona_nombre': ez.zona.nombre,
+                'precio': ez.precio_base,
+                'qty': qty,
+                'subtotal': item_subtotal,
+                'asientos_info': asientos_info,
+                'asiento_ids': asiento_ids,
+            })
+        if items:
+            cargo_servicio = _D('5.00')
+            total = subtotal + cargo_servicio
+            import json as _json
+            carritos.append({
+                'evento_id': evento_id,
+                'evento': evento,
+                'items': items,
+                'items_json': _json.dumps([{
+                    'zona_id': it['zona_id'],
+                    'qty': it['qty'],
+                    'asiento_ids': it.get('asiento_ids', []),
+                } for it in items]),
+                'subtotal': subtotal,
+                'cargo_servicio': cargo_servicio,
+                'total': total,
+                'item_count': sum(it['qty'] for it in items),
+            })
+
+    return render(request, 'pages/users/carrito.html', {
+        'carritos': carritos,
+        'total_general': sum(c['total'] for c in carritos),
+        'cart_count': sum(c['item_count'] for c in carritos),
+    })
+
+
+@never_cache
 def finalizar_compra_view(request, evento_id):
     guard = _require_login(request, next_url=f'/comprar-entrada/{evento_id}/')
     if guard:
