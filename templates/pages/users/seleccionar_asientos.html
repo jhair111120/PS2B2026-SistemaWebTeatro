@@ -233,9 +233,18 @@
             </div>
           </div>
 
+          {% if user_logged_in %}
           <button id="btn-continue-payment" class="btn-select-zone w-full font-bold" disabled>
             <i class="fas fa-lock me-2"></i>Continuar al Pago
           </button>
+          {% else %}
+          <button type="button" class="btn-select-zone w-full font-bold"
+            data-bs-toggle="modal" data-bs-target="#authModal"
+            onclick="switchAuthTab('login')"
+            style="background:linear-gradient(135deg,#64748B,#475569);cursor:pointer;">
+            <i class="fas fa-lock me-2"></i>Inicia Sesión para Comprar
+          </button>
+          {% endif %}
         </div>
       </div>
 
@@ -260,6 +269,7 @@
   const ASIENTOS_DATA  = {{ asientos_json|safe }};
   const FINALIZAR_URL  = "{% url 'finalizar_compra' evento.id %}";
   const CSRF_TOKEN     = "{{ csrf_token }}";
+  const USER_LOGGED_IN = {{ user_logged_in|lower }};
 </script>
 <script src="{% static 'js/pages/users/seleccionar_asientos.js' %}"></script>
 

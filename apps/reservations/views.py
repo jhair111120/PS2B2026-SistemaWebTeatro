@@ -39,10 +39,6 @@ def _require_login(request, next_url=None):
 
 @never_cache
 def seleccionar_zona_view(request, evento_id):
-    guard = _require_login(request, next_url=f'/comprar-entrada/{evento_id}/')
-    if guard:
-        return guard
-
     hoy = timezone.localdate()
     evento = get_object_or_404(
         Evento.objects.select_related('estado_evento').prefetch_related('eventozona_set__zona'),
@@ -74,10 +70,12 @@ def seleccionar_zona_view(request, evento_id):
             'disponibles': disponibles,
         })
 
+    user_logged_in = request.session.get('usuario_id') is not None
     return render(request, 'pages/users/seleccionar_zona.html', {
         'evento': evento,
         'zonas_data': zonas_data,
         'zonas_json': json.dumps(zonas_data),
+        'user_logged_in': user_logged_in,
     })
 
 
@@ -87,10 +85,6 @@ def seleccionar_zona_view(request, evento_id):
 
 @never_cache
 def seleccionar_asientos_view(request, evento_id, evento_zona_id):
-    guard = _require_login(request, next_url=f'/comprar-entrada/{evento_id}/')
-    if guard:
-        return guard
-
     hoy = timezone.localdate()
     evento = get_object_or_404(
         Evento.objects.select_related('estado_evento'),
@@ -138,6 +132,7 @@ def seleccionar_asientos_view(request, evento_id, evento_zona_id):
         for ea in evento_asientos
     ])
 
+    user_logged_in = request.session.get('usuario_id') is not None
     return render(request, 'pages/users/seleccionar_asientos.html', {
         'evento': evento,
         'ez': ez,
@@ -146,6 +141,7 @@ def seleccionar_asientos_view(request, evento_id, evento_zona_id):
         'limite': ez.limite_por_usuario,
         'precio': ez.precio_base,
         'color': ez.zona.codigo_color or '#1E293B',
+        'user_logged_in': user_logged_in,
     })
 
 

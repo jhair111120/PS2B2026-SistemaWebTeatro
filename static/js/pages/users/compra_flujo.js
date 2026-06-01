@@ -20,7 +20,9 @@ document.addEventListener('DOMContentLoaded', function () {
   var step = page.dataset.purchaseStep;
 
   if (step === 'zones') {
-    initTimer();
+    if (typeof USER_LOGGED_IN !== 'undefined' && USER_LOGGED_IN) {
+      initTimer();
+    }
     initZoneMap();
   }
 
@@ -90,6 +92,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Si tiene URL de asientos, redirigir directamente al mapa de asientos
         if (asientosUrl) {
+          var isLoggedIn = typeof USER_LOGGED_IN !== 'undefined' ? USER_LOGGED_IN : false;
+          if (!isLoggedIn) {
+            var authModal = document.getElementById('authModal');
+            if (authModal) {
+              var modal = new bootstrap.Modal(authModal);
+              if (typeof switchAuthTab === 'function') switchAuthTab('login');
+              modal.show();
+            }
+            return;
+          }
           // Animación de transición antes de redirigir
           var overlay = document.createElement('div');
           overlay.style.cssText = 'position:fixed;inset:0;background:#0A0E14;z-index:9999;opacity:0;transition:opacity .4s;pointer-events:none;display:flex;align-items:center;justify-content:center;';
