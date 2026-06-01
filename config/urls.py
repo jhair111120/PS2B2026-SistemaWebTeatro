@@ -41,6 +41,7 @@ from apps.reservations.views import (
 from apps.tickets.views import (
     mis_tickets_view, validar_entrada_view, registro_ventas_view,
     boleteria_view, api_get_zonas, boleteria_confirmar_view,
+    api_mis_tickets_venta,
 )
 
 # ── Soporte ───────────────────────────────────────────────────────────────────
@@ -93,6 +94,7 @@ urlpatterns = [
     path('boleteria/', boleteria_view, name='boleteria'),
     path('boleteria/confirmar/', boleteria_confirmar_view, name='boleteria_confirmar'),
     path('api/boleteria/zonas/<int:evento_id>/', api_get_zonas, name='api_boleteria_zonas'),
+    path('api/mis-tickets/<int:venta_id>/', api_mis_tickets_venta, name='api_mis_tickets_venta'),
 
     # ── PANEL ADMINISTRADOR ───────────────────────────────────────────────────
     path('admin-panel/', admin_panel, name='admin_panel'),

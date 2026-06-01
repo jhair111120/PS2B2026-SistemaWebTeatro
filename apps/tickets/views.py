@@ -22,6 +22,43 @@ from .models import Entrada, Venta
 
 
 @never_cache
+def api_mis_tickets_venta(request, venta_id):
+    """JSON con tickets de una venta para descargar desde perfil."""
+    if not request.session.get('usuario_id'):
+        return JsonResponse({'error': 'No autenticado'}, status=401)
+
+    venta = get_object_or_404(
+        Venta.objects.select_related(
+            'reserva__evento',
+            'usuario',
+        ).prefetch_related(
+            'entradas__detalle_reserva__evento_zona__zona',
+        ),
+        id=venta_id,
+        usuario_id=request.session['usuario_id'],
+    )
+
+    entradas_data = []
+    for e in venta.entradas.all():
+        entradas_data.append({
+            'codigo_qr': e.codigo_qr,
+            'codigo_ticket': str(e.codigo_ticket),
+            'ubicacion': e.descripcion_ubicacion,
+            'precio': float(e.precio_pagado),
+        })
+
+    return JsonResponse({
+        'evento': venta.reserva.evento.nombre,
+        'fecha': venta.reserva.evento.fecha_evento.strftime('%d/%m/%Y'),
+        'hora': venta.reserva.evento.hora_evento.strftime('%H:%M') if venta.reserva.evento.hora_evento else '',
+        'lugar': venta.reserva.evento.lugar,
+        'total': float(venta.total),
+        'codigo_reserva': venta.reserva.codigo_reserva,
+        'entradas': entradas_data,
+    })
+
+
+@never_cache
 def mis_tickets_view(request):
     if not request.session.get('usuario_id'):
         messages.error(request, 'Debes iniciar sesión para ver tus entradas.')

@@ -258,9 +258,15 @@
             </div>
             <div class="text-white-50" style="font-size: 0.75rem;">ID: {{ venta.reserva.codigo_reserva }}</div>
           </div>
-          <div class="text-end">
-            <span class="status-badge mb-2 d-inline-block">{{ venta.estado_venta.nombre|title }}</span>
-            <div class="fw-bold text-info">Bs. {{ venta.total }}</div>
+          <div class="text-end d-flex align-items-center gap-3">
+            <button class="btn-download-ticket" onclick="descargarTicketsVenta({{ venta.id }}, '{{ venta.reserva.evento.nombre|escapejs }}')"
+              title="Descargar tickets" style="background:none;border:1px solid rgba(255,255,255,0.15);color:#00AEEF;border-radius:8px;padding:6px 12px;font-size:0.8rem;cursor:pointer;transition:all 0.2s;">
+              <i class="fas fa-download"></i>
+            </button>
+            <div>
+              <span class="status-badge mb-2 d-inline-block">{{ venta.estado_venta.nombre|title }}</span>
+              <div class="fw-bold text-info">Bs. {{ venta.total }}</div>
+            </div>
           </div>
         </div>
         {% empty %}
@@ -318,6 +324,108 @@
     </div>
   </div>
 </div>
+
+<canvas id="ticket-download-canvas" style="display:none;"></canvas>
+
+<script>
+function descargarTicketsVenta(ventaId, eventoNombre) {
+  fetch('/api/mis-tickets/' + ventaId + '/')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.error) { alert(data.error); return; }
+      var nombreArchivo = 'entradas-' + eventoNombre.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+      data.entradas.forEach(function(entrada, i) {
+        descargarTicketIndividual(entrada, data, nombreArchivo + '-' + (i + 1));
+      });
+    })
+    .catch(function() { alert('Error al obtener los tickets.'); });
+}
+
+function descargarTicketIndividual(entrada, data, nombreArchivo) {
+  var qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(entrada.codigo_qr);
+  var img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = function() {
+    var canvas = document.getElementById('ticket-download-canvas');
+    var W = 600, H = 340;
+    canvas.width = W;
+    canvas.height = H;
+    var ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#151920';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#00AEEF';
+    ctx.fillRect(0, 0, W, 6);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(W - 230, 20, 210, 210);
+    ctx.drawImage(img, W - 225, 25, 200, 200);
+
+    ctx.fillStyle = '#9CA3AF';
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(entrada.codigo_ticket.substring(0, 30), W - 125, 245);
+
+    ctx.fillStyle = '#00AEEF';
+    ctx.font = 'bold 13px Inter, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('TEATRO AL AIRE LIBRE · "JAIME LAREDO"', 24, 40);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 22px Inter, sans-serif';
+    wrapTextTicket(ctx, data.evento, 24, 75, 330, 28);
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(24, 115); ctx.lineTo(340, 115); ctx.stroke();
+
+    var lineas = [
+      ['Fecha', data.fecha],
+      ['Hora', data.hora + ' hrs'],
+      ['Ubicaci\u00f3n', entrada.ubicacion],
+      ['Total', 'Bs. ' + data.total.toFixed(2)],
+    ];
+    var y = 140;
+    lineas.forEach(function(d) {
+      ctx.fillStyle = '#9CA3AF';
+      ctx.font = '11px Inter, sans-serif';
+      ctx.fillText(d[0].toUpperCase(), 24, y);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 14px Inter, sans-serif';
+      ctx.fillText(d[1], 24, y + 18);
+      y += 42;
+    });
+
+    ctx.fillStyle = '#00AEEF';
+    ctx.fillRect(0, H - 6, W, 6);
+
+    var link = document.createElement('a');
+    link.download = nombreArchivo + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  };
+  img.onerror = function() {
+    alert('No se pudo generar la imagen. Verifica tu conexi\u00f3n a internet.');
+  };
+  img.src = qrUrl;
+}
+
+function wrapTextTicket(ctx, text, x, y, maxWidth, lineHeight) {
+  var words = text.split(' ');
+  var line = '';
+  for (var i = 0; i < words.length; i++) {
+    var testLine = line + words[i] + ' ';
+    if (ctx.measureText(testLine).width > maxWidth && i > 0) {
+      ctx.fillText(line, x, y);
+      line = words[i] + ' ';
+      y += lineHeight;
+    } else {
+      line = testLine;
+    }
+  }
+  ctx.fillText(line, x, y);
+}
+</script>
 
 <script src="{% static 'js/pages/users/perfil.js' %}"></script>
 {% endblock %}
