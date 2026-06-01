@@ -7,6 +7,74 @@
 <link rel="stylesheet" href="{% static 'css/pages/users/comprar_entradas.css' %}" />
 <link rel="stylesheet" href="{% static 'css/pages/users/seleccionar_asientos.css' %}" />
 
+<style>
+.purchase-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 2rem;
+  padding: 1rem 0;
+}
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  position: relative;
+  z-index: 1;
+}
+.step-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  transition: all 0.3s;
+}
+.step-circle.complete {
+  background: #00AEEF;
+  color: white;
+  box-shadow: 0 0 12px rgba(0, 174, 239, 0.5);
+}
+.step-circle.active {
+  background: #00AEEF;
+  color: white;
+  box-shadow: 0 0 16px rgba(0, 174, 239, 0.6);
+  transform: scale(1.08);
+  border: 2px solid rgba(255,255,255,0.3);
+}
+.step-circle.inactive {
+  background: transparent;
+  color: #4B5563;
+  border: 2px solid #4B5563;
+}
+.step-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.step-label.complete { color: #00AEEF; }
+.step-label.active { color: white; }
+.step-label.inactive { color: #4B5563; }
+.step-connector {
+  flex: 1;
+  max-width: 80px;
+  min-width: 30px;
+  height: 2px;
+  margin: 0 4px;
+  margin-bottom: 1.6rem;
+  transition: all 0.3s;
+}
+.step-connector.complete { background: #00AEEF; }
+.step-connector.inactive { background: #2D3748; }
+</style>
+
 <div class="min-h-screen py-8 px-4" data-purchase-step="seats">
   <span id="evento-id-data" data-evento-id="{{ evento.id }}" style="display:none;"></span>
 
@@ -18,6 +86,28 @@
         <i class="fas fa-arrow-left"></i>
         <span>Volver al mapa de zonas</span>
       </a>
+    </div>
+
+    <div class="purchase-steps">
+      <div class="step-item">
+        <div class="step-circle complete"><i class="fas fa-check" style="font-size:0.8rem;"></i></div>
+        <span class="step-label complete">Zona</span>
+      </div>
+      <div class="step-connector complete"></div>
+      <div class="step-item">
+        <div class="step-circle active"><i class="fas fa-couch" style="font-size:0.85rem;"></i></div>
+        <span class="step-label active">Asientos</span>
+      </div>
+      <div class="step-connector inactive"></div>
+      <div class="step-item">
+        <div class="step-circle inactive">3</div>
+        <span class="step-label inactive">Pago</span>
+      </div>
+      <div class="step-connector inactive"></div>
+      <div class="step-item">
+        <div class="step-circle inactive">4</div>
+        <span class="step-label inactive">Confirmación</span>
+      </div>
     </div>
 
     <!-- Encabezado -->
