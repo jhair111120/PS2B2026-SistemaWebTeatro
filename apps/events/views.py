@@ -13,12 +13,47 @@ from django.core.validators import URLValidator
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
 
-from .models import Evento, EstadoEvento, EventoZona, Zona
+from .models import Evento, EstadoEvento, EventoZona, Zona, EventoAsiento
 
 
 # ─────────────────────────────────────────────
-# HELPERS ADMIN
+# HELPERS
 # ─────────────────────────────────────────────
+
+def _disponibilidad_evento(evento):
+    from django.db.models import Count, Q
+    stats = EventoAsiento.objects.filter(
+        evento_zona__evento=evento
+    ).aggregate(
+        total=Count('id'),
+        disponibles=Count('id', filter=Q(estado=EventoAsiento.Estado.DISPONIBLE)),
+    )
+    total = stats['total'] or 0
+    disponibles = stats['disponibles'] or 0
+
+    if total == 0:
+        return {'texto': 'Disponible', 'clase': 'badge-disponible', 'porcentaje': 100, 'disponibles': 0, 'total': 0}
+
+    porcentaje = (disponibles / total) * 100
+
+    if disponibles == 0:
+        texto = 'Agotado'
+        clase = 'badge-agotado'
+    elif disponibles <= 10 or porcentaje <= 20:
+        texto = 'Pocos asientos'
+        clase = 'badge-pocos'
+    else:
+        texto = 'Disponible'
+        clase = 'badge-disponible'
+
+    return {
+        'texto': texto,
+        'clase': clase,
+        'porcentaje': round(porcentaje, 1),
+        'disponibles': disponibles,
+        'total': total,
+    }
+
 
 def _require_admin(request):
     if not request.session.get('usuario_id'):
@@ -243,10 +278,12 @@ def inicio_view(request):
         zonas = ev.eventozona_set.filter(habilitada=True).order_by('precio_base')
         precio_min = zonas.aggregate(m=Min('precio_base'))['m'] or Decimal('0')
         cap_total = zonas.aggregate(s=Sum('capacidad_evento'))['s'] or 0
+        disp = _disponibilidad_evento(ev)
         eventos_data.append({
             'evento': ev,
             'precio_min': precio_min,
             'cap_total': cap_total,
+            'disponibilidad': disp,
         })
 
     return render(request, 'pages/users/inicio.html', {'eventos_data': eventos_data})
@@ -285,10 +322,12 @@ def eventos_view(request):
         zonas = ev.eventozona_set.filter(habilitada=True).order_by('precio_base')
         precio_min = zonas.aggregate(m=Min('precio_base'))['m'] or Decimal('0')
         cap_total = zonas.aggregate(s=Sum('capacidad_evento'))['s'] or 0
+        disp = _disponibilidad_evento(ev)
         eventos_data.append({
             'evento': ev,
             'precio_min': precio_min,
             'cap_total': cap_total,
+            'disponibilidad': disp,
         })
 
     return render(request, 'pages/events/eventos.html', {

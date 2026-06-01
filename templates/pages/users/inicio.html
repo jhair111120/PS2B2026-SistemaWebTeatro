@@ -6,6 +6,39 @@
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/pages/users/inicio.css' %}" />
 
+<style>
+.badge-disponible,
+.badge-pocos,
+.badge-agotado {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 10;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+.badge-disponible {
+  background: rgba(34, 197, 94, 0.9);
+  color: white;
+}
+.badge-pocos {
+  background: rgba(255, 159, 28, 0.9);
+  color: white;
+}
+.badge-agotado {
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+}
+</style>
+
 <section class="hero-section d-flex align-items-center min-vh-100">
   <div class="container text-center position-relative z-1 fade-in-up">
     <h1 class="hero-title text-white">Vive la Magia del Teatro</h1>
@@ -46,6 +79,10 @@
             <img src="https://via.placeholder.com/400x250/111/fff?text={{ ev.nombre|urlencode }}"
               class="card-img-top custom-card-img" alt="{{ ev.nombre }}">
             {% endif %}
+            <span class="{{ item.disponibilidad.clase }}" style="top:12px;left:12px;position:absolute;">
+              <i class="fas {% if item.disponibilidad.texto == 'Agotado' %}fa-times-circle{% elif item.disponibilidad.texto == 'Pocos asientos' %}fa-exclamation-triangle{% else %}fa-check-circle{% endif %}"></i>
+              {{ item.disponibilidad.texto }}
+            </span>
             <div class="event-date-badge position-absolute top-0 end-0 m-0 text-center p-2 text-white">
               {{ ev.fecha_evento|date:"l" }}<br>
               <span class="badge-day">{{ ev.fecha_evento|date:"d" }}</span><br>
