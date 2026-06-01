@@ -36,6 +36,7 @@ from apps.reservations.views import (
     compra_exitosa_view,
     guardar_carrito_api,
     carrito_view,
+    mapa_interactivo_view,
 )
 
 # ── Mis tickets ───────────────────────────────────────────────────────────────
@@ -75,6 +76,7 @@ urlpatterns = [
     path('comprar-entrada/<int:evento_id>/confirmar/', confirmar_compra_view, name='confirmar_compra'),
     path('compra-exitosa/<int:venta_id>/', compra_exitosa_view, name='compra_exitosa'),
     path('api/carrito/<int:evento_id>/', guardar_carrito_api, name='guardar_carrito_api'),
+    path('mapa-interactivo/<int:evento_id>/', mapa_interactivo_view, name='mapa_interactivo'),
 
     # ── PERFIL Y AUTH ─────────────────────────────────────────────────────────
     path('perfil/', perfil_view, name='perfil'),

@@ -1,0 +1,86 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Mapa Interactivo | Teatro Al Aire Libre{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/pages/users/mapa_interactivo.css' %}">
+
+<div class="mapa-page">
+  <div class="mapa-container">
+
+    <div class="mapa-hero">
+      <h1><i class="fas fa-map-marked-alt me-2" style="color:#00AEEF;"></i>Mapa Interactivo del Teatro</h1>
+      <div class="meta">
+        <i class="fas fa-calendar-alt"></i> {{ evento.fecha_evento|date:"d/m/Y" }}
+        &nbsp; <i class="fas fa-clock"></i> {{ evento.hora_evento|time:"H:i" }}
+        &nbsp; <i class="fas fa-tag"></i> {{ evento.nombre }}
+      </div>
+    </div>
+
+    <div class="mapa-main">
+
+      <div class="teatro-svg-card">
+        <div class="teatro-svg-wrapper" id="svg-theater"></div>
+
+        <div class="zone-legend">
+          {% for z in zonas_data %}
+          <div class="zone-legend-item" data-zona-id="{{ z.id }}">
+            <span class="zone-legend-dot" style="background:{{ z.color }};"></span>
+            <span>{{ z.nombre_display }}</span>
+            <span class="zone-legend-info">
+              Bs. {{ z.precio }} · {{ z.disponibles }}/{{ z.capacidad }}
+            </span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="seat-panel" id="seat-panel">
+        <div class="seat-panel-header">
+          <div class="seat-panel-title" id="seat-panel-title"></div>
+          <span class="seat-panel-close" id="seat-panel-close"><i class="fas fa-times"></i></span>
+        </div>
+        <div class="curved-seat-container" id="seat-container"></div>
+        <div class="seat-legend" id="seat-legend">
+          <div class="legend-seat"><span class="legend-seat-swatch available"></span> Disponible</div>
+          <div class="legend-seat"><span class="legend-seat-swatch selected" style="background:#00AEEF;"></span> Seleccionado</div>
+          <div class="legend-seat"><span class="legend-seat-swatch occupied"></span> Ocupado</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="cart-sidebar">
+      <div class="cart-card">
+        <div class="cart-title"><i class="fas fa-shopping-cart"></i> Tu Selección</div>
+
+        <div class="cart-empty" id="cart-empty">
+          <i class="fas fa-ticket-alt"></i>
+          Haz clic en una zona del mapa para elegir asientos
+        </div>
+
+        <div class="cart-items" id="cart-items"></div>
+
+        <div class="cart-divider"></div>
+        <div class="cart-line"><span>Subtotal</span><span id="cart-subtotal">Bs. 0</span></div>
+        <div class="cart-line"><span>Cargo por servicio</span><span id="cart-service">Bs. 0</span></div>
+        <div class="cart-line total"><span>Total</span><span id="cart-total">Bs. 0</span></div>
+
+        <button class="btn-continuar" id="btn-continuar" disabled>
+          <i class="fas fa-lock me-1"></i> Continuar al Pago
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  window.ZONAS_DATA = {{ zonas_json|safe }};
+  window.EVENTO_ID = {{ evento.id }};
+  window.CSRF_TOKEN = '{{ csrf_token }}';
+  window.USER_LOGGED_IN = {% if user_logged_in %}true{% else %}false{% endif %};
+</script>
+<script src="{% static 'js/pages/users/mapa_interactivo.js' %}"></script>
+{% endblock %}
