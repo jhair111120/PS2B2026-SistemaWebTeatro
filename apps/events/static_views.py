@@ -2,7 +2,10 @@
 Vistas para páginas estáticas: Sobre Nosotros, Contacto, Términos y Condiciones.
 """
 from django.shortcuts import render
-from apps.support.models import CategoriaSoporte
+
+
+def handler404(request, exception):
+    return render(request, '404.html', status=404)
 
 
 def sobre_nosotros_view(request):

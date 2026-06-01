@@ -43,6 +43,7 @@
         <div>
           <p class="admin-kpi-card__label">Ocupación próximos eventos</p>
           <p class="admin-kpi-card__value">{{ kpi_ocupacion_pct }}&nbsp;%</p>
+          <p class="cell-xs cell-muted" style="margin:0.35rem 0 0;">{{ dash_zonas_resumen }}</p>
         </div>
         <span class="admin-kpi-card__icon admin-kpi-card__icon--violet"><i class="fas fa-arrow-trend-up"></i></span>
       </div>
@@ -68,7 +69,7 @@
     </div>
     <div class="admin-card">
       <h3 class="admin-card__title">Ocupación por zonas</h3>
-      <p class="admin-card__subtitle">Porcentaje de ocupación actual</p>
+      <p class="admin-card__subtitle">Próximos eventos · {{ dash_zonas_resumen }}</p>
       <div class="admin-chart-box admin-chart-box--pie">
         <canvas id="chart-ocupacion-zonas" aria-label="Gráfico de ocupación por zona"></canvas>
       </div>
@@ -204,8 +205,9 @@
                   data-nombre="{{ ev.nombre|escape }}"
                   data-fecha="{{ ev.fecha_evento|date:'Y-m-d' }}"
                   data-hora="{{ ev.hora_evento|time:'H:i' }}"
+                  data-psvip="{% if fila.precio_super_vip != None %}{{ fila.precio_super_vip }}{% endif %}"
                   data-pvip="{% if fila.precio_vip != None %}{{ fila.precio_vip }}{% endif %}"
-                  data-pgrad="{% if fila.precio_grad != None %}{{ fila.precio_grad }}{% endif %}"
+                  data-pplatea="{% if fila.precio_platea != None %}{{ fila.precio_platea }}{% endif %}"
                   data-pgen="{% if fila.precio_gen != None %}{{ fila.precio_gen }}{% endif %}"
                   data-cap="{% if fila.cap_total %}{{ fila.cap_total }}{% endif %}"
                   data-activo="{% if fila.es_activo %}1{% else %}0{% endif %}"
@@ -526,7 +528,7 @@
     <div class="admin-card">
       <p class="admin-kpi-card__label">Ocupación asientos (eventos en rango)</p>
       <p class="admin-kpi-card__value">{{ rep_kpi_ocup }}%</p>
-      <p class="cell-xs cell-muted">No DISPONIBLE / total asientos programados</p>
+      <p class="cell-xs cell-muted">{{ rep_ocupacion_resumen }}</p>
     </div>
   </div>
   <div class="admin-grid-2">
@@ -537,7 +539,7 @@
     </div>
     <div class="admin-card">
       <h3 class="admin-card__title">Ocupación por zona</h3>
-      <p class="admin-card__subtitle">Eventos con fecha de función en el rango</p>
+      <p class="admin-card__subtitle">Eventos en el rango · {{ rep_ocupacion_resumen }}</p>
       <div class="admin-chart-box admin-chart-box--sm"><canvas id="chart-reportes-zonas-h"></canvas></div>
     </div>
   </div>
@@ -968,15 +970,42 @@
       <div class="admin-form-stack"><label>Idioma</label><input type="text" value="Español" /></div>
       <div class="admin-form-stack"><label>Zona Horaria</label><input type="text" value="America/La_Paz (BOT)" /></div>
     </div>
-    <h4 style="margin:1.25rem 0 0.75rem;">Tiempo de Reserva</h4>
-    <div class="admin-form-stack">
-      <label>Duración de Bloqueo (minutos)</label>
-      <input type="number" value="15" />
-      <p class="cell-xs cell-muted" style="margin:0.35rem 0 0;">Tiempo que un asiento permanece reservado antes de liberarse</p>
-    </div>
-    <div style="margin-top:1rem;display:flex;justify-content:flex-end;">
-      <button type="button" class="admin-btn-primary"><i class="fas fa-floppy-disk"></i> Guardar Configuración</button>
-    </div>
+    <h4 style="margin:1.25rem 0 0.75rem;">Soporte Humano</h4>
+    <form method="post" action="{% url 'admin_config_sistema_save' %}">
+      {% csrf_token %}
+      <div class="admin-form-grid" style="margin-top:1rem;">
+        <div class="admin-form-stack">
+          <label>Hora Inicio</label>
+          <input type="time" name="soporte_humano_hora_inicio" value="{% if config.soporte_humano_hora_inicio %}{{ config.soporte_humano_hora_inicio|time:'H:i' }}{% else %}08:00{% endif %}" />
+          <p class="cell-xs cell-muted" style="margin:0.35rem 0 0;">Hora de inicio del soporte humano (formato 24h)</p>
+        </div>
+        <div class="admin-form-stack">
+          <label>Hora Fin</label>
+          <input type="time" name="soporte_humano_hora_fin" value="{% if config.soporte_humano_hora_fin %}{{ config.soporte_humano_hora_fin|time:'H:i' }}{% else %}14:00{% endif %}" />
+          <p class="cell-xs cell-muted" style="margin:0.35rem 0 0;">Hora de fin del soporte humano (formato 24h)</p>
+        </div>
+      </div>
+      <div class="admin-form-stack" style="margin-top:1rem;">
+        <label style="display:flex;align-items:center;gap:0.5rem;">
+          <input type="checkbox" name="soporte_humano_habilitado" {% if config.soporte_humano_habilitado|default:True %}checked{% endif %} />
+          Habilitar Soporte Humano
+        </label>
+        <p class="cell-xs cell-muted" style="margin:0.35rem 0 0;">Si está deshabilitado, solo estará disponible el asistente virtual (IA)</p>
+      </div>
+      <div class="admin-form-stack" style="margin-top:1rem;padding:1rem;background:rgba(0,174,239,0.1);border-radius:8px;border:1px solid rgba(0,174,239,0.3);">
+        <p class="cell-strong" style="margin:0;">Estado Actual del Soporte Humano</p>
+        <p class="cell-xs cell-muted" style="margin:0.35rem 0 0;">
+          {% if config.soporte_humano_habilitado|default:True %}
+            Habilitado: {% if config.soporte_humano_hora_inicio %}{{ config.soporte_humano_hora_inicio|time:'H:i' }}{% else %}08:00{% endif %} - {% if config.soporte_humano_hora_fin %}{{ config.soporte_humano_hora_fin|time:'H:i' }}{% else %}14:00{% endif %}
+          {% else %}
+            Deshabilitado
+          {% endif %}
+        </p>
+      </div>
+      <div style="margin-top:1rem;display:flex;justify-content:flex-end;">
+        <button type="submit" class="admin-btn-primary"><i class="fas fa-floppy-disk"></i> Guardar Configuración</button>
+      </div>
+    </form>
   </div>
   {% endif %}
 </section>
@@ -1018,23 +1047,27 @@
         </div>
         <div class="admin-modal__grid admin-modal__grid--2" style="margin-top:1rem;">
           <div class="admin-modal__field">
-            <label for="modal-pvip">Precio VIP (Bs.)</label>
-            <input type="number" step="0.01" min="0" id="modal-pvip" name="precio_vip" placeholder="150" />
+            <label for="modal-psvip">Precio SUPER VIP (Bs.)</label>
+            <input type="number" step="0.01" min="0" id="modal-psvip" name="precio_super_vip" placeholder="200" />
           </div>
           <div class="admin-modal__field">
-            <label for="modal-pgrad">Precio gradería (Bs.)</label>
-            <input type="number" step="0.01" min="0" id="modal-pgrad" name="precio_graderia" placeholder="80" />
+            <label for="modal-pvip">Precio VIP (Bs.)</label>
+            <input type="number" step="0.01" min="0" id="modal-pvip" name="precio_vip" placeholder="150" />
           </div>
         </div>
         <div class="admin-modal__grid admin-modal__grid--2" style="margin-top:1rem;">
           <div class="admin-modal__field">
-            <label for="modal-pgen">Precio general (Bs.)</label>
-            <input type="number" step="0.01" min="0" id="modal-pgen" name="precio_general" placeholder="50" />
+            <label for="modal-pplatea">Precio PLATEA (Bs.)</label>
+            <input type="number" step="0.01" min="0" id="modal-pplatea" name="precio_platea" placeholder="100" />
           </div>
           <div class="admin-modal__field">
-            <label for="modal-cap">Capacidad total</label>
-            <input type="number" min="0" step="1" id="modal-cap" name="capacidad_total" placeholder="2000" />
+            <label for="modal-pgen">Precio GENERAL (Bs.)</label>
+            <input type="number" step="0.01" min="0" id="modal-pgen" name="precio_general" placeholder="50" />
           </div>
+        </div>
+        <div class="admin-modal__field" style="margin-top:1rem;">
+          <label for="modal-cap">Capacidad total</label>
+          <input type="number" min="0" step="1" id="modal-cap" name="capacidad_total" placeholder="2000" />
         </div>
         <div class="admin-modal__row-toggle" style="margin-top:1.15rem;">
           <label class="admin-switch">
@@ -1094,8 +1127,9 @@
       var inputNombre = document.getElementById('modal-nombre-ev');
       var inputFecha = document.getElementById('modal-fecha-ev');
       var inputHora = document.getElementById('modal-hora-ev');
+      var inputSuperVip = document.getElementById('modal-psvip');
       var inputVip = document.getElementById('modal-pvip');
-      var inputGrad = document.getElementById('modal-pgrad');
+      var inputPlatea = document.getElementById('modal-pplatea');
       var inputGen = document.getElementById('modal-pgen');
       var inputCap = document.getElementById('modal-cap');
       var inputActivo = document.getElementById('modal-activo-ev');
@@ -1111,8 +1145,9 @@
         if (inputNombre) inputNombre.value = '';
         if (inputFecha) inputFecha.value = '';
         if (inputHora) inputHora.value = '';
+        if (inputSuperVip) inputSuperVip.value = '';
         if (inputVip) inputVip.value = '';
-        if (inputGrad) inputGrad.value = '';
+        if (inputPlatea) inputPlatea.value = '';
         if (inputGen) inputGen.value = '';
         if (inputCap) inputCap.value = '';
         if (inputActivo) inputActivo.checked = true;
@@ -1131,8 +1166,9 @@
         if (inputNombre) inputNombre.value = btn.getAttribute('data-nombre') || '';
         if (inputFecha) inputFecha.value = btn.getAttribute('data-fecha') || '';
         if (inputHora) inputHora.value = btn.getAttribute('data-hora') || '';
+        if (inputSuperVip) inputSuperVip.value = btn.getAttribute('data-psvip') || '';
         if (inputVip) inputVip.value = btn.getAttribute('data-pvip') || '';
-        if (inputGrad) inputGrad.value = btn.getAttribute('data-pgrad') || '';
+        if (inputPlatea) inputPlatea.value = btn.getAttribute('data-pplatea') || '';
         if (inputGen) inputGen.value = btn.getAttribute('data-pgen') || '';
         if (inputCap) inputCap.value = btn.getAttribute('data-cap') || '';
         if (inputActivo) inputActivo.checked = (btn.getAttribute('data-activo') || '0') === '1';
@@ -1210,6 +1246,9 @@
 
       var pieLabs = P && Array.isArray(P.zonas_labels) ? P.zonas_labels : [];
       var pieDat = P && Array.isArray(P.zonas_data) ? P.zonas_data : [];
+      var pieOcup = P && Array.isArray(P.zonas_ocupados) ? P.zonas_ocupados : [];
+      var pieTot = P && Array.isArray(P.zonas_totales) ? P.zonas_totales : [];
+      var pieSinDatos = P && P.zonas_sin_datos === true;
 
       var lineLabs = P && Array.isArray(P.mensual_labels) ? P.mensual_labels : [];
       var lineVals = P && Array.isArray(P.mensual_vals) ? P.mensual_vals : [];
@@ -1242,7 +1281,7 @@
       }
 
       var ctxPie = document.getElementById('chart-ocupacion-zonas');
-      if (ctxPie) {
+      if (ctxPie && !pieSinDatos && pieLabs.length) {
         new Chart(ctxPie.getContext('2d'), {
           type: 'doughnut',
           data: {
@@ -1261,8 +1300,14 @@
               tooltip: {
                 callbacks: {
                   label: function (ctx) {
-                    var v = ctx.parsed;
-                    return (ctx.label || '') + ': ' + v + '%';
+                    var i = ctx.dataIndex;
+                    var pct = ctx.parsed;
+                    var o = pieOcup[i];
+                    var t = pieTot[i];
+                    if (o != null && t != null) {
+                      return (ctx.label || '') + ': ' + pct + '% (' + o + ' / ' + t + ')';
+                    }
+                    return (ctx.label || '') + ': ' + pct + '%';
                   },
                 },
               },
@@ -1320,6 +1365,9 @@
       var ymax = P && typeof P.sem_ymax === 'number' ? P.sem_ymax : 500;
       var zLabs = P && Array.isArray(P.zonas_labels) ? P.zonas_labels : [];
       var zDat = P && Array.isArray(P.zonas_data) ? P.zonas_data : [];
+      var zOcup = P && Array.isArray(P.zonas_ocupados) ? P.zonas_ocupados : [];
+      var zTot = P && Array.isArray(P.zonas_totales) ? P.zonas_totales : [];
+      var zSinDatos = P && P.zonas_sin_datos === true;
 
       var c1 = document.getElementById('chart-reportes-semanal');
       if (c1) {
@@ -1347,7 +1395,7 @@
       }
 
       var c2 = document.getElementById('chart-reportes-zonas-h');
-      if (c2) {
+      if (c2 && !zSinDatos && zLabs.length) {
         new Chart(c2.getContext('2d'), {
           type: 'bar',
           data: {
@@ -1368,7 +1416,14 @@
               tooltip: {
                 callbacks: {
                   label: function (ctx) {
-                    return (ctx.label || '') + ': ' + ctx.parsed.x + '%';
+                    var i = ctx.dataIndex;
+                    var pct = ctx.parsed.x;
+                    var o = zOcup[i];
+                    var t = zTot[i];
+                    if (o != null && t != null) {
+                      return (ctx.label || '') + ': ' + pct + '% (' + o + ' / ' + t + ')';
+                    }
+                    return (ctx.label || '') + ': ' + pct + '%';
                   },
                 },
               },

@@ -3,10 +3,6 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 import uuid
 
-
-# =============================
-# ESTADO PAGO
-# =============================
 class EstadoPago(models.Model):
     id = models.BigAutoField(primary_key=True)
 
@@ -23,9 +19,6 @@ class EstadoPago(models.Model):
         return self.nombre
 
 
-# =============================
-# MÉTODO PAGO
-# =============================
 class MetodoPago(models.Model):
     id = models.BigAutoField(primary_key=True)
 
@@ -42,9 +35,6 @@ class MetodoPago(models.Model):
         return self.nombre
 
 
-# =============================
-# PAGO (TU MODELO, SIN CAMBIOS CRÍTICOS)
-# =============================
 class Pago(models.Model):
     id = models.BigAutoField(primary_key=True)
 
@@ -138,3 +128,25 @@ class Pago(models.Model):
         if self.estado_pago and self.estado_pago.nombre.lower() == 'pagado':
             if not self.fecha_confirmacion:
                 raise ValidationError("Un pago 'pagado' debe tener fecha de confirmación.")
+
+
+class MetodoPagoGuardado(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    usuario = models.ForeignKey(
+        'users.Usuario', 
+        on_delete=models.CASCADE, 
+        related_name='metodos_pago_guardados'
+    )
+    ultimos_cuatro = models.CharField(max_length=4)
+    marca = models.CharField(max_length=50)
+    fecha_expiracion = models.CharField(max_length=7)
+    token_simulado = models.CharField(max_length=255, blank=True, null=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = 'metodo_pago_guardado'
+        ordering = ['-creado_en']
+
+    def __str__(self):
+        return f"{self.marca} **** {self.ultimos_cuatro}"

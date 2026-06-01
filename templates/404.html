@@ -1,0 +1,45 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Página no encontrada | Teatro Al Aire Libre{% endblock %}
+
+{% block content %}
+<div class="min-vh-100 d-flex align-items-center justify-content-center" style="background: #0A0E14;">
+  <div class="text-center px-4" style="max-width: 600px;">
+    <div class="mb-5">
+      <span class="d-block" style="font-size: 10rem; font-weight: 800; background: linear-gradient(135deg, #00AEEF, #d946ef); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1;">
+        404
+      </span>
+      <div class="d-flex align-items-center justify-content-center gap-2 mb-3">
+        <span class="d-inline-block" style="width: 60px; height: 2px; background: #00AEEF;"></span>
+        <i class="fas fa-mask" style="color: #d946ef; font-size: 1.2rem;"></i>
+        <span class="d-inline-block" style="width: 60px; height: 2px; background: #d946ef;"></span>
+      </div>
+    </div>
+
+    <h1 class="text-white fw-bold mb-3" style="font-family: 'IM Fell Great Primer SC', serif; font-size: 2rem;">
+      ¡El telón no se abre!
+    </h1>
+
+    <p class="text-white-50 mb-5" style="font-size: 1.05rem; line-height: 1.7;">
+      La página que buscas no está en cartelera. <br>
+      Puede que haya sido movida, no exista o hayas escrito mal la dirección.
+    </p>
+
+    <div class="d-flex flex-wrap justify-content-center gap-3">
+      <a href="{% url 'inicio' %}"
+         class="btn d-inline-flex align-items-center gap-2 px-5 py-3 fw-bold rounded-pill"
+         style="background: linear-gradient(135deg, #00AEEF, #0095cc); color: white; border: none; text-decoration: none;">
+        <i class="fas fa-home"></i>
+        Volver al Inicio
+      </a>
+      <a href="{% url 'eventos' %}"
+         class="btn d-inline-flex align-items-center gap-2 px-5 py-3 fw-bold rounded-pill"
+         style="background: transparent; color: white; border: 1px solid rgba(255,255,255,0.2); text-decoration: none;">
+        <i class="fas fa-calendar-alt"></i>
+        Ver Eventos
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

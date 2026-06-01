@@ -1,20 +1,152 @@
 import json
 import random
 from zoneinfo import ZoneInfo
+from datetime import time
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib import messages
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_POST
 
 from .models import Soporte, SoporteMensaje, EstadoSoporte, CategoriaSoporte
-from apps.users.models import Usuario
+from apps.users.models import Usuario, ConfiguracionSistema
 
 def es_personal_autorizado(request):
     if 'usuario_id' not in request.session:
         return False
     rol = request.session.get('usuario_rol', '').lower()
     return rol in ['soporte', 'administrador', 'admin']
+
+
+def es_horario_soporte_humano():
+    """Verifica si está dentro del horario de soporte humano según configuración"""
+    try:
+        config = ConfiguracionSistema.objects.first()
+        if not config or not config.soporte_humano_habilitado:
+            return False
+
+        tz_bolivia = ZoneInfo('America/La_Paz')
+        ahora = timezone.now().astimezone(tz_bolivia)
+        hora_actual = ahora.time()
+
+        hora_inicio = config.soporte_humano_hora_inicio
+        hora_fin = config.soporte_humano_hora_fin
+
+        # Si la hora de fin es menor que la hora de inicio, significa que cruza la medianoche
+        if hora_fin < hora_inicio:
+            # Ejemplo: 20:00 a 02:00 (del siguiente día)
+            return hora_actual >= hora_inicio or hora_actual < hora_fin
+        else:
+            # Horario normal del mismo día
+            return hora_inicio <= hora_actual < hora_fin
+    except Exception:
+        # Si hay error, usar valores por defecto (8:00 - 14:00)
+        tz_bolivia = ZoneInfo('America/La_Paz')
+        ahora = timezone.now().astimezone(tz_bolivia)
+        hora_actual = ahora.time()
+        return time(8, 0) <= hora_actual < time(14, 0)
+
+
+def generar_respuesta_ia(mensaje_usuario):
+    """Genera una respuesta automática de la IA basada en preguntas comunes sobre el sistema"""
+    mensaje_lower = mensaje_usuario.lower()
+    
+    # Base de conocimiento del sistema
+    respuestas = {
+        'horario': {
+            'palabras_clave': ['horario', 'hora', 'cuando', 'abierto', 'funciona', 'atencion'],
+            'respuesta': 'El teatro está abierto de martes a domingo de 18:00 a 23:00. La taquilla abre 2 horas antes de cada función. Para soporte humano, estamos disponibles de 8:00 a 14:00.'
+        },
+        'entradas': {
+            'palabras_clave': ['entrada', 'ticket', 'boleto', 'comprar', 'reservar', 'precio'],
+            'respuesta': 'Puedes comprar entradas directamente desde nuestra página web. Los precios varían según la zona: SUPER VIP, VIP, PLATEA y GENERAL. También puedes reservar entradas y pagarlas después.'
+        },
+        'zonas': {
+            'palabras_clave': ['zona', 'ubicacion', 'asiento', 'lugar', 'super vip', 'vip', 'platea', 'general'],
+            'respuesta': 'Contamos con 4 zonas: SUPER VIP (mejor ubicación), VIP, PLATEA y GENERAL. Cada zona tiene su propio precio y capacidad. Puedes ver el mapa del teatro al seleccionar tus asientos.'
+        },
+        'pago': {
+            'palabras_clave': ['pago', 'tarjeta', 'metodo', 'dinero', 'transferencia', 'qr'],
+            'respuesta': 'Aceptamos pagos con tarjeta de crédito/débito, transferencia bancaria y QR. Los pagos se procesan de forma segura a través de nuestra plataforma.'
+        },
+        'reembolso': {
+            'palabras_clave': ['reembolso', 'devolucion', 'cancelar', 'devolver', 'dinero'],
+            'respuesta': 'Los reembolsos solo se realizan si el evento es cancelado por el teatro. En caso de cancelación, el reembolso se procesa en un plazo máximo de 15 días hábiles.'
+        },
+        'cuenta': {
+            'palabras_clave': ['cuenta', 'registro', 'perfil', 'contraseña', 'sesion', 'login'],
+            'respuesta': 'Para crear una cuenta, haz clic en "Registrarse" en la página principal. Necesitarás proporcionar tu nombre, correo, teléfono y una contraseña segura. Puedes recuperar tu contraseña si la olvidas.'
+        },
+        'evento': {
+            'palabras_clave': ['evento', 'funcion', 'show', 'concierto', 'obra', 'calendario'],
+            'respuesta': 'Puedes ver todos los eventos programados en la sección "Eventos" de nuestra página. Cada evento muestra la fecha, hora, precios y disponibilidad de asientos.'
+        },
+        'contacto': {
+            'palabras_clave': ['contacto', 'telefono', 'correo', 'email', 'ubicacion', 'direccion'],
+            'respuesta': 'Puedes contactarnos a través de este chat de soporte, por correo a info@teatrolapaz.bo o llamando al +591 2 123-4567. Estamos ubicados en el Teatro al Aire Libre "Jaime Laredo".'
+        },
+        'parking': {
+            'palabras_clave': ['parking', 'estacionamiento', 'auto', 'coche'],
+            'respuesta': 'Contamos con estacionamiento gratuito para los asistentes. Recomendamos llegar con 30 minutos de anticipación para asegurar lugar.'
+        },
+        'accesibilidad': {
+            'palabras_clave': ['accesibilidad', 'discapacidad', 'silla', 'ruedas', 'acceso'],
+            'respuesta': 'El teatro cuenta con accesibilidad para personas con discapacidad. Contamos con rampas, espacios reservados y asistentes capacitados para ayudar. Por favor contáctanos antes para coordinar.'
+        }
+    }
+    
+    # Buscar respuesta basada en palabras clave
+    mejor_respuesta = None
+    mejor_coincidencia = 0
+    
+    for categoria, data in respuestas.items():
+        coincidencias = sum(1 for palabra in data['palabras_clave'] if palabra in mensaje_lower)
+        if coincidencias > mejor_coincidencia:
+            mejor_coincidencia = coincidencias
+            mejor_respuesta = data['respuesta']
+    
+    if mejor_respuesta:
+        return mejor_respuesta
+    
+    # Respuesta por defecto si no hay coincidencia
+    respuestas_default = [
+        "Entiendo tu consulta. Para ayudarte mejor, ¿podrías proporcionar más detalles sobre tu problema?",
+        "Lamento no tener una respuesta específica para eso. ¿Te gustaría hablar con un agente de soporte humano?",
+        "Estoy aquí para ayudarte con preguntas sobre el teatro, eventos, entradas y pagos. ¿Podrías reformular tu pregunta?",
+        "Si necesitas ayuda más específica, te recomiendo crear un ticket de soporte para que un humano te asista."
+    ]
+    
+    return random.choice(respuestas_default)
+
+
+@require_POST
+def soporte_ia_api(request):
+    """Endpoint para la IA de soporte"""
+    if 'usuario_id' not in request.session:
+        return JsonResponse({'error': 'No autorizado'}, status=403)
+    
+    try:
+        data = json.loads(request.body)
+        mensaje_usuario = data.get('mensaje', '').strip()
+        
+        if not mensaje_usuario:
+            return JsonResponse({'error': 'Mensaje vacío'}, status=400)
+        
+        # Generar respuesta de la IA
+        respuesta_ia = generar_respuesta_ia(mensaje_usuario)
+        
+        tz_bolivia = ZoneInfo('America/La_Paz')
+        hora_actual = timezone.now().astimezone(tz_bolivia)
+        
+        return JsonResponse({
+            'success': True,
+            'respuesta': respuesta_ia,
+            'fecha_envio_formateada': hora_actual.strftime("%I:%M %p"),
+            'es_ia': True
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 @never_cache
 def support_dashboard(request):
@@ -129,8 +261,8 @@ def tickets_list_api(request):
         
     return JsonResponse({'tickets': tickets_list})
 
-@never_cache 
-def cliente_soporte_view(request, ticket_id=None):
+@never_cache
+def cliente_soporte_view(request, ticket_id=None, modo='ia'):
     if 'usuario_id' not in request.session:
         messages.error(request, "Debes iniciar sesión para contactar a soporte.")
         return redirect('/?action=login')
@@ -153,7 +285,7 @@ def cliente_soporte_view(request, ticket_id=None):
                     categoria = CategoriaSoporte.objects.get(id=categoria_id)
                 except CategoriaSoporte.DoesNotExist:
                     categoria, _ = CategoriaSoporte.objects.get_or_create(nombre='Soporte General')
-                
+
                 usuario = Usuario.objects.get(id=usuario_id)
                 nuevo_ticket = Soporte.objects.create(
                     numero_reclamo=f"TKT-{random.randint(100000, 999999)}",
@@ -164,22 +296,25 @@ def cliente_soporte_view(request, ticket_id=None):
                     descripcion=descripcion,
                     fecha_creacion=timezone.now()
                 )
-                
+
                 SoporteMensaje.objects.create(
                     soporte=nuevo_ticket, remitente=usuario, mensaje=descripcion, fecha_envio=timezone.now()
                 )
-                
+
                 messages.success(request, "Ticket creado con éxito. Te responderemos pronto.")
                 return redirect('cliente_soporte_detalle', ticket_id=nuevo_ticket.id)
             except Exception as e:
                 messages.error(request, "Ocurrió un error al crear el ticket. Inténtalo de nuevo.")
 
     categorias = CategoriaSoporte.objects.all()
+    horario_humano = es_horario_soporte_humano()
 
     return render(request, 'pages/users/cliente_soporte.html', {
         'mis_tickets': mis_tickets,
         'ticket_seleccionado': ticket_seleccionado,
-        'categorias': categorias
+        'categorias': categorias,
+        'horario_humano': horario_humano,
+        'modo_actual': modo
     })
 
 def cliente_mensajes_api(request, ticket_id):

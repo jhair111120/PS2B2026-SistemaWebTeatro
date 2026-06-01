@@ -12,6 +12,12 @@ class EstadoEventoAdmin(admin.ModelAdmin):
     list_display = ('id', 'nombre')
 
 
+class EventoZonaInline(admin.TabularInline):
+    model = EventoZona
+    extra = 0
+    fields = ('zona', 'precio_base', 'capacidad_evento', 'nombre_display', 'limite_por_usuario', 'habilitada')
+
+
 @admin.register(Evento)
 class EventoAdmin(admin.ModelAdmin):
     list_display = (
@@ -22,6 +28,7 @@ class EventoAdmin(admin.ModelAdmin):
     search_fields = ('nombre', 'lugar')
     ordering = ('-fecha_evento',)
     list_select_related = ('estado_evento',)
+    inlines = [EventoZonaInline]
 
 
 @admin.register(Zona)

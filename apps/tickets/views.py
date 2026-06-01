@@ -139,6 +139,76 @@ def validar_entrada_view(request):
     })
 
 
+# --- VISTA DE REGISTRO DE VENTAS (empleados/admin) ---
+
+@never_cache
+def registro_ventas_view(request):
+    """Listado completo de ventas para empleados y administradores."""
+    if not request.session.get('usuario_id'):
+        return redirect('/?action=login')
+    rol = (request.session.get('usuario_rol') or '').strip().lower()
+    if rol not in ('administrador', 'empleado'):
+        messages.error(request, 'Acceso restringido al personal del teatro.')
+        return redirect('inicio')
+
+    q = (request.GET.get('q') or '').strip()
+    fecha_desde = request.GET.get('desde', '').strip()
+    fecha_hasta = request.GET.get('hasta', '').strip()
+
+    ventas_qs = Venta.objects.select_related(
+        'reserva__evento',
+        'usuario',
+        'estado_venta',
+        'canal_venta',
+    ).prefetch_related(
+        'entradas__detalle_reserva__evento_zona__zona',
+        'reserva__pagos__metodo_pago',
+    ).order_by('-fecha_venta')
+
+    if q:
+        from django.db.models import Q as djQ
+        ventas_qs = ventas_qs.filter(
+            djQ(reserva__evento__nombre__icontains=q) |
+            djQ(reserva__codigo_reserva__icontains=q) |
+            djQ(usuario__nombre__icontains=q) |
+            djQ(usuario__apellido__icontains=q) |
+            djQ(usuario__correo__icontains=q)
+        )
+    if fecha_desde:
+        ventas_qs = ventas_qs.filter(fecha_venta__gte=fecha_desde)
+    if fecha_hasta:
+        from datetime import datetime, timedelta
+        hasta_dt = datetime.strptime(fecha_hasta, '%Y-%m-%d') + timedelta(days=1)
+        ventas_qs = ventas_qs.filter(fecha_venta__lt=hasta_dt)
+
+    total_ingresos = sum(v.total for v in ventas_qs if v.estado_venta.nombre.lower() == 'emitida')
+    total_entradas = sum(v.entradas.count() for v in ventas_qs)
+    total_ventas = ventas_qs.count()
+
+    ventas_rows = []
+    for v in ventas_qs:
+        pagos_list = list(v.reserva.pagos.all()[:1])
+        metodo = pagos_list[0].metodo_pago.nombre if pagos_list else '—'
+        asientos_info = []
+        for e in v.entradas.all():
+            asientos_info.append(e.descripcion_ubicacion)
+        ventas_rows.append({
+            'venta': v,
+            'metodo': metodo,
+            'asientos_txt': ', '.join(asientos_info) if asientos_info else '—',
+        })
+
+    return render(request, 'pages/tickets/registro_ventas.html', {
+        'ventas_rows': ventas_rows,
+        'total_ingresos': total_ingresos,
+        'total_entradas': total_entradas,
+        'total_ventas': total_ventas,
+        'q': q,
+        'fecha_desde': fecha_desde,
+        'fecha_hasta': fecha_hasta,
+    })
+
+
 # --- VISTAS DE BOLETERÍA (venta presencial) ---
 
 from django.views.decorators.http import require_POST as _require_post_bole

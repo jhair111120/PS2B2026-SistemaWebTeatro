@@ -47,8 +47,51 @@
             {% if not ticket_seleccionado %}
             <div class="ticket-form-card shadow-lg">
                 <h3 class="fw-bold text-white mb-2">¿En qué podemos ayudarte?</h3>
-                <p class="text-light opacity-75 mb-4">Abre un nuevo ticket de soporte y nuestro equipo te atenderá a la
-                    brevedad.</p>
+                <p class="text-light opacity-75 mb-4">Elige el tipo de soporte que necesitas.</p>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-12">
+                        <div class="support-type-card {% if modo_actual == 'ia' %}active{% endif %}" onclick="seleccionarModo('ia')">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="support-type-icon ia-icon">
+                                    <i class="fas fa-robot"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold text-white">Asistente Virtual (IA)</div>
+                                    <div class="text-light opacity-75 small">Respuestas inmediatas 24/7</div>
+                                </div>
+                                <div class="support-type-check">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="support-type-card {% if modo_actual == 'humano' %}active{% endif %} {% if not horario_humano %}disabled{% endif %}"
+                            onclick="{% if horario_humano %}seleccionarModo('humano'){% endif %}">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="support-type-icon humano-icon">
+                                    <i class="fas fa-headset"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold text-white">Soporte Humano</div>
+                                    <div class="text-light opacity-75 small">
+                                        {% if horario_humano %}
+                                            Disponible ahora
+                                        {% else %}
+                                            No disponible fuera de horario
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="support-type-check">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if modo_actual == 'humano' %}
                 <form action="{% url 'cliente_soporte' %}" method="POST">
                     {% csrf_token %}
                     <div class="mb-3">
@@ -72,6 +115,39 @@
                             Chat</button>
                     </div>
                 </form>
+                {% elif modo_actual == 'ia' %}
+                <div class="ia-chat-container shadow-lg">
+                    <div class="chat-header">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="support-avatar ia-avatar"><i class="fas fa-robot"></i></div>
+                            <div>
+                                <div class="fw-bold text-white fs-5">Asistente Virtual</div>
+                                <div class="small fw-bold text-success">
+                                    <span class="online-indicator"></span>Disponible 24/7
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chat-messages" id="iaChatMessages">
+                        <div class="message ia-message">
+                            <div class="message-content">
+                                ¡Hola! Soy el asistente virtual del Teatro La Paz. ¿En qué puedo ayudarte hoy?
+                            </div>
+                            <div class="message-time">Ahora</div>
+                        </div>
+                    </div>
+
+                    <div class="chat-input-area">
+                        <div class="chat-input-wrapper">
+                            <input type="text" id="iaReplyInput" placeholder="Escribe tu pregunta aquí..."
+                                autocomplete="off">
+                            <button class="btn-send-client" onclick="sendIAMessage()"><i
+                                    class="fas fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
             </div>
             {% else %}
             <div class="client-chat-box shadow-lg">
@@ -132,4 +208,182 @@
         </div>
     </div>
 </div>
+
+{% if modo_actual == 'ia' %}
+<script>
+    function seleccionarModo(modo) {
+        window.location.href = "/mi-soporte/" + modo + "/";
+    }
+
+    function sendIAMessage() {
+        const input = document.getElementById('iaReplyInput');
+        const mensaje = input.value.trim();
+        if (!mensaje) return;
+
+        // Agregar mensaje del usuario
+        const chatMessages = document.getElementById('iaChatMessages');
+        const userMsg = document.createElement('div');
+        userMsg.className = 'message user-message';
+        userMsg.innerHTML = `
+            <div class="message-content">${mensaje}</div>
+            <div class="message-time">Ahora</div>
+        `;
+        chatMessages.appendChild(userMsg);
+        input.value = '';
+
+        // Enviar a la IA
+        fetch("{% url 'soporte_ia_api' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ mensaje: mensaje })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const iaMsg = document.createElement('div');
+                iaMsg.className = 'message ia-message';
+                iaMsg.innerHTML = `
+                    <div class="message-content">${data.respuesta}</div>
+                    <div class="message-time">${data.fecha_envio_formateada}</div>
+                `;
+                chatMessages.appendChild(iaMsg);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+
+    // Permitir enviar con Enter
+    document.getElementById('iaReplyInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendIAMessage();
+        }
+    });
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% else %}
+<script>
+    function seleccionarModo(modo) {
+        window.location.href = "/mi-soporte/" + modo + "/";
+    }
+</script>
+{% endif %}
+
+<style>
+    .support-type-card {
+        background: rgba(30, 58, 95, 0.6);
+        border: 2px solid rgba(0, 174, 239, 0.3);
+        border-radius: 12px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .support-type-card:hover:not(.disabled) {
+        border-color: rgba(0, 174, 239, 0.6);
+        background: rgba(30, 58, 95, 0.8);
+    }
+
+    .support-type-card.active {
+        border-color: #00AEEF;
+        background: rgba(0, 174, 239, 0.2);
+    }
+
+    .support-type-card.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .support-type-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .ia-icon {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .humano-icon {
+        background: linear-gradient(135deg, #00AEEF 0%, #0066cc 100%);
+    }
+
+    .support-type-check {
+        color: #00AEEF;
+        opacity: 0;
+    }
+
+    .support-type-card.active .support-type-check {
+        opacity: 1;
+    }
+
+    .ia-chat-container {
+        background: rgba(30, 58, 95, 0.6);
+        border: 2px solid rgba(0, 174, 239, 0.3);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .ia-avatar {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .message {
+        margin-bottom: 1rem;
+        max-width: 80%;
+    }
+
+    .ia-message {
+        align-self: flex-start;
+    }
+
+    .user-message {
+        align-self: flex-end;
+        margin-left: auto;
+    }
+
+    .message-content {
+        padding: 0.75rem 1rem;
+        border-radius: 12px;
+        margin-bottom: 0.25rem;
+    }
+
+    .ia-message .message-content {
+        background: rgba(102, 126, 234, 0.3);
+        border: 1px solid rgba(102, 126, 234, 0.5);
+    }
+
+    .user-message .message-content {
+        background: rgba(0, 174, 239, 0.3);
+        border: 1px solid rgba(0, 174, 239, 0.5);
+    }
+
+    .message-time {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.5);
+    }
+</style>
 {% endblock %}
