@@ -2,9 +2,9 @@
 URL configuration for config project.
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, re_path
 from django.views.generic import TemplateView
-from apps.events.static_views import handler404
+from apps.events.static_views import handler404 as _handler404_view
 
 # ── Auth & perfil ─────────────────────────────────────────────────────────────
 from apps.users.views import (
@@ -139,4 +139,13 @@ urlpatterns = [
     path('mi-soporte/api/ia/', soporte_ia_api, name='soporte_ia_api'),
 ]
 
+# ── Catch-all 404 (funciona incluso con DEBUG=True) ──
 handler404 = 'apps.events.static_views.handler404'
+
+
+def _catch_all_404(request):
+    from django.http import Http404
+    return _handler404_view(request, Http404())
+
+
+urlpatterns += [re_path(r'^.*$', _catch_all_404)]
