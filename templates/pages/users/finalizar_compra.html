@@ -133,7 +133,7 @@
 
     <!-- PASO 1: Selección de método de pago -->
     <div id="pago-step1">
-      <form method="post" action="{% url 'confirmar_compra' evento.id %}">
+      <form id="form-metodo-pago" method="post" action="{% url 'confirmar_compra' evento.id %}">
         {% csrf_token %}
 
         <div class="main-event-grid">
@@ -157,8 +157,18 @@
               <h3 class="text-xl font-bold mb-6">Método de Pago</h3>
 
               <div class="flex flex-col gap-4 mb-6">
-                <label class="payment-method-option selected" id="opt-tarjeta">
-                  <input type="radio" name="metodo_pago" value="Tarjeta de Crédito" checked onchange="selectMetodo(this)">
+                <label class="payment-method-option selected" id="opt-paypal">
+                  <input type="radio" name="metodo_pago" value="PayPal" checked onchange="selectMetodo(this)">
+                  <div class="flex items-center gap-3">
+                    <i class="fab fa-paypal text-[#003087] text-2xl"></i>
+                    <div>
+                      <p class="font-bold">Pagar con PayPal</p>
+                      <p class="text-xs text-gray-500">Pago seguro vía PayPal - Tarjetas de prueba en sandbox</p>
+                    </div>
+                  </div>
+                </label>
+                <label class="payment-method-option" id="opt-tarjeta">
+                  <input type="radio" name="metodo_pago" value="Tarjeta de Crédito" onchange="selectMetodo(this)">
                   <div>
                     <p class="font-bold">Tarjeta de Crédito o Débito</p>
                     <p class="text-xs text-gray-500">Visa, Mastercard, American Express</p>
@@ -340,14 +350,38 @@ function confirmarPagoQR() {
   }, 2000);
 }
 
-var metodoPagoForm = document.querySelector('form[action*="confirmar"]');
+// Manejar envío del form de método de pago
+var metodoPagoForm = document.getElementById('form-metodo-pago');
 if (metodoPagoForm) {
   metodoPagoForm.addEventListener('submit', function(e) {
+    var paypalSelected = document.querySelector('input[name="metodo_pago"][value="PayPal"]:checked');
     var qrSelected = document.querySelector('input[name="metodo_pago"][value="QR Bancario"]:checked');
-    if (qrSelected) {
+
+    if (paypalSelected) {
+      // Redirigir a PayPal
+      e.preventDefault();
+      var btn = document.getElementById('btn-continuar-pago');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fab fa-paypal me-2"></i> Redirigiendo a PayPal...';
+
+      // Crear form para enviar a PayPal
+      var form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '/pago/paypal/crear/' + eventoId + '/';
+
+      var csrf = document.createElement('input');
+      csrf.type = 'hidden';
+      csrf.name = 'csrfmiddlewaretoken';
+      csrf.value = document.querySelector('input[name=csrfmiddlewaretoken]').value;
+      form.appendChild(csrf);
+
+      document.body.appendChild(form);
+      form.submit();
+    } else if (qrSelected) {
       e.preventDefault();
       mostrarQRPago();
     }
+    // Para Tarjeta y Transferencia, el form se envía normalmente
   });
 }
 </script>

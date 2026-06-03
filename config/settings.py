@@ -154,3 +154,11 @@ PASSWORD_RESET_TIMEOUT = 600
 # DEBUG TEMPORAL
 print("EMAIL:", EMAIL_HOST_USER)
 print("PASSWORD:", EMAIL_HOST_PASSWORD)
+
+# ==========================================
+# PAYPAL SANDBOX CONFIGURATION
+# ==========================================
+PAYPAL_CLIENT_ID = os.getenv('PAYPAL_CLIENT_ID', 'TU_CLIENT_ID_AQUI')
+PAYPAL_CLIENT_SECRET = os.getenv('PAYPAL_CLIENT_SECRET', 'TU_CLIENT_SECRET_AQUI')
+PAYPAL_MODE = os.getenv('PAYPAL_MODE', 'sandbox')  # 'sandbox' o 'live'
+PAYPAL_RATE_TO_USD = float(os.getenv('PAYPAL_RATE_TO_USD', '6.96'))

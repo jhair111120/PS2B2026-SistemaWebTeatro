@@ -251,56 +251,6 @@ def carrito_view(request):
     })
 
 
-# ─────────────────────────────────────────────
-# MAPA INTERACTIVO DEL TEATRO
-# ─────────────────────────────────────────────
-
-@never_cache
-def mapa_interactivo_view(request, evento_id):
-    """Página del mapa interactivo del teatro."""
-    hoy = timezone.localdate()
-    evento = get_object_or_404(
-        Evento.objects.select_related('estado_evento').prefetch_related('eventozona_set__zona'),
-        pk=evento_id,
-        estado_evento__nombre__icontains='activ',
-        fecha_evento__gte=hoy,
-    )
-
-    zonas = (
-        evento.eventozona_set
-        .select_related('zona')
-        .filter(habilitada=True)
-        .order_by('-precio_base')
-    )
-
-    zonas_data = []
-    for ez in zonas:
-        disponibles = EventoAsiento.objects.filter(
-            evento_zona=ez, estado=EventoAsiento.Estado.DISPONIBLE
-        ).count()
-        total = ez.capacidad_evento or EventoAsiento.objects.filter(evento_zona=ez).count()
-        zonas_data.append({
-            'id': ez.id,
-            'nombre': ez.zona.nombre.upper(),
-            'nombre_display': (ez.nombre_display or ez.zona.nombre).upper(),
-            'precio': float(ez.precio_base),
-            'limite': ez.limite_por_usuario,
-            'color': ez.zona.codigo_color or '#1E293B',
-            'capacidad': total,
-            'disponibles': disponibles,
-            'tipo_asignacion': ez.zona.tipo_asignacion,
-            'orden_visual': ez.zona.orden_visual or 0,
-        })
-
-    user_logged_in = request.session.get('usuario_id') is not None
-    return render(request, 'pages/users/mapa_interactivo.html', {
-        'evento': evento,
-        'zonas_data': zonas_data,
-        'zonas_json': json.dumps(zonas_data),
-        'user_logged_in': user_logged_in,
-    })
-
-
 @never_cache
 def finalizar_compra_view(request, evento_id):
     guard = _require_login(request, next_url=f'/comprar-entrada/{evento_id}/')

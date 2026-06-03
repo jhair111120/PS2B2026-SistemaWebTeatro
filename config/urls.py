@@ -2,9 +2,8 @@
 URL configuration for config project.
 """
 from django.contrib import admin
-from django.urls import path, re_path
+from django.urls import path
 from django.views.generic import TemplateView
-from apps.events.static_views import handler404 as _handler404_view
 
 # ── Auth & perfil ─────────────────────────────────────────────────────────────
 from apps.users.views import (
@@ -36,7 +35,14 @@ from apps.reservations.views import (
     compra_exitosa_view,
     guardar_carrito_api,
     carrito_view,
-    mapa_interactivo_view,
+)
+
+# ── Pago con PayPal ──────────────────────────────────────────────────────────
+from apps.payments.views import (
+    paypal_create_view,
+    paypal_execute_view,
+    paypal_cancel_view,
+    paypal_status_view,
 )
 
 # ── Mis tickets ───────────────────────────────────────────────────────────────
@@ -76,7 +82,12 @@ urlpatterns = [
     path('comprar-entrada/<int:evento_id>/confirmar/', confirmar_compra_view, name='confirmar_compra'),
     path('compra-exitosa/<int:venta_id>/', compra_exitosa_view, name='compra_exitosa'),
     path('api/carrito/<int:evento_id>/', guardar_carrito_api, name='guardar_carrito_api'),
-    path('mapa-interactivo/<int:evento_id>/', mapa_interactivo_view, name='mapa_interactivo'),
+
+    # ── PAGO PAYPAL ────────────────────────────────────────────────────────────
+    path('pago/paypal/crear/<int:evento_id>/', paypal_create_view, name='paypal_create'),
+    path('pago/paypal/execute/', paypal_execute_view, name='paypal_execute'),
+    path('pago/paypal/cancel/<int:evento_id>/', paypal_cancel_view, name='paypal_cancel'),
+    path('api/paypal/status/', paypal_status_view, name='paypal_status'),
 
     # ── PERFIL Y AUTH ─────────────────────────────────────────────────────────
     path('perfil/', perfil_view, name='perfil'),
@@ -139,13 +150,4 @@ urlpatterns = [
     path('mi-soporte/api/ia/', soporte_ia_api, name='soporte_ia_api'),
 ]
 
-# ── Catch-all 404 (funciona incluso con DEBUG=True) ──
 handler404 = 'apps.events.static_views.handler404'
-
-
-def _catch_all_404(request):
-    from django.http import Http404
-    return _handler404_view(request, Http404())
-
-
-urlpatterns += [re_path(r'^.*$', _catch_all_404)]
