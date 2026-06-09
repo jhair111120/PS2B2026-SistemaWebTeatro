@@ -1,0 +1,129 @@
+{% extends "layouts/admin_base.html" %}
+{% load static %}
+
+{% block title %}Validar Entrada | Teatro{% endblock %}
+
+{% block content %}
+<div class="min-h-screen py-8 px-4">
+  <div class="max-w-2xl mx-auto">
+
+    <div class="mb-6">
+      <a href="{% url 'admin_panel' %}" class="back-link flex items-center gap-2">
+        <i class="fas fa-arrow-left"></i>
+        <span>Volver al Panel</span>
+      </a>
+    </div>
+
+    <div class="mb-6">
+      <h1 class="text-3xl font-extrabold text-white"><i class="fas fa-qrcode text-[#00AEEF] me-3"></i>Validar Entrada</h1>
+      <p class="text-gray-400 mt-2">Escanea o ingresa el código QR del ticket</p>
+    </div>
+
+    <div class="form-section-card">
+      <div class="mb-6">
+        <label class="block text-sm text-gray-400 mb-2">Código QR del Ticket</label>
+        <input type="text" id="input-qr" class="input-v2 font-mono" placeholder="Pega o escanea el código QR aquí..." autocomplete="off">
+      </div>
+
+      <button onclick="validarEntrada()" id="btn-validar" class="btn-pay-purchase w-full">
+        <i class="fas fa-check-circle me-2"></i> Validar Entrada
+      </button>
+
+      <div id="resultado" class="mt-6 hidden">
+        <div id="resultado-valido" class="hidden">
+          <div class="bg-green-500/10 border border-green-500/30 rounded-xl p-6 text-center">
+            <i class="fas fa-check-circle text-green-500 text-5xl mb-4"></i>
+            <h3 class="text-xl font-bold text-green-400 mb-2">¡Entrada Válida!</h3>
+            <div id="datos-valido" class="text-left mt-4 space-y-2 text-sm"></div>
+          </div>
+        </div>
+
+        <div id="resultado-invalido" class="hidden">
+          <div class="bg-red-500/10 border border-red-500/30 rounded-xl p-6 text-center">
+            <i class="fas fa-times-circle text-red-500 text-5xl mb-4"></i>
+            <h3 class="text-xl font-bold text-red-400 mb-2" id="error-msg"></h3>
+            <div id="datos-invalido" class="text-left mt-4 space-y-2 text-sm"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+document.getElementById('input-qr').addEventListener('paste', function() {
+  setTimeout(function() { validarEntrada(); }, 200);
+});
+
+document.getElementById('input-qr').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') validarEntrada();
+});
+
+function validarEntrada() {
+  var codigo = document.getElementById('input-qr').value.trim();
+  if (!codigo) {
+    alert('Ingresa el código QR');
+    return;
+  }
+
+  var btn = document.getElementById('btn-validar');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Validando...';
+
+  var formData = new FormData();
+  formData.append('codigo_qr', codigo);
+  formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+  fetch('{% url "validar_entrada" %}', {
+    method: 'POST',
+    body: formData,
+    headers: {'X-Requested-With': 'XMLHttpRequest'}
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    document.getElementById('resultado').classList.remove('hidden');
+    document.getElementById('resultado-valido').classList.add('hidden');
+    document.getElementById('resultado-invalido').classList.add('hidden');
+
+    if (data.valida) {
+      document.getElementById('resultado-valido').classList.remove('hidden');
+      var d = data.entrada;
+      var html = '';
+      html += '<div class="flex justify-between"><span class="text-gray-400">Evento:</span><span class="font-bold text-white">' + d.evento + '</span></div>';
+      html += '<div class="flex justify-between"><span class="text-gray-400">Fecha:</span><span class="text-white">' + d.fecha + ' - ' + d.hora + '</span></div>';
+      html += '<div class="flex justify-between"><span class="text-gray-400">Ubicación:</span><span class="text-white">' + d.ubicacion + '</span></div>';
+      if (d.fila) {
+        html += '<div class="flex justify-between"><span class="text-gray-400">Asiento:</span><span class="text-white">Fila ' + d.fila + ' - Nro ' + d.asiento + '</span></div>';
+      }
+      html += '<div class="flex justify-between"><span class="text-gray-400">Comprador:</span><span class="text-white">' + d.comprador + '</span></div>';
+      document.getElementById('datos-valido').innerHTML = html;
+    } else {
+      document.getElementById('resultado-invalido').classList.remove('hidden');
+      document.getElementById('error-msg').textContent = data.error;
+      if (data.entrada) {
+        var d = data.entrada;
+        var html = '';
+        html += '<div class="flex justify-between"><span class="text-gray-400">Evento:</span><span class="text-white">' + d.evento + '</span></div>';
+        html += '<div class="flex justify-between"><span class="text-gray-400">Ubicación:</span><span class="text-white">' + d.ubicacion + '</span></div>';
+        if (d.fecha_validacion) {
+          html += '<div class="flex justify-between"><span class="text-gray-400">Usada el:</span><span class="text-white">' + d.fecha_validacion + '</span></div>';
+        }
+        document.getElementById('datos-invalido').innerHTML = html;
+      }
+    }
+  })
+  .catch(function(err) {
+    document.getElementById('resultado').classList.remove('hidden');
+    document.getElementById('resultado-invalido').classList.remove('hidden');
+    document.getElementById('error-msg').textContent = 'Error de conexión';
+  })
+  .finally(function() {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-check-circle me-2"></i> Validar Entrada';
+    document.getElementById('input-qr').value = '';
+    document.getElementById('input-qr').focus();
+  });
+}
+</script>
+{% endblock %}

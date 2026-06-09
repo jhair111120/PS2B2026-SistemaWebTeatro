@@ -1,0 +1,132 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+{% block title %}Contacto | Teatro Al Aire Libre{% endblock %}
+{% block content %}
+
+<div class="min-h-screen py-16 px-4" style="background:#0A0E14;">
+  <div class="max-w-5xl mx-auto">
+
+    <div class="text-center mb-12">
+      <h1 class="text-5xl font-extrabold text-white mb-4">Contacto</h1>
+      <p class="text-xl text-gray-400">Estamos aquí para ayudarte. Contáctanos por cualquiera de estos medios.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+
+      <!-- Info de contacto -->
+      <div>
+        <h2 class="text-2xl font-bold text-white mb-8">Información de Contacto</h2>
+
+        <div class="flex flex-col gap-6">
+          <div class="flex items-start gap-4 p-5 rounded-xl" style="background:#151920;border:1px solid rgba(255,255,255,0.1);">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(0,174,239,0.15);">
+              <i class="fas fa-map-marker-alt text-[#00AEEF] text-lg"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-white mb-1">Dirección</h4>
+              <p class="text-gray-400 text-sm">Avenida del Poeta s/n<br>La Paz, Bolivia</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4 p-5 rounded-xl" style="background:#151920;border:1px solid rgba(255,255,255,0.1);">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(0,174,239,0.15);">
+              <i class="fas fa-phone-alt text-[#00AEEF] text-lg"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-white mb-1">Teléfono</h4>
+              <p class="text-gray-400 text-sm">+591 2 123-4567<br>Lunes a Viernes, 9:00 - 18:00</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4 p-5 rounded-xl" style="background:#151920;border:1px solid rgba(255,255,255,0.1);">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(0,174,239,0.15);">
+              <i class="fas fa-envelope text-[#00AEEF] text-lg"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-white mb-1">Correo Electrónico</h4>
+              <p class="text-gray-400 text-sm">info@teatrolapaz.bo<br>soporte@teatrolapaz.bo</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4 p-5 rounded-xl" style="background:#151920;border:1px solid rgba(255,255,255,0.1);">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(0,174,239,0.15);">
+              <i class="fas fa-clock text-[#00AEEF] text-lg"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-white mb-1">Horario de Atención</h4>
+              <p class="text-gray-400 text-sm">Lunes a Viernes: 9:00 - 18:00<br>Sábados: 10:00 - 14:00</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Redes sociales -->
+        <div class="mt-8">
+          <h4 class="font-bold text-white mb-4">Síguenos</h4>
+          <div class="flex gap-4">
+            <a href="#" class="w-10 h-10 rounded-full flex items-center justify-center text-white transition-all"
+               style="background:#1E293B;" onmouseover="this.style.background='#00AEEF'" onmouseout="this.style.background='#1E293B'">
+              <i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="#" class="w-10 h-10 rounded-full flex items-center justify-center text-white transition-all"
+               style="background:#1E293B;" onmouseover="this.style.background='#00AEEF'" onmouseout="this.style.background='#1E293B'">
+              <i class="fab fa-instagram"></i>
+            </a>
+            <a href="#" class="w-10 h-10 rounded-full flex items-center justify-center text-white transition-all"
+               style="background:#1E293B;" onmouseover="this.style.background='#00AEEF'" onmouseout="this.style.background='#1E293B'">
+              <i class="fab fa-tiktok"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formulario -->
+      <div>
+        <h2 class="text-2xl font-bold text-white mb-8">Envíanos un Mensaje</h2>
+        <div class="p-8 rounded-2xl" style="background:#151920;border:1px solid rgba(255,255,255,0.1);">
+          {% if request.session.usuario_id %}
+          <form method="post" action="{% url 'cliente_soporte' %}">
+            {% csrf_token %}
+            <div class="mb-4">
+              <label class="block text-sm text-gray-400 mb-2">Asunto</label>
+              <input type="text" name="asunto" class="w-full rounded-lg px-4 py-3 text-white text-sm"
+                     style="background:#1E293B;border:1px solid rgba(255,255,255,0.1);outline:none;"
+                     placeholder="¿En qué podemos ayudarte?" required>
+            </div>
+            <div class="mb-4">
+              <label class="block text-sm text-gray-400 mb-2">Categoría</label>
+              <select name="categoria" class="w-full rounded-lg px-4 py-3 text-white text-sm"
+                      style="background:#1E293B;border:1px solid rgba(255,255,255,0.1);outline:none;">
+                {% for cat in categorias %}
+                <option value="{{ cat.id }}">{{ cat.nombre|capfirst }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-6">
+              <label class="block text-sm text-gray-400 mb-2">Mensaje</label>
+              <textarea name="descripcion" rows="5" class="w-full rounded-lg px-4 py-3 text-white text-sm"
+                        style="background:#1E293B;border:1px solid rgba(255,255,255,0.1);outline:none;resize:none;"
+                        placeholder="Describe tu consulta o problema..." required></textarea>
+            </div>
+            <button type="submit" class="w-full py-3 rounded-lg font-bold text-white"
+                    style="background:#00AEEF;border:none;cursor:pointer;">
+              <i class="fas fa-paper-plane me-2"></i> Enviar Mensaje
+            </button>
+          </form>
+          {% else %}
+          <div class="text-center py-8">
+            <i class="fas fa-lock text-4xl text-gray-600 mb-4 block"></i>
+            <p class="text-gray-400 mb-6">Inicia sesión para enviarnos un mensaje directo.</p>
+            <a href="#" class="inline-block px-6 py-3 rounded-full font-bold text-white"
+               style="background:#00AEEF;text-decoration:none;"
+               data-bs-toggle="modal" data-bs-target="#authModal" onclick="switchAuthTab('login')">
+              Iniciar Sesión
+            </a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

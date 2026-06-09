@@ -1,0 +1,258 @@
+{% load static tailwind_tags %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Teatro Al Aire Libre - Jaime Laredo{% endblock %}</title>
+
+  {% tailwind_css %}
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link
+    href="https://fonts.googleapis.com/css2?family=IM+Fell+Great+Primer+SC&family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/layouts/base.css' %}">
+
+  <style>
+    /* Estilos y animación para el enlace de "Olvidé mi contraseña" */
+    .forgot-pwd-link {
+      color: #64748b;
+      /* Color gris suave */
+      font-size: 0.85rem;
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .forgot-pwd-link:hover {
+      color: #0EA5E9;
+      /* Azul del tema al pasar el mouse */
+      transform: translateX(5px);
+      /* Pequeño desplazamiento a la derecha */
+    }
+  </style>
+</head>
+
+<body class="d-flex flex-column min-vh-screen">
+
+  {% include 'components/navbar.html' %}
+
+  {% if messages %}
+  <div id="django-messages-container" style="position:fixed;top:70px;right:20px;z-index:9999;max-width:380px;">
+    {% for message in messages %}
+    <div
+      class="django-message alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% else %}alert-info{% endif %} alert-dismissible fade show shadow"
+      data-message="{{ message }}" data-tags="{{ message.tags }}" role="alert" style="font-size:0.9rem;">
+      {% if message.tags == 'error' %}<i class="fas fa-exclamation-circle me-2"></i>
+      {% elif message.tags == 'success' %}<i class="fas fa-check-circle me-2"></i>
+      {% else %}<i class="fas fa-info-circle me-2"></i>{% endif %}
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <main class="flex-grow-1">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer
+    style="background-color: #151920; color: white; border-top: 1px solid rgba(255,255,255,0.05); padding: 50px 0 30px 0; font-family: 'Inter', sans-serif;">
+    <div style="max-width: 1280px; margin: 0 auto; padding: 0 40px;">
+      <div style="display: flex; flex-wrap: wrap; gap: 30px; justify-content: space-between; align-items: flex-start;">
+
+        <div style="flex: 1.5; min-width: 300px; margin-bottom: 20px;">
+          <div style="display: flex; flex-direction: column; margin-bottom: 20px;">
+            <span
+              style="font-family: 'IM Fell Great Primer SC', serif; font-size: 1.8rem; letter-spacing: 0.05em; color: white; line-height: 1.2;">TEATRO
+              AL AIRE LIBRE</span>
+            <span
+              style="font-family: 'IM Fell Great Primer SC', serif; font-size: 1.2rem; color: #E5E7EB; letter-spacing: 0.05em;">"JAIME
+              LAREDO"</span>
+          </div>
+          <p style="font-size: 14px; color: #D1D5DB; line-height: 1.6; max-width: 320px; font-weight: 500;">
+            El mejor espacio cultural de Bolivia para disfrutar de espectáculos únicos bajo las estrellas.
+          </p>
+        </div>
+
+        <div style="width: 180px; margin-bottom: 20px;">
+          <h5 style="margin-top: 0; font-weight: bold; color: white; font-size: 1.1rem; margin-bottom: 20px;">Enlaces
+            Rápidos</h5>
+          <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px;">
+            <li><a href="{% url 'eventos' %}"
+                style="color: #D1D5DB; text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.3s;"
+                onmouseover="this.style.color='white'" onmouseout="this.style.color='#D1D5DB'">Ver Eventos</a></li>
+            <li><a href="{% url 'mis_tickets' %}"
+                style="color: #D1D5DB; text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.3s;"
+                onmouseover="this.style.color='white'" onmouseout="this.style.color='#D1D5DB'">Mis entradas</a></li>
+            <li><a href="{% url 'sobre_nosotros' %}"
+                style="color: #D1D5DB; text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.3s;"
+                onmouseover="this.style.color='white'" onmouseout="this.style.color='#D1D5DB'">Sobre Nosotros</a></li>
+            <li><a href="{% url 'contacto' %}"
+                style="color: #D1D5DB; text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.3s;"
+                onmouseover="this.style.color='white'" onmouseout="this.style.color='#D1D5DB'">Contacto</a></li>
+          </ul>
+        </div>
+
+        <div style="width: 230px; margin-bottom: 20px;">
+          <h5 style="margin-top: 0; font-weight: bold; color: white; font-size: 1.1rem; margin-bottom: 20px;">Contacto
+          </h5>
+          <div style="display: flex; flex-direction: column; gap: 18px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <i class="fas fa-phone-alt" style="color: var(--color-blue, #0EA5E9); font-size: 18px;"></i>
+              <span style="color: #D1D5DB; font-size: 14px; font-weight: 500;">+591 2 1234567</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <i class="fas fa-envelope" style="color: var(--color-blue, #0EA5E9); font-size: 18px;"></i>
+              <span style="color: #D1D5DB; font-size: 14px; font-weight: 500;">info@teatrolapaz.bo</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="width: 200px; margin-bottom: 20px;">
+          <h5 style="margin-top: 0; font-weight: bold; color: white; font-size: 1.1rem; margin-bottom: 20px;">Síguenos
+          </h5>
+          <div style="display: flex; gap: 20px;">
+            <a href="#" style="text-decoration: none; color: white; font-size: 1.4rem; transition: transform 0.3s;"
+              onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"><i
+                class="fab fa-facebook-f"></i></a>
+            <a href="#" style="text-decoration: none; color: white; font-size: 1.4rem; transition: transform 0.3s;"
+              onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"><i
+                class="fab fa-instagram"></i></a>
+            <a href="#" style="text-decoration: none; color: white; font-size: 1.4rem; transition: transform 0.3s;"
+              onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"><i
+                class="fab fa-tiktok"></i></a>
+          </div>
+        </div>
+
+      </div>
+
+      <div
+        style="margin-top: 40px; padding-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; color: #D1D5DB; font-size: 13px; font-weight: 500;">
+        <span>© 2026 Teatro al Aire Libre La Paz. Todos los derechos reservados.</span>
+        <div style="display: flex; gap: 25px;">
+          <a href="{% url 'terminos' %}" style="color: #D1D5DB; text-decoration: none; transition: color 0.3s;"
+            onmouseover="this.style.color='white'" onmouseout="this.style.color='#D1D5DB'">Términos y Condiciones</a>
+          <a href="{% url 'privacidad' %}" style="color: #D1D5DB; text-decoration: none; transition: color 0.3s;"
+            onmouseover="this.style.color='white'" onmouseout="this.style.color='#D1D5DB'">Política de Privacidad</a>
+        </div>
+      </div>
+
+    </div>
+  </footer>
+
+  {% if request.session.usuario_id %}
+  <a href="{% url 'cliente_soporte' %}" class="floating-chat-btn">
+    <i class="far fa-comment-dots"></i>
+    <span class="chat-badge">!</span>
+  </a>
+  {% else %}
+  <a href="#" class="floating-chat-btn" data-bs-toggle="modal" data-bs-target="#authModal"
+    onclick="switchAuthTab('login')">
+    <i class="far fa-comment-dots"></i>
+    <span class="chat-badge">!</span>
+  </a>
+  {% endif %}
+
+  <div class="modal fade" id="authModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 450px;">
+      <div class="modal-content position-relative">
+        <button type="button" class="btn-close-custom" data-bs-dismiss="modal" aria-label="Cerrar"><i
+            class="fas fa-times"></i></button>
+        <div class="modal-body p-4">
+          <div class="modal-brand mt-2">TEATRO AL AIRE LIBRE<br>"JAIME LAREDO"</div>
+          <h3 class="text-center fw-bold mb-4" style="color: black;">Iniciar Sesión o Registrarse</h3>
+
+          <div class="auth-toggle-box">
+            <button class="auth-toggle-btn active" id="tab-login" onclick="switchAuthTab('login')">Iniciar
+              Sesión</button>
+            <button class="auth-toggle-btn" id="tab-signup" onclick="switchAuthTab('signup')">Registrarse</button>
+          </div>
+
+          <div id="form-login">
+            <form action="{% url 'login' %}" method="POST">
+              {% csrf_token %}
+              <div class="mb-3">
+                <input type="email" name="correo" class="form-control custom-input" placeholder="Correo Electrónico"
+                  required oninput="this.value = this.value.replace(/^\s+/, '')">
+              </div>
+              <div class="mb-4 password-wrapper">
+                <input type="password" name="password" class="form-control custom-input pwd-input"
+                  placeholder="Contraseña" required oninput="this.value = this.value.replace(/^\s+/, '')">
+                <i class="fas fa-eye-slash password-toggle" onclick="togglePassword(this)"></i>
+              </div>
+              <button type="submit" class="btn btn-dark-action mb-3">Acceder</button>
+
+              <div class="text-start">
+                <a href="{% url 'forgot_password' %}" class="forgot-pwd-link">
+                  <i class="fas fa-lock me-1"></i> Olvidé mi Contraseña
+                </a>
+              </div>
+
+            </form>
+          </div>
+
+          <div id="form-signup" class="d-none">
+            <form action="{% url 'signup' %}" method="POST" id="signupForm">
+              {% csrf_token %}
+              <div class="mb-3">
+                <input type="email" name="correo" id="reg-correo" class="form-control custom-input"
+                  placeholder="Ej. usuario123@dominio.bo" required onkeyup="valEmail()"
+                  oninput="this.value = this.value.replace(/^\s+/, '')">
+                <div id="email-feed" class="feedback-msg">Debe ser un correo válido con su dominio.</div>
+              </div>
+              <div class="row g-2 mb-3">
+                <div class="col-6">
+                  <input type="text" name="nombre" id="reg-nombre" class="form-control custom-input"
+                    placeholder="Nombre" required onkeyup="valNombre('reg-nombre')"
+                    oninput="this.value = this.value.replace(/^\s+/, '').replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')">
+                  <div id="reg-nombre-feed" class="feedback-msg">Inicie con mayúscula, mínimo 2 letras.</div>
+                </div>
+                <div class="col-6">
+                  <input type="text" name="apellido" id="reg-apellido" class="form-control custom-input"
+                    placeholder="Apellido" required onkeyup="valApellido('reg-apellido')"
+                    oninput="this.value = this.value.replace(/^\s+/, '').replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')">
+                  <div id="reg-apellido-feed" class="feedback-msg">Cada palabra debe iniciar con mayúscula y tener
+                    mínimo 2 letras.</div>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <div class="password-wrapper">
+                  <input type="password" name="password" id="reg-pwd" class="form-control custom-input pwd-input"
+                    placeholder="Contraseña" required onkeyup="valPwd()"
+                    oninput="this.value = this.value.replace(/^\s+/, '')">
+                  <i class="fas fa-eye-slash password-toggle" onclick="togglePassword(this)"></i>
+                </div>
+                <div id="pwd-feed" class="feedback-msg">Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1
+                  especial (@$!%*?&.-).</div>
+              </div>
+
+              <div class="input-group mb-1 phone-container-box" id="phone-container"
+                style="border: 2px solid black; border-radius: 10px; overflow: hidden;">
+                <button class="btn btn-light dropdown-toggle bg-white border-0" type="button"
+                  style="border-right: 1px solid #ddd !important;" disabled>🇧🇴</button>
+                <input type="tel" name="telefono" id="reg-tel" class="form-control border-0 shadow-none"
+                  placeholder="Celular (8 dígitos)" maxlength="8" onkeyup="valTel()"
+                  oninput="this.value = this.value.replace(/^\s+/, '').replace(/[^0-9]/g, '')">
+              </div>
+              <div id="tel-feed" class="feedback-msg mb-3">Debe tener exactamente 8 dígitos y comenzar con 6 o 7.</div>
+
+              <button type="submit" class="btn btn-dark-action mb-3 mt-3">Registrarse</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{% static 'js/layouts/base.js' %}"></script>
+</body>
+
+</html>

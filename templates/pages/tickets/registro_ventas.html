@@ -1,0 +1,137 @@
+{% extends "layouts/admin_base.html" %}
+{% load static %}
+
+{% block title %}Registro de Ventas{% endblock %}
+
+{% block admin_content %}
+<div class="admin-dashboard">
+
+  <section class="admin-panel admin-section">
+    <div class="admin-page-head-row">
+      <div class="admin-page-head">
+        <h1 class="admin-page-title"><i class="fas fa-cart-shopping me-2" style="color:#00AEEF;"></i>Registro de Ventas</h1>
+        <p class="admin-page-desc">Historial completo de todas las ventas realizadas en el teatro.</p>
+      </div>
+      <a href="{% url 'boleteria' %}" class="admin-btn-primary" style="text-decoration:none;display:inline-flex;align-items:center;gap:.5rem;padding:.6rem 1.2rem;">
+        <i class="fas fa-plus"></i> Nueva Venta
+      </a>
+    </div>
+
+    <div class="admin-kpi-grid" style="margin-bottom:1.5rem;">
+      <div class="admin-card">
+        <div class="admin-kpi-card__row">
+          <div>
+            <p class="admin-kpi-card__label">Total de Ventas</p>
+            <p class="admin-kpi-card__value">{{ total_ventas }}</p>
+          </div>
+          <span class="admin-kpi-card__icon admin-kpi-card__icon--sky"><i class="fas fa-receipt"></i></span>
+        </div>
+      </div>
+      <div class="admin-card">
+        <div class="admin-kpi-card__row">
+          <div>
+            <p class="admin-kpi-card__label">Ingresos (Emitidas)</p>
+            <p class="admin-kpi-card__value">Bs. {{ total_ingresos|floatformat:0 }}</p>
+          </div>
+          <span class="admin-kpi-card__icon admin-kpi-card__icon--emerald"><i class="fas fa-dollar-sign"></i></span>
+        </div>
+      </div>
+      <div class="admin-card">
+        <div class="admin-kpi-card__row">
+          <div>
+            <p class="admin-kpi-card__label">Entradas Vendidas</p>
+            <p class="admin-kpi-card__value">{{ total_entradas }}</p>
+          </div>
+          <span class="admin-kpi-card__icon admin-kpi-card__icon--violet"><i class="fas fa-ticket-alt"></i></span>
+        </div>
+      </div>
+    </div>
+
+    <form class="admin-filters" method="get" action="{% url 'registro_ventas' %}">
+      <div class="admin-input-wrap"><i class="fas fa-magnifying-glass"></i><input class="admin-input" type="search" name="q" value="{{ q }}" placeholder="Buscar por evento, código, cliente..." /></div>
+      <div>
+        <input class="admin-input" type="date" name="desde" value="{{ fecha_desde }}" placeholder="Desde" style="width:auto;">
+      </div>
+      <div>
+        <input class="admin-input" type="date" name="hasta" value="{{ fecha_hasta }}" placeholder="Hasta" style="width:auto;">
+      </div>
+      <button type="submit" class="admin-btn-primary" style="padding:0.5rem 1rem;font-size:0.8125rem;"><i class="fas fa-filter"></i> Filtrar</button>
+      {% if q or fecha_desde or fecha_hasta %}
+      <a href="{% url 'registro_ventas' %}" class="admin-btn-danger" style="padding:0.5rem 1rem;font-size:0.8125rem;text-decoration:none;"><i class="fas fa-times"></i> Limpiar</a>
+      {% endif %}
+    </form>
+
+    <div class="admin-table-shell">
+      <div class="admin-table-shell__head">
+        <h2>Historial de Ventas</h2>
+        <span class="cell-muted cell-xs">{{ total_ventas }} venta{{ total_ventas|pluralize:"s" }}</span>
+      </div>
+      <div class="admin-table-scroll">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Cliente</th>
+              <th>Evento</th>
+              <th>Detalle</th>
+              <th>Monto</th>
+              <th>Método</th>
+              <th>Canal</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+              <th class="cell-right">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in ventas_rows %}
+            {% with v=row.venta %}
+            <tr>
+              <td class="cell-xs" style="font-family:monospace;">{{ v.id }}</td>
+              <td>
+                {% if v.usuario %}
+                  <div class="cell-strong">{{ v.usuario.nombre }} {{ v.usuario.apellido }}</div>
+                  <div class="cell-xs cell-muted">{{ v.usuario.correo }}</div>
+                {% else %}
+                  <span class="cell-muted">Cliente mostrador</span>
+                {% endif %}
+              </td>
+              <td class="cell-muted"><i class="fas fa-calendar" style="color:#38bdf8;"></i> {{ v.reserva.evento.nombre }}</td>
+              <td class="cell-muted cell-xs" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                <i class="fas fa-chair" style="color:#38bdf8;"></i> {{ row.asientos_txt }}
+              </td>
+              <td class="fw-bold">Bs. {{ v.total|floatformat:2 }}</td>
+              <td class="cell-xs">{{ row.metodo }}</td>
+              <td class="cell-xs">{{ v.canal_venta.nombre|title }}</td>
+              <td class="cell-xs cell-muted">{{ v.fecha_venta|date:"d M Y H:i" }}</td>
+              <td>
+                {% if 'emit' in v.estado_venta.nombre|lower %}
+                  <span class="admin-badge admin-badge--ok">{{ v.estado_venta.nombre }}</span>
+                {% elif 'anul' in v.estado_venta.nombre|lower or 'reemb' in v.estado_venta.nombre|lower %}
+                  <span class="admin-badge admin-badge--danger">{{ v.estado_venta.nombre }}</span>
+                {% else %}
+                  <span class="admin-badge admin-badge--warn">{{ v.estado_venta.nombre }}</span>
+                {% endif %}
+              </td>
+              <td class="cell-right">
+                <a href="{% url 'admin_venta_detalle' v.id %}" class="admin-icon-btn" style="color:#38bdf8;text-decoration:none;" title="Ver detalle">
+                  <i class="fas fa-eye"></i>
+                </a>
+              </td>
+            </tr>
+            {% endwith %}
+            {% empty %}
+            <tr>
+              <td colspan="10" style="text-align:center;padding:3rem;color:#94a3b8;">
+                <i class="fas fa-inbox" style="font-size:2rem;display:block;margin-bottom:1rem;opacity:.5;"></i>
+                No hay ventas registradas{% if q or fecha_desde or fecha_hasta %} que coincidan con los filtros{% endif %}.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+</div>
+{% endblock %}

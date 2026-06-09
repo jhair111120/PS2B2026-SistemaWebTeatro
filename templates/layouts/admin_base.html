@@ -1,0 +1,231 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Panel de administración{% endblock %} · Teatro La Paz</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="{% static 'css/pages/admin/panel.css' %}" />
+    {% block extra_head %}{% endblock %}
+  </head>
+  <body class="admin-body">
+    <div class="admin-layout">
+      <aside class="admin-sidebar" aria-label="Navegación principal">
+        <div class="admin-sidebar__brand">
+          <div class="admin-sidebar__brand-inner">
+            <span class="admin-sidebar__logo">
+              <i class="fas fa-theater-masks"></i>
+            </span>
+            <div>
+              <p class="admin-sidebar__title">Teatro La Paz</p>
+              <p class="admin-sidebar__subtitle">Panel de Administración</p>
+            </div>
+          </div>
+        </div>
+
+        <nav class="admin-sidebar__nav" id="admin-sidebar-nav">
+          <button type="button" data-admin-tab="dashboard" class="admin-nav-btn admin-nav-btn--active">
+            <i class="fas fa-grip"></i>
+            Dashboard
+          </button>
+          <button type="button" data-admin-tab="eventos" class="admin-nav-btn">
+            <i class="fas fa-calendar-days"></i>
+            Eventos
+          </button>
+          <button type="button" data-admin-tab="zonas" class="admin-nav-btn">
+            <i class="fas fa-vector-square"></i>
+            Zonas y Asientos
+          </button>
+          <button type="button" data-admin-tab="reservas" class="admin-nav-btn">
+            <i class="fas fa-bookmark"></i>
+            Reservas
+          </button>
+          <button type="button" data-admin-tab="ventas" class="admin-nav-btn">
+            <i class="fas fa-cart-shopping"></i>
+            Ventas
+          </button>
+          <button type="button" data-admin-tab="reportes" class="admin-nav-btn">
+            <i class="fas fa-chart-column"></i>
+            Reportes
+          </button>
+          <button type="button" data-admin-tab="soporte" class="admin-nav-btn">
+            <i class="fas fa-comments"></i>
+            Soporte
+          </button>
+          <button type="button" data-admin-tab="cuentas" class="admin-nav-btn">
+            <i class="fas fa-user-gear"></i>
+            Cuentas
+          </button>
+          <button type="button" data-admin-tab="configuracion" class="admin-nav-btn">
+            <i class="fas fa-gear"></i>
+            Configuración
+          </button>
+        </nav>
+
+        <div class="admin-sidebar__footer">
+          <p>Versión 1.0.0</p>
+          <p>© 2026 Teatro La Paz</p>
+        </div>
+      </aside>
+
+      <div class="admin-main">
+        <header class="admin-topbar">
+          <button type="button" id="admin-mobile-menu" class="admin-menu-toggle" aria-label="Abrir menú">
+            <i class="fas fa-bars"></i>
+          </button>
+
+          <form class="admin-search-wrap" method="get" action="{% url 'admin_panel' %}" style="margin:0;">
+            <input type="hidden" name="tab" value="reservas" />
+            <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+            <input
+              type="search"
+              name="res_q"
+              class="admin-search-input"
+              placeholder="Buscar reservas (código, evento, correo)…"
+              value="{{ request.GET.res_q }}"
+              autocomplete="off"
+            />
+          </form>
+
+          <div class="admin-topbar__actions">
+            <button type="button" class="admin-icon-btn admin-icon-btn--ghost" aria-label="Notificaciones" title="Sin notificaciones configuradas">
+              <i class="fas fa-bell"></i>
+            </button>
+            {% with uname=request.session.usuario_nombre|default:'Admin' %}
+            <div class="admin-user-menu" id="admin-user-menu-wrap">
+              <button
+                type="button"
+                class="admin-user-pill admin-user-menu__trigger"
+                id="admin-user-menu-trigger"
+                aria-expanded="false"
+                aria-haspopup="true"
+                aria-controls="admin-user-dropdown"
+              >
+                <span class="admin-user-avatar">{{ uname|slice:':1'|upper }}</span>
+                <span class="admin-user-name">{{ uname }}</span>
+                <i class="fas fa-chevron-down" aria-hidden="true"></i>
+              </button>
+              <div class="admin-user-dropdown hidden" id="admin-user-dropdown" role="menu" aria-hidden="true">
+                <div class="admin-user-dropdown__head">
+                  <span class="admin-user-dropdown__role">{{ request.session.usuario_rol|default:'Usuario'|title }}</span>
+                  {% if request.session.usuario_correo %}
+                    <span class="admin-user-dropdown__email">{{ request.session.usuario_correo }}</span>
+                  {% endif %}
+                </div>
+                <hr class="admin-user-dropdown__sep" />
+                <a role="menuitem" class="admin-user-dropdown__item" href="{% url 'perfil' %}">Mi perfil</a>
+                <a role="menuitem" class="admin-user-dropdown__item" href="{% url 'admin_panel' %}?tab=configuracion">Configuración</a>
+                <hr class="admin-user-dropdown__sep" />
+                <a role="menuitem" class="admin-user-dropdown__item admin-user-dropdown__item--danger" href="{% url 'logout' %}">Cerrar sesión</a>
+              </div>
+            </div>
+            {% endwith %}
+          </div>
+        </header>
+
+        <main class="admin-content">
+          {% if messages %}
+            <div class="admin-flash-stack" role="status">
+              {% for message in messages %}
+                <div class="admin-flash {% if 'error' in message.tags %}admin-flash--error{% elif 'success' in message.tags %}admin-flash--success{% elif 'warning' in message.tags %}admin-flash--warn{% else %}admin-flash--info{% endif %}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+          {% block admin_content %}{% endblock %}
+        </main>
+      </div>
+    </div>
+
+    <div id="admin-drawer-overlay" class="admin-drawer-overlay" aria-hidden="true"></div>
+    <aside id="admin-drawer" class="admin-drawer" aria-hidden="true">
+      <div class="admin-drawer__head">
+        <span class="admin-drawer__title">Menú</span>
+        <button type="button" id="admin-drawer-close" class="admin-drawer__close" aria-label="Cerrar">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="admin-drawer__nav" id="admin-drawer-nav"></div>
+    </aside>
+
+    <script>
+      (function () {
+        var drawerNav = document.getElementById('admin-drawer-nav');
+        var sidebarNav = document.getElementById('admin-sidebar-nav');
+        var drawer = document.getElementById('admin-drawer');
+        var overlay = document.getElementById('admin-drawer-overlay');
+
+        function closeDrawer() {
+          drawer.classList.remove('is-open');
+          overlay.classList.remove('is-visible');
+          drawer.setAttribute('aria-hidden', 'true');
+        }
+
+        function openDrawer() {
+          drawer.classList.add('is-open');
+          overlay.classList.add('is-visible');
+          drawer.setAttribute('aria-hidden', 'false');
+        }
+
+        if (drawerNav && sidebarNav) {
+          drawerNav.innerHTML = sidebarNav.innerHTML;
+          drawerNav.querySelectorAll('.admin-nav-btn').forEach(function (btn) {
+            btn.addEventListener('click', closeDrawer);
+          });
+        }
+
+        document.getElementById('admin-mobile-menu')?.addEventListener('click', openDrawer);
+        document.getElementById('admin-drawer-close')?.addEventListener('click', closeDrawer);
+        overlay?.addEventListener('click', closeDrawer);
+
+        (function () {
+          var wrap = document.getElementById('admin-user-menu-wrap');
+          var trigger = document.getElementById('admin-user-menu-trigger');
+          var menu = document.getElementById('admin-user-dropdown');
+          if (!wrap || !trigger || !menu) return;
+
+          function closeMenu() {
+            menu.classList.add('hidden');
+            menu.setAttribute('aria-hidden', 'true');
+            trigger.setAttribute('aria-expanded', 'false');
+          }
+
+          function openMenu() {
+            menu.classList.remove('hidden');
+            menu.setAttribute('aria-hidden', 'false');
+            trigger.setAttribute('aria-expanded', 'true');
+          }
+
+          trigger.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var open = !menu.classList.contains('hidden');
+            if (open) closeMenu();
+            else openMenu();
+          });
+
+          document.addEventListener('click', function () {
+            closeMenu();
+          });
+
+          wrap.addEventListener('click', function (e) {
+            e.stopPropagation();
+          });
+
+          menu.querySelectorAll('a[role=\"menuitem\"]').forEach(function (link) {
+            link.addEventListener('click', closeMenu);
+          });
+        })();
+      })();
+    </script>
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>

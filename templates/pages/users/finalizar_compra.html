@@ -1,0 +1,545 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}Finalizar Compra | {{ evento.nombre }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/pages/users/comprar_entradas.css' %}" />
+
+<style>
+.purchase-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 2rem;
+  padding: 1rem 0;
+}
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  position: relative;
+  z-index: 1;
+}
+.step-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  transition: all 0.3s;
+}
+.step-circle.complete {
+  background: #00AEEF;
+  color: white;
+  box-shadow: 0 0 12px rgba(0, 174, 239, 0.5);
+}
+.step-circle.active {
+  background: #00AEEF;
+  color: white;
+  box-shadow: 0 0 16px rgba(0, 174, 239, 0.6);
+  transform: scale(1.08);
+  border: 2px solid rgba(255,255,255,0.3);
+}
+.step-circle.inactive {
+  background: transparent;
+  color: #4B5563;
+  border: 2px solid #4B5563;
+}
+.step-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.step-label.complete { color: #00AEEF; }
+.step-label.active { color: white; }
+.step-label.inactive { color: #4B5563; }
+.step-connector {
+  flex: 1;
+  max-width: 80px;
+  min-width: 30px;
+  height: 2px;
+  margin: 0 4px;
+  margin-bottom: 1.6rem;
+  transition: all 0.3s;
+}
+.step-connector.complete { background: #00AEEF; }
+.step-connector.inactive { background: #2D3748; }
+</style>
+
+<div class="min-h-screen py-8 px-4">
+  <div class="max-w-6xl mx-auto">
+
+    <div class="mb-6">
+      <a href="{% url 'seleccionar_zona' evento.id %}" class="back-link flex items-center gap-2">
+        <i class="fas fa-arrow-left"></i>
+        <span>Volver</span>
+      </a>
+    </div>
+
+    <div class="purchase-steps">
+      <div class="step-item">
+        <div class="step-circle complete"><i class="fas fa-check" style="font-size:0.8rem;"></i></div>
+        <span class="step-label complete">Zona</span>
+      </div>
+      <div class="step-connector complete"></div>
+      <div class="step-item">
+        <div class="step-circle complete"><i class="fas fa-check" style="font-size:0.8rem;"></i></div>
+        <span class="step-label complete">Asientos</span>
+      </div>
+      <div class="step-connector complete"></div>
+      <div class="step-item">
+        <div class="step-circle active"><i class="fas fa-credit-card" style="font-size:0.85rem;"></i></div>
+        <span class="step-label active">Pago</span>
+      </div>
+      <div class="step-connector inactive"></div>
+      <div class="step-item">
+        <div class="step-circle inactive">4</div>
+        <span class="step-label inactive">Confirmación</span>
+      </div>
+    </div>
+
+    <div class="mb-6">
+      <h1 class="text-4xl font-extrabold text-white">Finalizar Compra</h1>
+      <p class="text-gray-400 mt-2">Revisa tu selección y elige el método de pago.</p>
+    </div>
+
+    {% if messages %}
+    <div class="mb-4">
+      {% for msg in messages %}
+      <div class="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400 mb-2">
+        <i class="fas fa-exclamation-circle me-2"></i>{{ msg }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if not carrito %}
+    <div class="text-center py-16">
+      <i class="fas fa-shopping-cart text-5xl text-gray-600 mb-4"></i>
+      <h3 class="text-xl text-white mb-4">Tu carrito está vacío</h3>
+      <a href="{% url 'seleccionar_zona' evento.id %}" class="btn-select-zone px-8 py-3 inline-block" style="text-decoration:none;">
+        Seleccionar Zonas
+      </a>
+    </div>
+    {% else %}
+
+    <!-- PASO 1: Selección de método de pago -->
+    <div id="pago-step1">
+      <form id="form-metodo-pago" method="post" action="{% url 'confirmar_compra' evento.id %}">
+        {% csrf_token %}
+
+        <div class="main-event-grid">
+          <div class="event-details-column">
+
+            <div class="form-section-card">
+              <h3 class="text-xl font-bold mb-4">Información Personal</h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="input-group-v2">
+                  <label>Nombre</label>
+                  <input type="text" class="input-v2" value="{{ request.session.usuario_nombre }}" readonly>
+                </div>
+                <div class="input-group-v2">
+                  <label>Correo</label>
+                  <input type="text" class="input-v2" value="{{ request.session.usuario_correo }}" readonly>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section-card">
+              <h3 class="text-xl font-bold mb-6">Método de Pago</h3>
+
+              <div class="flex flex-col gap-4 mb-6">
+                <label class="payment-method-option selected" id="opt-paypal">
+                  <input type="radio" name="metodo_pago" value="PayPal" checked onchange="selectMetodo(this)">
+                  <div class="flex items-center gap-3">
+                    <i class="fab fa-paypal text-[#003087] text-2xl"></i>
+                    <div>
+                      <p class="font-bold">Pagar con PayPal</p>
+                      <p class="text-xs text-gray-500">Pago seguro vía PayPal - Tarjetas de prueba en sandbox</p>
+                    </div>
+                  </div>
+                </label>
+                <label class="payment-method-option" id="opt-tarjeta">
+                  <input type="radio" name="metodo_pago" value="Tarjeta de Crédito" onchange="selectMetodo(this)">
+                  <div>
+                    <p class="font-bold">Tarjeta de Crédito o Débito</p>
+                    <p class="text-xs text-gray-500">Visa, Mastercard, American Express</p>
+                  </div>
+                </label>
+                <label class="payment-method-option" id="opt-qr">
+                  <input type="radio" name="metodo_pago" value="QR Bancario" onchange="selectMetodo(this)">
+                  <div>
+                    <p class="font-bold">QR Bancario</p>
+                    <p class="text-xs text-gray-500">Escanea el código QR para pagar</p>
+                  </div>
+                </label>
+                <label class="payment-method-option" id="opt-transferencia">
+                  <input type="radio" name="metodo_pago" value="Transferencia Bancaria" onchange="selectMetodo(this)">
+                  <div>
+                    <p class="font-bold">Transferencia Bancaria</p>
+                    <p class="text-xs text-gray-500">Transferencia directa</p>
+                  </div>
+                </label>
+              </div>
+
+              <button type="submit" id="btn-continuar-pago" class="btn-pay-purchase w-full">
+                Continuar al Pago — Bs. {{ total }}
+              </button>
+            </div>
+          </div>
+
+          <div class="purchase-sidebar-column">
+            <div class="summary-card">
+              <h3 class="summary-title"><i class="fas fa-shopping-cart text-[#00AEEF]"></i> Resumen de Compra</h3>
+
+              <div class="event-summary-box">
+                {% if evento.imagen_url %}
+                <img src="{{ evento.imagen_url }}" class="summary-event-image" alt="{{ evento.nombre }}">
+                {% else %}
+                <img src="https://via.placeholder.com/400x120/151920/fff?text={{ evento.nombre|urlencode }}" class="summary-event-image" alt="{{ evento.nombre }}">
+                {% endif %}
+                <h4 class="font-bold text-lg mt-3">{{ evento.nombre }}</h4>
+                <p class="text-xs text-gray-500">{{ evento.fecha_evento|date:"d/m/Y" }} - {{ evento.hora_evento|time:"H:i" }}</p>
+              </div>
+
+              <div class="text-sm font-semibold mb-4">Zonas Seleccionadas</div>
+              <div id="cart-items" class="mb-6">
+                {% for item in carrito %}
+                <div class="selected-item">
+                  <div>
+                    <p class="font-bold text-sm">{{ item.zona_nombre }}</p>
+                    <p class="text-xs text-gray-500">{{ item.qty }} entrada{{ item.qty|pluralize }} × Bs. {{ item.precio }}</p>
+                    {% if item.asientos_info %}
+                    <p class="text-xs mt-1" style="color:#7dd3fc;">
+                      <i class="fas fa-chair me-1" style="font-size:.65rem;"></i>
+                      {{ item.asientos_info|join:", " }}
+                    </p>
+                    {% endif %}
+                  </div>
+                  <span class="font-bold">Bs. {{ item.subtotal }}</span>
+                </div>
+                {% endfor %}
+              </div>
+
+              <div class="border-t border-white/10 pt-4">
+                <div class="summary-line">
+                  <span class="text-gray-400">SubTotal</span>
+                  <span>Bs. {{ subtotal }}</span>
+                </div>
+                <div class="summary-line">
+                  <span class="text-gray-400">Cargo por Servicio</span>
+                  <span>Bs. {{ cargo_servicio }}</span>
+                </div>
+                <div class="summary-total">
+                  <span>Total</span>
+                  <span class="text-[#00AEEF]">Bs. {{ total }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- PASO 2: QR de pago (solo para QR Bancario) -->
+    <div id="pago-step2" class="hidden">
+      <div class="max-w-2xl mx-auto">
+        <div class="form-section-card text-center">
+          <h2 class="text-2xl font-bold mb-2">Escanea el QR para Pagar</h2>
+          <p class="text-gray-400 mb-6">Usa tu aplicación bancaria para escanear el código QR y realizar el pago de <strong class="text-[#00AEEF]">Bs. {{ total }}</strong></p>
+
+          <div class="qr-payment-container mb-6">
+            <div class="qr-payment-code">
+              <img id="qr-pago-img" src="" alt="QR de Pago" class="w-64 h-64 mx-auto">
+            </div>
+            <p class="text-xs text-gray-500 mt-3" id="qr-pago-ref"></p>
+          </div>
+
+          <div class="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 mb-6 text-left">
+            <div class="flex gap-3">
+              <i class="fas fa-info-circle text-yellow-500 mt-1"></i>
+              <div class="text-xs text-yellow-300">
+                <p class="font-bold mb-1">Instrucciones:</p>
+                <ol class="list-decimal list-inside space-y-1">
+                  <li>Abre la app de tu banco</li>
+                  <li>Selecciona "Pagar con QR"</li>
+                  <li>Escanea el código mostrado</li>
+                  <li>Confirma el monto de <strong>Bs. {{ total }}</strong></li>
+                  <li>Presiona "Ya pagué" cuando hayas completado el pago</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex gap-4">
+            <button type="button" onclick="volverASeleccion()" class="flex-1 bg-white/5 py-3 rounded-lg font-bold text-white">
+              <i class="fas fa-arrow-left me-2"></i> Volver
+            </button>
+            <button type="button" id="btn-ya-pague" onclick="confirmarPagoQR()" class="flex-1 bg-green-600 hover:bg-green-700 py-3 rounded-lg font-bold text-white">
+              <i class="fas fa-check-circle me-2"></i> Ya Pagué
+            </button>
+          </div>
+
+          <div id="verificando-pago" class="hidden mt-4">
+            <div class="flex items-center justify-center gap-3 text-blue-400">
+              <i class="fas fa-spinner fa-spin text-xl"></i>
+              <span>Verificando pago...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden form for QR payment confirmation -->
+    <form id="form-confirmar-qr" method="post" action="{% url 'confirmar_compra' evento.id %}" class="hidden">
+      {% csrf_token %}
+      <input type="hidden" name="metodo_pago" value="QR Bancario">
+    </form>
+
+    <!-- Hidden form for PayPal simulation confirmation -->
+    <form id="form-confirmar-paypal" method="post" action="{% url 'confirmar_compra' evento.id %}" class="hidden">
+      {% csrf_token %}
+      <input type="hidden" name="metodo_pago" value="PayPal">
+    </form>
+
+    <!-- ═══════ PAYPAL MODAL ═══════ -->
+    <div id="paypal-modal" class="pp-overlay hidden">
+      <div class="pp-modal">
+        <!-- Header -->
+        <div class="pp-header">
+          <span style="color:#fff;font-weight:800;font-size:1.3rem;font-style:italic;letter-spacing:-0.5px;">
+            <span style="color:#253B80;">Pay</span><span style="color:#179BD7;">Pal</span>
+          </span>
+          <button type="button" class="pp-close" onclick="cerrarPaypalModal()">&times;</button>
+        </div>
+
+        <!-- STEP 1: Login -->
+        <div id="pp-step-login" class="pp-body">
+          <div class="pp-login-box">
+            <h3 class="pp-login-title">Pague con su cuenta PayPal</h3>
+            <div class="pp-email-display">
+              <i class="fab fa-paypal" style="color:#003087;font-size:1.5rem;"></i>
+              <span>{{ request.session.usuario_correo }}</span>
+            </div>
+            <div class="pp-field">
+              <label>Contraseña</label>
+              <input type="password" id="pp-password" value="••••••••" readonly>
+            </div>
+            <button type="button" class="pp-btn-primary" onclick="ppStep2()">
+              Iniciar sesión y pagar
+            </button>
+            <p class="pp-terms">Al continuar, acepta los <a href="#">Términos de uso</a> y la <a href="#">Política de privacidad</a> de PayPal.</p>
+          </div>
+        </div>
+
+        <!-- STEP 2: Confirmación -->
+        <div id="pp-step-confirm" class="pp-body hidden">
+          <div class="pp-confirm-box">
+            <div class="pp-avatar">
+              <i class="fab fa-paypal"></i>
+            </div>
+            <p class="pp-user-name">{{ request.session.usuario_nombre }}</p>
+
+            <div class="pp-summary">
+              <div class="pp-summary-row">
+                <span>Entradas Teatro Al Aire Libre</span>
+                <span class="pp-amount">Bs. {{ total }}</span>
+              </div>
+              <div class="pp-summary-row pp-total">
+                <span>Total a pagar</span>
+                <span class="pp-total-amount">Bs. {{ total }}</span>
+              </div>
+            </div>
+
+            <div class="pp-payment-method">
+              <i class="fab fa-cc-visa" style="color:#1a1f71;font-size:1.2rem;"></i>
+              <span>PayPal Balance</span>
+              <span class="pp-balance">USD 1,000.00</span>
+            </div>
+
+            <button type="button" class="pp-btn-pay" onclick="ppStep3()">
+              <i class="fab fa-paypal me-2"></i> Pagar ahora
+            </button>
+            <button type="button" class="pp-btn-cancel" onclick="cerrarPaypalModal()">Cancelar</button>
+          </div>
+        </div>
+
+        <!-- STEP 3: Procesando -->
+        <div id="pp-step-processing" class="pp-body hidden">
+          <div class="pp-processing-box">
+            <div class="pp-spinner"></div>
+            <p class="pp-processing-text">Procesando su pago...</p>
+            <p class="pp-processing-sub">No cierre esta ventana</p>
+          </div>
+        </div>
+
+        <!-- STEP 4: Éxito -->
+        <div id="pp-step-success" class="pp-body hidden">
+          <div class="pp-success-box">
+            <div class="pp-checkmark">
+              <svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="25" fill="none" stroke="#22c55e" stroke-width="2"/><path fill="none" stroke="#22c55e" stroke-width="3" d="M14.1 27.2l7.1 7.2 16.7-16.8" class="pp-checkmark-path"/></svg>
+            </div>
+            <h3 class="pp-success-title">Pago aprobado</h3>
+            <p class="pp-success-amount">Bs. {{ total }} USD</p>
+            <p class="pp-success-id">ID de transacción: <span id="pp-tx-id"></span></p>
+            <p class="pp-success-sub">Redirigiendo al teatro...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% endif %}
+
+  </div>
+</div>
+
+<style>
+.pp-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+.pp-modal { background:#fff; border-radius:12px; width:420px; max-width:95vw; overflow:hidden; box-shadow:0 25px 60px rgba(0,0,0,0.3); animation:ppSlideUp 0.3s ease; }
+@keyframes ppSlideUp { from { transform:translateY(30px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+.pp-header { background:#003087; padding:12px 20px; display:flex; align-items:center; justify-content:space-between; }
+.pp-logo { height:24px; fill:#fff; }
+.pp-close { background:none; border:none; color:#fff; font-size:24px; cursor:pointer; padding:0 4px; }
+.pp-body { padding:24px; }
+.pp-login-box { text-align:center; }
+.pp-login-title { color:#333; font-size:1.1rem; margin-bottom:20px; }
+.pp-email-display { display:flex; align-items:center; gap:10px; justify-content:center; background:#f5f7fa; padding:12px 16px; border-radius:8px; margin-bottom:20px; font-weight:600; color:#333; }
+.pp-field { text-align:left; margin-bottom:20px; }
+.pp-field label { display:block; font-size:0.85rem; color:#666; margin-bottom:6px; }
+.pp-field input { width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; font-size:1rem; box-sizing:border-box; }
+.pp-btn-primary { width:100%; padding:14px; background:#0070ba; color:#fff; border:none; border-radius:24px; font-size:1rem; font-weight:700; cursor:pointer; transition:background 0.2s; }
+.pp-btn-primary:hover { background:#005ea6; }
+.pp-terms { font-size:0.75rem; color:#999; margin-top:16px; }
+.pp-terms a { color:#0070ba; text-decoration:none; }
+.pp-confirm-box { text-align:center; }
+.pp-avatar { width:60px; height:60px; background:#003087; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 12px; }
+.pp-avatar i { color:#fff; font-size:28px; }
+.pp-user-name { font-weight:700; color:#333; margin-bottom:20px; }
+.pp-summary { background:#f5f7fa; border-radius:8px; padding:16px; margin-bottom:16px; text-align:left; }
+.pp-summary-row { display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.9rem; color:#555; }
+.pp-total { border-top:1px solid #ddd; padding-top:8px; margin-top:8px; font-weight:700; color:#333; }
+.pp-amount { font-weight:600; }
+.pp-total-amount { font-weight:700; color:#003087; font-size:1.05rem; }
+.pp-payment-method { display:flex; align-items:center; gap:10px; padding:12px 16px; border:1px solid #ddd; border-radius:8px; margin-bottom:20px; font-size:0.9rem; }
+.pp-balance { margin-left:auto; font-weight:700; color:#333; }
+.pp-btn-pay { width:100%; padding:14px; background:#0070ba; color:#fff; border:none; border-radius:24px; font-size:1rem; font-weight:700; cursor:pointer; transition:background 0.2s; margin-bottom:10px; }
+.pp-btn-pay:hover { background:#005ea6; }
+.pp-btn-cancel { width:100%; padding:10px; background:none; border:none; color:#0070ba; font-size:0.9rem; cursor:pointer; }
+.pp-processing-box { text-align:center; padding:40px 0; }
+.pp-spinner { width:50px; height:50px; border:4px solid #e5e7eb; border-top-color:#0070ba; border-radius:50%; animation:ppSpin 0.8s linear infinite; margin:0 auto 20px; }
+@keyframes ppSpin { to { transform:rotate(360deg); } }
+.pp-processing-text { font-size:1.1rem; font-weight:700; color:#333; }
+.pp-processing-sub { font-size:0.85rem; color:#999; margin-top:8px; }
+.pp-success-box { text-align:center; padding:30px 0; }
+.pp-checkmark { width:80px; height:80px; margin:0 auto 20px; }
+.pp-checkmark svg { width:100%; height:100%; }
+.pp-checkmark-path { stroke-dasharray:50; stroke-dashoffset:50; animation:ppDraw 0.6s 0.3s ease forwards; }
+@keyframes ppDraw { to { stroke-dashoffset:0; } }
+.pp-success-title { font-size:1.3rem; font-weight:700; color:#22c55e; margin-bottom:8px; }
+.pp-success-amount { font-size:1.5rem; font-weight:700; color:#333; margin-bottom:12px; }
+.pp-success-id { font-size:0.8rem; color:#999; margin-bottom:20px; }
+.pp-success-id span { color:#333; font-family:monospace; }
+.pp-success-sub { font-size:0.85rem; color:#666; }
+</style>
+
+<script>
+var totalCompra = '{{ total }}';
+var eventoId = '{{ evento.id }}';
+var usuarioNombre = '{{ request.session.usuario_nombre|default:"Cliente" }}';
+var usuarioCorreo = '{{ request.session.usuario_correo|default:"" }}';
+
+function selectMetodo(radio) {
+  document.querySelectorAll('.payment-method-option').forEach(function(el) { el.classList.remove('selected'); });
+  radio.closest('.payment-method-option').classList.add('selected');
+}
+
+function generarQRPago() {
+  var ref = 'TEATRO-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+  var qrData = 'PAGO-' + ref + '-MONTO-' + totalCompra.replace('.', '');
+  var qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=' + encodeURIComponent(qrData);
+  document.getElementById('qr-pago-img').src = qrUrl;
+  document.getElementById('qr-pago-ref').textContent = 'Referencia: ' + ref;
+  return ref;
+}
+
+function mostrarQRPago() {
+  document.getElementById('pago-step1').classList.add('hidden');
+  document.getElementById('pago-step2').classList.remove('hidden');
+  generarQRPago();
+}
+
+function volverASeleccion() {
+  document.getElementById('pago-step2').classList.add('hidden');
+  document.getElementById('pago-step1').classList.remove('hidden');
+  document.getElementById('verificando-pago').classList.add('hidden');
+}
+
+function confirmarPagoQR() {
+  var btn = document.getElementById('btn-ya-pague');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Verificando...';
+  document.getElementById('verificando-pago').classList.remove('hidden');
+
+  setTimeout(function() {
+    document.getElementById('form-confirmar-qr').submit();
+  }, 2000);
+}
+
+// Manejar envío del form de método de pago
+var metodoPagoForm = document.getElementById('form-metodo-pago');
+if (metodoPagoForm) {
+  metodoPagoForm.addEventListener('submit', function(e) {
+    var paypalSelected = document.querySelector('input[name="metodo_pago"][value="PayPal"]:checked');
+    var qrSelected = document.querySelector('input[name="metodo_pago"][value="QR Bancario"]:checked');
+
+    if (paypalSelected) {
+      e.preventDefault();
+      document.getElementById('paypal-modal').classList.remove('hidden');
+      document.getElementById('pp-step-login').classList.remove('hidden');
+      document.getElementById('pp-step-confirm').classList.add('hidden');
+      document.getElementById('pp-step-processing').classList.add('hidden');
+      document.getElementById('pp-step-success').classList.add('hidden');
+    } else if (qrSelected) {
+      e.preventDefault();
+      mostrarQRPago();
+    }
+  });
+}
+
+// ═══════ PAYPAL MODAL FUNCTIONS ═══════
+function cerrarPaypalModal() {
+  document.getElementById('paypal-modal').classList.add('hidden');
+}
+
+function ppStep2() {
+  document.getElementById('pp-step-login').classList.add('hidden');
+  document.getElementById('pp-step-confirm').classList.remove('hidden');
+}
+
+function ppStep3() {
+  document.getElementById('pp-step-confirm').classList.add('hidden');
+  document.getElementById('pp-step-processing').classList.remove('hidden');
+
+  var txId = 'PP-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+  document.getElementById('pp-tx-id').textContent = txId;
+
+  setTimeout(function() {
+    document.getElementById('pp-step-processing').classList.add('hidden');
+    document.getElementById('pp-step-success').classList.remove('hidden');
+
+    setTimeout(function() {
+      cerrarPaypalModal();
+      document.getElementById('form-confirmar-paypal').submit();
+    }, 2500);
+  }, 2200);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,209 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Venta Exitosa | Teatro Al Aire Libre</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'css/pages/tickets/boleteria.css' %}">
+</head>
+
+<body>
+
+  <!-- ── SIDEBAR ─────────────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <h5 class="text-white">TEATRO AL AIRE<br>LIBRE</h5>
+      <p>Panel de Empleado</p>
+    </div>
+    <nav class="mt-2">
+      <a href="{% url 'boleteria' %}" class="nav-item-admin active">
+        <i class="fas fa-store"></i> Boletería
+      </a>
+      <a href="{% url 'registro_ventas' %}" class="nav-item-admin">
+        <i class="fas fa-clipboard-list"></i> Registro Ventas
+      </a>
+      <a href="{% url 'logout' %}" class="nav-item-admin danger">
+        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+      </a>
+    </nav>
+  </aside>
+
+  <div class="main-content">
+
+    <!-- ── TOPBAR ───────────────────────────────────────────────── -->
+    <header class="topbar">
+      <div>
+        <h6 class="text-white mb-0 fw-bold">
+          <i class="fas fa-store me-2" style="color: var(--color-cyan);"></i>Ventanilla de Boletería
+        </h6>
+        <small class="text-gray-custom">Venta presencial de entradas</small>
+      </div>
+      <div class="topbar-right">
+        <div class="dropdown">
+          <button class="btn-account dropdown-toggle" type="button"
+            data-bs-toggle="dropdown" aria-expanded="false">
+            <div class="user-avatar"><i class="far fa-user"></i></div>
+            <span class="fw-bold text-white">
+              {{ request.session.usuario_nombre|default:"Empleado" }}
+            </span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end user-dropdown-menu">
+            <li class="user-dropdown-header">
+              <div class="fw-bold text-white">
+                {{ request.session.usuario_nombre_completo|default:"Empleado" }}
+              </div>
+              <div class="small text-gray-custom">
+                {{ request.session.usuario_correo|default:"" }}
+              </div>
+            </li>
+            <li>
+              <a class="user-dropdown-item logout" href="{% url 'logout' %}">
+                <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </header>
+
+    <!-- ── MAIN ─────────────────────────────────────────────────── -->
+    <main class="success-wrapper">
+
+      <!-- Hero de éxito -->
+      <div class="success-hero">
+        <div class="success-icon-circle">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <h4 class="fw-bold mt-2">¡Venta Registrada Exitosamente!</h4>
+        <p class="text-gray-custom">
+          La transacción ha sido procesada y las entradas han sido generadas.
+        </p>
+      </div>
+
+      <!-- Metadatos de la venta -->
+      <div class="sale-meta-card">
+        <div class="sale-meta-grid">
+          <div class="meta-item">
+            <label>Evento</label>
+            <span>{{ venta.reserva.evento.nombre }}</span>
+          </div>
+          <div class="meta-item">
+            <label>Fecha del Evento</label>
+            <span>
+              {{ venta.reserva.evento.fecha_evento|date:"d/m/Y" }}
+              {{ venta.reserva.evento.hora_evento|time:"H:i" }}
+            </span>
+          </div>
+          <div class="meta-item">
+            <label>Código de Reserva</label>
+            <span style="font-family: 'Courier New', monospace; color: var(--color-cyan);">
+              {{ venta.reserva.codigo_reserva }}
+            </span>
+          </div>
+          <div class="meta-item highlight">
+            <label>Total Cobrado</label>
+            <span>Bs. {{ venta.total }}</span>
+          </div>
+          <div class="meta-item">
+            <label>Método de Pago</label>
+            <span>
+              {% if primer_pago %}
+                {% if primer_pago.metodo_pago.nombre == 'QR' or primer_pago.metodo_pago.nombre == 'Qr' %}
+                  <i class="fas fa-qrcode me-1" style="color:var(--color-cyan);"></i>
+                {% else %}
+                  <i class="fas fa-money-bill-wave me-1" style="color:var(--color-green);"></i>
+                {% endif %}
+                {{ primer_pago.metodo_pago.nombre }}
+              {% else %}
+                —
+              {% endif %}
+            </span>
+          </div>
+          <div class="meta-item">
+            <label>Canal de Venta</label>
+            <span>
+              <i class="fas fa-store me-1" style="color:var(--color-blue);"></i>
+              Ventanilla
+            </span>
+          </div>
+          <div class="meta-item">
+            <label>Atendido por</label>
+            <span>
+              {{ venta.empleado.nombre }} {{ venta.empleado.apellido }}
+            </span>
+          </div>
+          <div class="meta-item">
+            <label>Fecha y Hora de Venta</label>
+            <span>{{ venta.fecha_venta|date:"d/m/Y H:i" }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Listado de entradas generadas -->
+      <div class="tickets-section-title">
+        <i class="fas fa-ticket-alt me-1"></i>
+        Entradas Generadas ({{ entradas|length }})
+      </div>
+
+      {% for entrada in entradas %}
+      <div class="ticket-row">
+        <div class="ticket-num">{{ forloop.counter }}</div>
+        <div class="flex-grow-1">
+          <div class="ticket-zone">{{ entrada.descripcion_ubicacion }}</div>
+          <div class="ticket-code">{{ entrada.codigo_ticket }}</div>
+        </div>
+        <div class="ticket-price">Bs. {{ entrada.precio_pagado }}</div>
+        <div class="ms-3">
+          <span class="badge" style="
+            background: rgba(16,185,129,.12);
+            color: #10B981;
+            border: 1px solid rgba(16,185,129,.3);
+            font-size: .7rem; padding: 4px 8px; border-radius: 6px;
+          ">
+            <i class="fas fa-check me-1"></i>{{ entrada.estado_entrada.nombre|upper }}
+          </span>
+        </div>
+      </div>
+      {% empty %}
+      <p class="text-gray-custom small text-center py-3">No se encontraron entradas asociadas.</p>
+      {% endfor %}
+
+      <!-- Acciones -->
+      <div class="d-flex gap-3 mt-4 justify-content-center pb-2">
+        <a href="{% url 'boleteria' %}" class="btn-nueva-venta">
+          <i class="fas fa-plus"></i> Nueva Venta
+        </a>
+        <button onclick="window.print()" class="btn-back px-4 fw-bold"
+          style="width:auto; border-radius:10px; font-size:.9rem; gap:8px;">
+          <i class="fas fa-print"></i> Imprimir
+        </button>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <style>
+    /* Estilos de impresión */
+    @media print {
+      .sidebar, .topbar, .btn-nueva-venta, .btn-back { display: none !important; }
+      .main-content { margin-left: 0 !important; }
+      body { background: white !important; color: black !important; }
+      .sale-meta-card, .ticket-row {
+        border: 1px solid #ccc !important;
+        background: white !important;
+        color: black !important;
+      }
+      .ticket-zone, .ticket-code, .ticket-price,
+      .meta-item label, .meta-item span { color: black !important; }
+      .success-hero { padding-top: 10px !important; }
+    }
+  </style>
+
+</body>
+</html>
