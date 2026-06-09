@@ -232,7 +232,7 @@ def close_ticket_api(request):
             if not ticket_id: return JsonResponse({'error': 'ID faltante'}, status=400)
             ticket = get_object_or_404(Soporte, pk=ticket_id)
             
-            estado_cerrado, _ = EstadoSoporte.objects.get_or_create(nombre='Cerrado') 
+            estado_cerrado, _ = EstadoSoporte.objects.get_or_create(nombre='cerrado') 
             ticket.estado_soporte = estado_cerrado
             ticket.fecha_cierre = timezone.now()
             ticket.save() 

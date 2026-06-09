@@ -85,8 +85,6 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     )
 
     activo = models.BooleanField(default=True)
-    is_2fa_enabled = models.BooleanField(default=False)
-    totp_secret = models.CharField(max_length=255, blank=True, null=True)
     admin_notif_reservas = models.BooleanField(default=False)
     admin_notif_ventas = models.BooleanField(default=False)
     admin_notif_soporte = models.BooleanField(default=False)
@@ -100,7 +98,7 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     notif_push = models.BooleanField(default=True)
 
     # 2FA (Autenticación de 2 Factores)
-    totp_secret = models.CharField(max_length=32, blank=True, null=True)
+    totp_secret = models.CharField(max_length=255, blank=True, null=True)
     is_2fa_enabled = models.BooleanField(default=False)
 
     fecha_creacion = models.DateTimeField(auto_now_add=True)

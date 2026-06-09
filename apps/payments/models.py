@@ -130,6 +130,46 @@ class Pago(models.Model):
                 raise ValidationError("Un pago 'pagado' debe tener fecha de confirmación.")
 
 
+class PagoPayPalPendiente(models.Model):
+    id = models.BigAutoField(primary_key=True)
+
+    paypal_payment_id = models.CharField(
+        max_length=255,
+        unique=True,
+        db_index=True,
+    )
+
+    usuario_id = models.IntegerField()
+
+    evento_id = models.IntegerField()
+
+    carrito_data = models.JSONField()
+
+    monto_bs = models.DecimalField(max_digits=10, decimal_places=2)
+    monto_usd = models.DecimalField(max_digits=10, decimal_places=2)
+
+    referencia = models.CharField(max_length=100)
+
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('aprobado', 'Aprobado'),
+        ('rechazado', 'Rechazado'),
+        ('cancelado', 'Cancelado'),
+        ('procesado', 'Procesado'),
+    ]
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
+
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_expiracion = models.DateTimeField()
+
+    class Meta:
+        db_table = 'pago_paypal_pendiente'
+        ordering = ['-fecha_creacion']
+
+    def __str__(self):
+        return f"PayPal Pendiente {self.paypal_payment_id[:20]} - {self.estado}"
+
+
 class MetodoPagoGuardado(models.Model):
     id = models.BigAutoField(primary_key=True)
     usuario = models.ForeignKey(

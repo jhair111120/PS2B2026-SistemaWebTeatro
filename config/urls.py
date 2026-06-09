@@ -43,6 +43,7 @@ from apps.payments.views import (
     paypal_execute_view,
     paypal_cancel_view,
     paypal_status_view,
+    paypal_webhook_view,
 )
 
 # ── Mis tickets ───────────────────────────────────────────────────────────────
@@ -88,6 +89,7 @@ urlpatterns = [
     path('pago/paypal/execute/', paypal_execute_view, name='paypal_execute'),
     path('pago/paypal/cancel/<int:evento_id>/', paypal_cancel_view, name='paypal_cancel'),
     path('api/paypal/status/', paypal_status_view, name='paypal_status'),
+    path('api/paypal/webhook/', paypal_webhook_view, name='paypal_webhook'),
 
     # ── PERFIL Y AUTH ─────────────────────────────────────────────────────────
     path('perfil/', perfil_view, name='perfil'),

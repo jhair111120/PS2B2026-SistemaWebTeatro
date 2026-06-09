@@ -1,124 +1,119 @@
 """
-Servicio de integración con PayPal Sandbox.
-
-CONFIGURACIÓN:
-1. Ve a https://developer.paypal.com
-2. Crea una cuenta de desarrollador (gratis)
-3. Ve a "My Apps & Credentials" → Sandbox
-4. Crea una app copia el Client ID y Secret
-5. Colócalos en el archivo .env del proyecto:
-
-   PAYPAL_CLIENT_ID=AQUI_TU_CLIENT_ID
-   PAYPAL_CLIENT_SECRET=AQUI_TU_CLIENT_SECRET
-   PAYPAL_MODE=sandbox
-
-6. Para probar, usa las tarjetas de prueba de PayPal Sandbox:
-   - Visa: 4111111111111111
-   - Mastercard: 5500000000000004
-   - CVV: 123
-   - Fecha: cualquier fecha futura
+Servicio de integración con PayPal Sandbox usando la API REST directa.
 """
-import paypalrestsdk
+import logging
+import requests
 from django.conf import settings
 
+logger = logging.getLogger(__name__)
 
-def configure_paypal():
-    """Configura el SDK de PayPal con las credenciales del .env"""
-    paypalrestsdk.configure({
-        'mode': settings.PAYPAL_MODE,
-        'client_id': settings.PAYPAL_CLIENT_ID,
-        'client_secret': settings.PAYPAL_CLIENT_SECRET,
-    })
+PAYPAL_BASE = {
+    'sandbox': 'https://api-m.sandbox.paypal.com',
+    'live': 'https://api-m.paypal.com',
+}
 
 
-def crear_pago(monto_bs, monto_usd, referencia, evento_id, return_url, cancel_url):
-    """
-    Crea un pago en PayPal y retorna el objeto Payment.
+def _get_access_token():
+    """Obtiene un access token de PayPal."""
+    base = PAYPAL_BASE.get(settings.PAYPAL_MODE, PAYPAL_BASE['sandbox'])
+    resp = requests.post(
+        f'{base}/v1/oauth2/token',
+        auth=(settings.PAYPAL_CLIENT_ID, settings.PAYPAL_CLIENT_SECRET),
+        headers={'Accept': 'application/json', 'Accept-Language': 'en_US'},
+        data={'grant_type': 'client_credentials'},
+    )
+    resp.raise_for_status()
+    return resp.json()['access_token']
 
-    Args:
-        monto_bs: Monto en Bolivianos
-        monto_usd: Monto en USD (convertido con PAYPAL_RATE_TO_USD)
-        referencia: Referencia interna del teatro
-        evento_id: ID del evento
-        return_url: URL a la que PayPal redirige después del pago exitoso
-        cancel_url: URL a la que PayPal redirige si el usuario cancela
 
-    Returns:
-        Objeto Payment de PayPal o None si hay error
-    """
-    configure_paypal()
+def crear_pago(monto_usd, referencia, evento_id, return_url, cancel_url):
+    """Crea un pago en PayPal y retorna el dict con id y approval_url."""
+    base = PAYPAL_BASE.get(settings.PAYPAL_MODE, PAYPAL_BASE['sandbox'])
+    token = _get_access_token()
 
-    payment = paypalrestsdk.Payment({
-        'intent': 'sale',
-        'payer': {
-            'payment_method': 'paypal',
-        },
-        'redirect_urls': {
+    payload = {
+        'intent': 'CAPTURE',
+        'purchase_units': [{
+            'reference_id': referencia,
+            'description': f'Entradas Teatro Al Aire Libre - Evento #{evento_id}',
+            'amount': {
+                'currency_code': 'USD',
+                'value': f'{monto_usd:.2f}',
+            },
+        }],
+        'application_context': {
+            'brand_name': 'Teatro Al Aire Libre',
+            'landing_page': 'BILLING',
+            'user_action': 'PAY_NOW',
             'return_url': return_url,
             'cancel_url': cancel_url,
         },
-        'transactions': [{
-            'item_list': {
-                'items': [{
-                    'name': f'Teatro Al Aire Libre - Evento #{evento_id}',
-                    'sku': f'EVENTO-{evento_id}-{referencia}',
-                    'price': f'{monto_usd:.2f}',
-                    'currency': 'USD',
-                    'quantity': 1,
-                }]
-            },
-            'amount': {
-                'total': f'{monto_usd:.2f}',
-                'currency': 'USD',
-            },
-            'description': f'Compra de entradas - Teatro Al Aire Libre - Ref: {referencia}',
-            'custom': referencia,
-        }],
-    })
+    }
 
-    if payment.create():
-        return payment
-    else:
-        # Error al crear el pago
-        error_msg = payment.error.get('message', 'Error desconocido de PayPal')
-        raise ValueError(f'Error al crear pago en PayPal: {error_msg}')
+    resp = requests.post(
+        f'{base}/v2/checkout/orders',
+        headers={
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {token}',
+        },
+        json=payload,
+    )
 
+    data = resp.json()
 
-def ejecutar_pago(payment_id, payer_id):
-    """
-    Ejecuta (confirma) un pago después de que el usuario lo aprueba en PayPal.
+    if resp.status_code not in (200, 201):
+        error_msg = data.get('message', str(data))
+        logger.error(f'PayPal error al crear orden: {error_msg}')
+        raise ValueError(f'Error de PayPal: {error_msg}')
 
-    Args:
-        payment_id: ID del pago de PayPal
-        payer_id: ID del pagador de PayPal
+    approval_url = None
+    for link in data.get('links', []):
+        if link.get('rel') == 'approve':
+            approval_url = link['href']
+            break
 
-    Returns:
-        Objeto Payment ejecutado o None si hay error
-    """
-    configure_paypal()
-
-    payment = paypalrestsdk.Payment.find(payment_id)
-
-    if payment.execute({'payer_id': payer_id}):
-        return payment
-    else:
-        error_msg = payment.error.get('message', 'Error desconocido de PayPal')
-        raise ValueError(f'Error al ejecutar pago en PayPal: {error_msg}')
+    logger.info(f'PayPal orden creada: {data["id"]} - Ref: {referencia}')
+    return data['id'], approval_url
 
 
-def obtener_pago(payment_id):
-    """
-    Obtiene un pago de PayPal por su ID.
+def capturar_pago(order_id):
+    """Captura (confirma) un pago después de que el usuario lo aprueba."""
+    base = PAYPAL_BASE.get(settings.PAYPAL_MODE, PAYPAL_BASE['sandbox'])
+    token = _get_access_token()
 
-    Args:
-        payment_id: ID del pago de PayPal
+    resp = requests.post(
+        f'{base}/v2/checkout/orders/{order_id}/capture',
+        headers={
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {token}',
+        },
+    )
 
-    Returns:
-        Objeto Payment o None
-    """
-    configure_paypal()
+    data = resp.json()
 
-    try:
-        return paypalrestsdk.Payment.find(payment_id)
-    except Exception:
-        return None
+    if resp.status_code not in (200, 201):
+        error_msg = data.get('message', str(data))
+        logger.error(f'PayPal error al capturar: {error_msg}')
+        raise ValueError(f'Error al confirmar pago: {error_msg}')
+
+    status = data.get('status', '')
+    logger.info(f'PayPal captura: {order_id} - Estado: {status}')
+    return data
+
+
+def verificar_orden(order_id):
+    """Obtiene el estado de una orden de PayPal."""
+    base = PAYPAL_BASE.get(settings.PAYPAL_MODE, PAYPAL_BASE['sandbox'])
+    token = _get_access_token()
+
+    resp = requests.get(
+        f'{base}/v2/checkout/orders/{order_id}',
+        headers={
+            'Accept': 'application/json',
+            'Authorization': f'Bearer {token}',
+        },
+    )
+
+    if resp.status_code == 200:
+        return resp.json()
+    return None
