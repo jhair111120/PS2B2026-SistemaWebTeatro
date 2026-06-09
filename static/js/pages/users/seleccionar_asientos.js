@@ -53,10 +53,56 @@
         var b = document.getElementById('timer-container');
         if (b) { b.style.background = 'rgba(239,68,68,.15)'; b.style.borderColor = 'rgba(239,68,68,.4)'; }
         el.style.color = '#ef4444'; el.textContent = 'Expirado';
-        setTimeout(function () { window.location.href = '/comprar-entrada/' + EVENTO_ID + '/'; }, 2000);
+        mostrarModalExpirado();
       }
     }
     tick(); setInterval(tick, 1000);
+  }
+
+  /* ── Modal tiempo expirado ───────────────────────────────────── */
+  function mostrarModalExpirado() {
+    if (document.getElementById('modal-tiempo-expirado')) return;
+    var overlay = document.createElement('div');
+    overlay.id = 'modal-tiempo-expirado';
+    overlay.style.cssText =
+      'position:fixed;inset:0;z-index:99999;' +
+      'background:rgba(0,0,0,.82);backdrop-filter:blur(5px);' +
+      'display:flex;align-items:center;justify-content:center;padding:1rem;';
+    overlay.innerHTML =
+      '<style>@keyframes aparecerModal{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}</style>' +
+      '<div style="' +
+        'background:linear-gradient(135deg,#0d1117,#151920);' +
+        'border:1px solid rgba(239,68,68,.35);border-radius:1.25rem;' +
+        'padding:2.5rem 2rem;max-width:400px;width:100%;text-align:center;' +
+        'box-shadow:0 0 60px rgba(239,68,68,.15),0 20px 60px rgba(0,0,0,.6);' +
+        'animation:aparecerModal .3s ease;' +
+      '">' +
+        '<div style="' +
+          'width:68px;height:68px;border-radius:50%;margin:0 auto 1.25rem;' +
+          'background:rgba(239,68,68,.12);border:2px solid rgba(239,68,68,.4);' +
+          'display:flex;align-items:center;justify-content:center;' +
+        '">' +
+          '<i class="fas fa-clock" style="font-size:1.75rem;color:#ef4444;"></i>' +
+        '</div>' +
+        '<h2 style="font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:.6rem;">' +
+          'Tu tiempo se ha agotado' +
+        '</h2>' +
+        '<p style="color:#9ca3af;font-size:.88rem;line-height:1.65;margin-bottom:1.75rem;">' +
+          'El tiempo para completar tu compra ha expirado.<br>' +
+          'Los asientos reservados han sido liberados.' +
+        '</p>' +
+        '<button id="btn-modal-expirado" style="' +
+          'width:100%;padding:.85rem;border:none;border-radius:.75rem;cursor:pointer;' +
+          'background:linear-gradient(90deg,#ef4444,#dc2626);' +
+          'color:#fff;font-weight:700;font-size:.95rem;' +
+        '">' +
+          '<i class="fas fa-home" style="margin-right:.5rem;"></i>Aceptar' +
+        '</button>' +
+      '</div>';
+    document.body.appendChild(overlay);
+    document.getElementById('btn-modal-expirado').addEventListener('click', function () {
+      window.location.href = '/';
+    });
   }
 
   /* ══════════════════════════════════════════════════════════════
@@ -462,85 +508,34 @@
     });
   }
 
-  /* ── Vista 3D ────────────────────────────────────────────────── */
+  /* ── Vista desde el asiento (imagen según número) ───────────── */
   function draw3DStage(seat) {
-    var canvas = document.getElementById('stage3d');
+    var img     = document.getElementById('stage3d-img');
     var overlay = document.getElementById('stage3d-overlay');
     var hint    = document.getElementById('preview-hint');
-    if (!canvas) return;
-    var ctx = canvas.getContext('2d'), W = canvas.width, H = canvas.height;
-    ctx.clearRect(0, 0, W, H);
+
     if (!seat) {
-      if (overlay) overlay.classList.remove('hidden');
-      if (hint) hint.textContent = 'Selecciona un asiento para ver la perspectiva';
+      if (img)     { img.style.display = 'none'; img.src = ''; }
+      if (overlay) overlay.style.display = 'flex';
+      if (hint)    hint.textContent = 'Selecciona un asiento para ver la perspectiva';
       return;
     }
-    if (overlay) overlay.classList.add('hidden');
 
-    var filas = {};
-    ASIENTOS_DATA.forEach(function (a) { if (!filas[a.fila]) filas[a.fila] = []; filas[a.fila].push(a); });
-    var fk = Object.keys(filas).sort(), tf = fk.length;
-    var ri = fk.indexOf(String(seat.fila));
-    var ra = (filas[seat.fila] || []).sort(function (a, b) { return a.numero - b.numero; });
-    var tc = ra.length, ci = ra.findIndex(function (a) { return a.id === seat.id; });
-    var nx = tc > 1 ? ci / (tc - 1) : 0.5, ny = tf > 1 ? ri / (tf - 1) : 0.5;
-    var df = 1 - ny * 0.55;
+    /* Asientos 1–30  → vista cercana al escenario
+       Asientos 31–69 → vista media
+       Asientos 70+   → vista lejana (al aire libre) */
+    var n = parseInt(seat.numero, 10);
+    var url;
+    if (n >= 1 && n <= 30) {
+      url = 'https://eju.tv/wp-content/uploads/2021/08/img_61191061dec36-1100x762.jpg';
+    } else if (n >= 31 && n <= 69) {
+      url = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2Xs-lnvQGBrpHvFqxiAmt2_4Rdz2ajokpxg&s';
+    } else {
+      url = 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjEitjZpQUDC5OZ25L0Fo0KHRwnU40Lra0k8vfhA8rTzGeIQ-zS5KgHPk9JckiGrJlxW6JShnsv55jpwk6NTIghAZghEBIFNHMlZ6UKjh6JgKOPNkDXHtjjNsQMeMiV6ge4ESBjaxnZu3aO/w1200-h630-p-k-no-nu/Teatro+Al+Aire+Libre+con+una+nueva+imagen.jpg';
+    }
 
-    var bg = ctx.createLinearGradient(0, 0, 0, H);
-    bg.addColorStop(0, '#060a10'); bg.addColorStop(1, '#0d1520');
-    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = 'rgba(255,255,255,.6)';
-    [[40,20],[80,35],[130,15],[200,28],[270,12],[340,30],[390,18],[450,25],[520,10],[570,35],
-     [60,55],[150,48],[230,60],[310,42],[420,52],[500,45],[550,58]].forEach(function (s) {
-      ctx.beginPath(); ctx.arc(s[0], s[1], .8, 0, Math.PI * 2); ctx.fill();
-    });
-    var fy = H * 0.72;
-    var fg = ctx.createLinearGradient(0, fy, 0, H);
-    fg.addColorStop(0, '#0a1018'); fg.addColorStop(1, '#060a0e');
-    ctx.fillStyle = fg; ctx.fillRect(0, fy, W, H - fy);
-    var ox = (nx - 0.5) * W * 0.35, sw = W * 0.55 * df, sh = H * 0.22 * df;
-    var scx = W / 2 + ox, sy = fy - sh * 0.3;
-    var sL = scx - sw / 2, sR = scx + sw / 2, sT = sy - sh, sB = sy;
-    ctx.shadowColor = 'rgba(217,70,239,.5)'; ctx.shadowBlur = 30;
-    var sg = ctx.createLinearGradient(sL, sT, sR, sB);
-    sg.addColorStop(0, '#1a0a2e'); sg.addColorStop(.5, '#2d1060'); sg.addColorStop(1, '#1a0a2e');
-    ctx.fillStyle = sg;
-    ctx.beginPath(); ctx.moveTo(sL, sB); ctx.lineTo(sR, sB);
-    ctx.lineTo(sR + sw * .06, sT); ctx.lineTo(sL - sw * .06, sT); ctx.closePath(); ctx.fill();
-    ctx.shadowBlur = 0;
-    ctx.strokeStyle = 'rgba(217,70,239,.8)'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(sL - sw * .06, sT); ctx.lineTo(sR + sw * .06, sT); ctx.stroke();
-    var nl = Math.round(5 * df) + 2;
-    for (var i = 0; i < nl; i++) {
-      var lx = sL - sw * .06 + (sR - sL + sw * .12) * (i / (nl - 1)), ly = sT - 2;
-      var cg = ctx.createRadialGradient(lx, ly, 0, lx, ly + sh * 1.5, sh * 1.5);
-      cg.addColorStop(0, 'rgba(255,240,180,.18)'); cg.addColorStop(.5, 'rgba(255,220,100,.06)'); cg.addColorStop(1, 'rgba(255,200,50,0)');
-      ctx.fillStyle = cg; ctx.beginPath(); ctx.moveTo(lx, ly);
-      ctx.lineTo(lx - sw * .08, sB + sh * .5); ctx.lineTo(lx + sw * .08, sB + sh * .5); ctx.closePath(); ctx.fill();
-      ctx.fillStyle = 'rgba(255,240,180,.9)'; ctx.beginPath(); ctx.arc(lx, ly, 3 * df, 0, Math.PI * 2); ctx.fill();
-    }
-    ctx.font = 'bold ' + Math.round(11 * df) + 'px Inter,sans-serif';
-    ctx.fillStyle = 'rgba(232,121,249,.7)'; ctx.textAlign = 'center';
-    ctx.fillText('ESCENARIO', scx, sT + sh * .55);
-    if (ri > 0) {
-      var nfr = Math.min(ri, 4);
-      for (var r = 0; r < nfr; r++) {
-        var rf = 1 - (r / nfr) * .4, ry = fy + H * .04 + r * H * .055;
-        var rw = W * .7 * rf, rcx = W / 2 + ox * .3, ns = Math.round(8 * rf);
-        var sw2 = Math.max(6, rw / ns * .6), sh2 = sw2 * .8;
-        for (var s = 0; s < ns; s++) {
-          var sx = rcx - rw / 2 + (rw / (ns - 1)) * s;
-          ctx.fillStyle = 'rgba(30,41,59,.8)';
-          ctx.beginPath(); ctx.roundRect(sx - sw2 / 2, ry, sw2, sh2, 2); ctx.fill();
-          ctx.strokeStyle = 'rgba(255,255,255,.1)'; ctx.lineWidth = .5; ctx.stroke();
-        }
-      }
-    }
-    var mx = W / 2 + ox * .1, my = H - 18;
-    ctx.fillStyle = ZONA_COLOR || '#00AEEF';
-    ctx.beginPath(); ctx.roundRect(mx - 28, my - 14, 56, 14, 4); ctx.fill();
-    ctx.font = 'bold 9px Inter,sans-serif'; ctx.fillStyle = 'white'; ctx.textAlign = 'center';
-    ctx.fillText('F' + seat.fila + '-' + seat.numero, mx, my - 4);
+    if (img) { img.src = url; img.style.display = 'block'; }
+    if (overlay) overlay.style.display = 'none';
     if (hint) hint.textContent = 'Vista desde Fila ' + seat.fila + ', Asiento ' + seat.numero;
   }
 

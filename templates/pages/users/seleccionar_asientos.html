@@ -142,11 +142,15 @@
             <span>Vista desde el asiento seleccionado</span>
             <span class="stage-preview-hint" id="preview-hint">Selecciona un asiento para ver la perspectiva</span>
           </div>
-          <div class="stage-3d-wrapper">
-            <canvas id="stage3d" width="600" height="220"></canvas>
-            <div class="stage-3d-overlay" id="stage3d-overlay">
-              <i class="fas fa-chair" style="font-size:2rem; color:rgba(255,255,255,.2);"></i>
-              <p style="color:rgba(255,255,255,.4); font-size:.85rem; margin-top:.5rem;">Haz clic en un asiento</p>
+          <div class="stage-3d-wrapper" style="position:relative;width:100%;min-height:220px;background:#0d1117;border-radius:.75rem;overflow:hidden;">
+            <img id="stage3d-img"
+                 src=""
+                 alt="Vista desde el asiento"
+                 style="display:none;width:100%;height:220px;object-fit:cover;border-radius:.75rem;">
+            <div class="stage-3d-overlay" id="stage3d-overlay"
+                 style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+              <i class="fas fa-chair" style="font-size:2rem;color:rgba(255,255,255,.2);"></i>
+              <p style="color:rgba(255,255,255,.4);font-size:.85rem;margin-top:.5rem;">Haz clic en un asiento</p>
             </div>
           </div>
         </div>

@@ -31,13 +31,10 @@ document.addEventListener('DOMContentLoaded', function () {
     var countdownEl = document.getElementById('countdown');
     if (!countdownEl) return;
 
-    // Leer el evento_id desde el atributo data del elemento en el DOM
-    // para garantizar que esté disponible sin importar el orden de los scripts
     var eventoIdEl = document.getElementById('evento-id-data');
     var eventoId = eventoIdEl ? eventoIdEl.dataset.eventoId : 'x';
     var deadlineKey = 'purchaseDeadline_' + eventoId;
 
-    // Solo crear el deadline si NO existe ya (no reiniciar al recargar)
     if (!localStorage.getItem(deadlineKey)) {
       localStorage.setItem(deadlineKey, String(Date.now() + 15 * 60 * 1000));
     }
@@ -60,16 +57,58 @@ document.addEventListener('DOMContentLoaded', function () {
           countdownEl.style.color = '#ef4444';
           countdownEl.textContent = 'Expirado';
         }
-        setTimeout(function() {
-          window.location.href = eventoId !== 'x'
-            ? '/comprar-entrada/' + eventoId + '/'
-            : '/eventos/';
-        }, 2000);
+        mostrarModalExpirado();
       }
     }
 
     tick();
     setInterval(tick, 1000);
+  }
+
+  // ── Modal tiempo expirado ─────────────────────────────────────────
+  function mostrarModalExpirado() {
+    if (document.getElementById('modal-tiempo-expirado')) return;
+    var overlay = document.createElement('div');
+    overlay.id = 'modal-tiempo-expirado';
+    overlay.style.cssText =
+      'position:fixed;inset:0;z-index:99999;' +
+      'background:rgba(0,0,0,.82);backdrop-filter:blur(5px);' +
+      'display:flex;align-items:center;justify-content:center;padding:1rem;';
+    overlay.innerHTML =
+      '<style>@keyframes aparecerModal{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}</style>' +
+      '<div style="' +
+        'background:linear-gradient(135deg,#0d1117,#151920);' +
+        'border:1px solid rgba(239,68,68,.35);border-radius:1.25rem;' +
+        'padding:2.5rem 2rem;max-width:400px;width:100%;text-align:center;' +
+        'box-shadow:0 0 60px rgba(239,68,68,.15),0 20px 60px rgba(0,0,0,.6);' +
+        'animation:aparecerModal .3s ease;' +
+      '">' +
+        '<div style="' +
+          'width:68px;height:68px;border-radius:50%;margin:0 auto 1.25rem;' +
+          'background:rgba(239,68,68,.12);border:2px solid rgba(239,68,68,.4);' +
+          'display:flex;align-items:center;justify-content:center;' +
+        '">' +
+          '<i class="fas fa-clock" style="font-size:1.75rem;color:#ef4444;"></i>' +
+        '</div>' +
+        '<h2 style="font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:.6rem;">' +
+          'Tu tiempo se ha agotado' +
+        '</h2>' +
+        '<p style="color:#9ca3af;font-size:.88rem;line-height:1.65;margin-bottom:1.75rem;">' +
+          'El tiempo para completar tu compra ha expirado.<br>' +
+          'Los asientos reservados han sido liberados.' +
+        '</p>' +
+        '<button id="btn-modal-expirado" style="' +
+          'width:100%;padding:.85rem;border:none;border-radius:.75rem;cursor:pointer;' +
+          'background:linear-gradient(90deg,#ef4444,#dc2626);' +
+          'color:#fff;font-weight:700;font-size:.95rem;' +
+        '">' +
+          '<i class="fas fa-home" style="margin-right:.5rem;"></i>Aceptar' +
+        '</button>' +
+      '</div>';
+    document.body.appendChild(overlay);
+    document.getElementById('btn-modal-expirado').addEventListener('click', function () {
+      window.location.href = '/';
+    });
   }
 
   // ── Mapa de zonas ─────────────────────────────────────────────────
