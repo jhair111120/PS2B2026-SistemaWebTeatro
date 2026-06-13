@@ -169,7 +169,7 @@ PAYPAL_RATE_TO_USD = float(os.getenv('PAYPAL_RATE_TO_USD', '6.96'))
 # Proveedor: auto | gemini | groq | openai | none
 SUPPORT_AI_PROVIDER = os.getenv('SUPPORT_AI_PROVIDER', 'auto')
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
-GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.0-flash')
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-1.5-flash')
 GROQ_API_KEY = os.getenv('GROQ_API_KEY', '')
 GROQ_MODEL = os.getenv('GROQ_MODEL', 'llama-3.3-70b-versatile')
 GROQ_API_BASE = os.getenv('GROQ_API_BASE', 'https://api.groq.com/openai/v1')
