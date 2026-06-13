@@ -271,10 +271,58 @@
   const PRECIO_UNIT    = {{ precio }};
   const LIMITE         = {{ limite }};
   const ASIENTOS_DATA  = {{ asientos_json|safe }};
+  const PERSPECTIVA_IMGS = {{ perspectiva_imgs_json|safe }};
+
+  /* Perspectiva desde asiento — inline para todos los eventos (sin URLs externas) */
+  window.getPerspectiveSide = function (seat) {
+    var row = ASIENTOS_DATA.filter(function (a) { return a.fila === seat.fila; });
+    if (!row.length) return 'medio';
+    var nums = row.map(function (a) { return parseInt(a.numero, 10); }).sort(function (a, b) { return a - b; });
+    var n = parseInt(seat.numero, 10);
+    var idx = nums.indexOf(n);
+    if (idx < 0 || nums.length === 1) return 'medio';
+    var ratio = idx / (nums.length - 1);
+    if (ratio <= 0.33) return 'izquierda';
+    if (ratio >= 0.66) return 'derecha';
+    return 'medio';
+  };
+
+  window.draw3DStage = function (seat) {
+    var img = document.getElementById('stage3d-img');
+    var overlay = document.getElementById('stage3d-overlay');
+    var hint = document.getElementById('preview-hint');
+    var overlayMsg = overlay && overlay.querySelector('p');
+
+    if (!seat) {
+      if (img) { img.style.display = 'none'; img.removeAttribute('src'); }
+      if (overlay) overlay.style.display = 'flex';
+      if (overlayMsg) overlayMsg.textContent = 'Haz clic en un asiento';
+      if (hint) hint.textContent = 'Selecciona un asiento para ver la perspectiva';
+      return;
+    }
+
+    if (!PERSPECTIVA_IMGS) {
+      if (img) { img.style.display = 'none'; img.removeAttribute('src'); }
+      if (overlay) overlay.style.display = 'flex';
+      if (overlayMsg) overlayMsg.textContent = 'Vista previa no disponible para esta zona';
+      if (hint) hint.textContent = 'Fila ' + seat.fila + ', Asiento ' + seat.numero;
+      return;
+    }
+
+    var side = window.getPerspectiveSide(seat);
+    var url = PERSPECTIVA_IMGS[side] || PERSPECTIVA_IMGS.medio;
+    if (img) {
+      img.src = url;
+      img.alt = 'Vista ' + side + ' — Fila ' + seat.fila + ', Asiento ' + seat.numero;
+      img.style.display = 'block';
+    }
+    if (overlay) overlay.style.display = 'none';
+    if (hint) hint.textContent = 'Fila ' + seat.fila + ', Asiento ' + seat.numero + ' · Vista ' + side;
+  };
   const FINALIZAR_URL  = "{% url 'finalizar_compra' evento.id %}";
   const CSRF_TOKEN     = "{{ csrf_token }}";
   const USER_LOGGED_IN = {{ user_logged_in|lower }};
 </script>
-<script src="{% static 'js/pages/users/seleccionar_asientos.js' %}"></script>
+<script src="{% static 'js/pages/users/seleccionar_asientos.js' %}?v=20260613"></script>
 
 {% endblock %}

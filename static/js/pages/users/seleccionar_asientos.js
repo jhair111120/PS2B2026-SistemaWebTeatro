@@ -34,7 +34,7 @@
     initTimer();
     buildCurvedMap();
     initContinueBtn();
-    draw3DStage(null);
+    if (typeof window.draw3DStage === 'function') window.draw3DStage(null);
   });
 
   /* ── Timer ───────────────────────────────────────────────────── */
@@ -451,7 +451,8 @@
       setSeatVisual(el, true);
       lastSelected = { id: id, fila: fila, numero: numero };
     }
-    updateSidebar(); draw3DStage(lastSelected);
+    updateSidebar();
+    if (typeof window.draw3DStage === 'function') window.draw3DStage(lastSelected);
   }
 
   /* ── Sidebar ─────────────────────────────────────────────────── */
@@ -489,7 +490,8 @@
     var el = window._seatElements && window._seatElements[sid];
     if (el) setSeatVisual(el, false);
     lastSelected = selectedMeta.length ? selectedMeta[selectedMeta.length - 1] : null;
-    updateSidebar(); draw3DStage(lastSelected);
+    updateSidebar();
+    if (typeof window.draw3DStage === 'function') window.draw3DStage(lastSelected);
   }
 
   function setText(id, v) { var e = document.getElementById(id); if (e) e.textContent = v; }
@@ -506,37 +508,6 @@
       if (i) i.value = JSON.stringify(c);
       if (f) f.submit();
     });
-  }
-
-  /* ── Vista desde el asiento (imagen según número) ───────────── */
-  function draw3DStage(seat) {
-    var img     = document.getElementById('stage3d-img');
-    var overlay = document.getElementById('stage3d-overlay');
-    var hint    = document.getElementById('preview-hint');
-
-    if (!seat) {
-      if (img)     { img.style.display = 'none'; img.src = ''; }
-      if (overlay) overlay.style.display = 'flex';
-      if (hint)    hint.textContent = 'Selecciona un asiento para ver la perspectiva';
-      return;
-    }
-
-    /* Asientos 1–30  → vista cercana al escenario
-       Asientos 31–69 → vista media
-       Asientos 70+   → vista lejana (al aire libre) */
-    var n = parseInt(seat.numero, 10);
-    var url;
-    if (n >= 1 && n <= 30) {
-      url = 'https://eju.tv/wp-content/uploads/2021/08/img_61191061dec36-1100x762.jpg';
-    } else if (n >= 31 && n <= 69) {
-      url = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2Xs-lnvQGBrpHvFqxiAmt2_4Rdz2ajokpxg&s';
-    } else {
-      url = 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjEitjZpQUDC5OZ25L0Fo0KHRwnU40Lra0k8vfhA8rTzGeIQ-zS5KgHPk9JckiGrJlxW6JShnsv55jpwk6NTIghAZghEBIFNHMlZ6UKjh6JgKOPNkDXHtjjNsQMeMiV6ge4ESBjaxnZu3aO/w1200-h630-p-k-no-nu/Teatro+Al+Aire+Libre+con+una+nueva+imagen.jpg';
-    }
-
-    if (img) { img.src = url; img.style.display = 'block'; }
-    if (overlay) overlay.style.display = 'none';
-    if (hint) hint.textContent = 'Vista desde Fila ' + seat.fila + ', Asiento ' + seat.numero;
   }
 
   /* ── Toast ───────────────────────────────────────────────────── */

@@ -14,6 +14,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST, require_GET
 
 from apps.events.models import Evento, EventoZona, EventoAsiento, Asiento
+from apps.events.perspectiva import perspectiva_imagenes_para_zona
 from apps.tickets.models import Entrada, Venta
 
 from .services import procesar_compra
@@ -133,11 +134,13 @@ def seleccionar_asientos_view(request, evento_id, evento_zona_id):
     ])
 
     user_logged_in = request.session.get('usuario_id') is not None
+    perspectiva = perspectiva_imagenes_para_zona(ez.zona)
     return render(request, 'pages/users/seleccionar_asientos.html', {
         'evento': evento,
         'ez': ez,
         'filas': filas_ordenadas,
         'asientos_json': asientos_json,
+        'perspectiva_imgs_json': json.dumps(perspectiva) if perspectiva else 'null',
         'limite': ez.limite_por_usuario,
         'precio': ez.precio_base,
         'color': ez.zona.codigo_color or '#1E293B',

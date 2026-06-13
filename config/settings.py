@@ -162,3 +162,20 @@ PAYPAL_CLIENT_ID = os.getenv('PAYPAL_CLIENT_ID', 'TU_CLIENT_ID_AQUI')
 PAYPAL_CLIENT_SECRET = os.getenv('PAYPAL_CLIENT_SECRET', 'TU_CLIENT_SECRET_AQUI')
 PAYPAL_MODE = os.getenv('PAYPAL_MODE', 'sandbox')  # 'sandbox' o 'live'
 PAYPAL_RATE_TO_USD = float(os.getenv('PAYPAL_RATE_TO_USD', '6.96'))
+
+# ==========================================
+# ASISTENTE IA DE SOPORTE
+# ==========================================
+# Proveedor: auto | gemini | groq | openai | none
+SUPPORT_AI_PROVIDER = os.getenv('SUPPORT_AI_PROVIDER', 'auto')
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.0-flash')
+GROQ_API_KEY = os.getenv('GROQ_API_KEY', '')
+GROQ_MODEL = os.getenv('GROQ_MODEL', 'llama-3.3-70b-versatile')
+GROQ_API_BASE = os.getenv('GROQ_API_BASE', 'https://api.groq.com/openai/v1')
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
+OPENAI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-4o-mini')
+OPENAI_API_BASE = os.getenv('OPENAI_API_BASE', 'https://api.openai.com/v1')
+
+TEATRO_UBICACION_TEXTO = 'Avenida del Poeta, La Paz, Bolivia'
+TEATRO_MAPS_URL = 'https://maps.app.goo.gl/L2vCegKyoDNpwncJ8'

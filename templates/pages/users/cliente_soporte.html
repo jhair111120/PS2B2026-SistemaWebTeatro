@@ -7,6 +7,31 @@
 <link rel="stylesheet" href="{% static 'css/pages/users/cliente_soporte.css' %}">
 
 <div class="container support-container">
+    <!-- Horario de soporte humano -->
+    <div class="support-hours-banner mb-4">
+        <div class="support-hours-banner__icon">
+            <i class="fas fa-headset"></i>
+        </div>
+        <div class="support-hours-banner__body">
+            <div class="support-hours-banner__title">Soporte humano</div>
+            <div class="support-hours-banner__schedule">
+                Horario: <strong>{{ hora_inicio }}</strong> – <strong>{{ hora_fin }}</strong>
+                <span class="support-hours-banner__tz">(hora Bolivia · ahora {{ hora_bolivia }})</span>
+            </div>
+            <div class="support-hours-banner__status {% if horario_humano %}is-online{% else %}is-offline{% endif %}">
+                {% if horario_humano %}
+                    <span class="pulse-dot"></span> Disponible ahora — puedes crear un ticket humano
+                {% else %}
+                    <span class="pulse-dot pulse-dot--off"></span> Fuera de horario — el asistente IA atiende 24/7
+                {% endif %}
+            </div>
+        </div>
+        <div class="support-hours-banner__ia">
+            <i class="fas fa-robot me-1"></i>
+            IA {% if ia_avanzada %}avanzada{% else %}inteligente{% endif %} · 24/7
+        </div>
+    </div>
+
     <div class="row g-4">
         <div class="col-md-4">
             <div class="sidebar-tickets shadow-lg">
@@ -124,6 +149,7 @@
                                 <div class="fw-bold text-white fs-5">Asistente Virtual</div>
                                 <div class="small fw-bold text-success">
                                     <span class="online-indicator"></span>Disponible 24/7
+                                    {% if ia_avanzada %} · IA avanzada{% endif %}
                                 </div>
                             </div>
                         </div>
@@ -132,7 +158,7 @@
                     <div class="chat-messages" id="iaChatMessages">
                         <div class="message ia-message">
                             <div class="message-content">
-                                ¡Hola! Soy el asistente virtual del Teatro La Paz. ¿En qué puedo ayudarte hoy?
+                                ¡Hola! 👋 Soy el asistente virtual del Teatro Al Aire Libre. ¿En qué puedo ayudarte hoy? Puedo asistirte con compras de entradas, información de eventos, métodos de pago, horarios, soporte técnico y más.
                             </div>
                             <div class="message-time">Ahora</div>
                         </div>
@@ -211,58 +237,98 @@
 
 {% if modo_actual == 'ia' %}
 <script>
+    const iaHistorial = [];
+
     function seleccionarModo(modo) {
         window.location.href = "/mi-soporte/" + modo + "/";
     }
 
+    function escapeHtml(text) {
+        const d = document.createElement('div');
+        d.textContent = text;
+        return d.innerHTML;
+    }
+
+    function formatIaText(text) {
+        let s = escapeHtml(text);
+        s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        s = s.replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+        s = s.replace(/\n/g, '<br>');
+        return s;
+    }
+
+    function appendIaBubble(role, text, timeLabel) {
+        const chatMessages = document.getElementById('iaChatMessages');
+        const div = document.createElement('div');
+        div.className = role === 'user' ? 'message user-message' : 'message ia-message';
+        const content = role === 'user' ? escapeHtml(text) : formatIaText(text);
+        div.innerHTML = `
+            <div class="message-content">${content}</div>
+            <div class="message-time">${timeLabel || 'Ahora'}</div>
+        `;
+        chatMessages.appendChild(div);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function showTyping(show) {
+        let el = document.getElementById('iaTypingIndicator');
+        const chatMessages = document.getElementById('iaChatMessages');
+        if (show && !el) {
+            el = document.createElement('div');
+            el.id = 'iaTypingIndicator';
+            el.className = 'message ia-message ia-typing';
+            el.innerHTML = '<div class="message-content"><span class="typing-dots"><span></span><span></span><span></span></span> Escribiendo...</div>';
+            chatMessages.appendChild(el);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        } else if (!show && el) {
+            el.remove();
+        }
+    }
+
     function sendIAMessage() {
         const input = document.getElementById('iaReplyInput');
+        const btn = document.querySelector('.ia-chat-container .btn-send-client');
         const mensaje = input.value.trim();
         if (!mensaje) return;
 
-        // Agregar mensaje del usuario
-        const chatMessages = document.getElementById('iaChatMessages');
-        const userMsg = document.createElement('div');
-        userMsg.className = 'message user-message';
-        userMsg.innerHTML = `
-            <div class="message-content">${mensaje}</div>
-            <div class="message-time">Ahora</div>
-        `;
-        chatMessages.appendChild(userMsg);
+        appendIaBubble('user', mensaje, 'Ahora');
+        iaHistorial.push({ role: 'user', content: mensaje });
         input.value = '';
+        input.disabled = true;
+        if (btn) btn.disabled = true;
+        showTyping(true);
 
-        // Enviar a la IA
         fetch("{% url 'soporte_ia_api' %}", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': getCookie('csrftoken')
             },
-            body: JSON.stringify({ mensaje: mensaje })
+            body: JSON.stringify({ mensaje: mensaje, historial: iaHistorial.slice(-10) })
         })
         .then(response => response.json())
         .then(data => {
+            showTyping(false);
+            input.disabled = false;
+            if (btn) btn.disabled = false;
+            input.focus();
             if (data.success) {
-                const iaMsg = document.createElement('div');
-                iaMsg.className = 'message ia-message';
-                iaMsg.innerHTML = `
-                    <div class="message-content">${data.respuesta}</div>
-                    <div class="message-time">${data.fecha_envio_formateada}</div>
-                `;
-                chatMessages.appendChild(iaMsg);
-                chatMessages.scrollTop = chatMessages.scrollHeight;
+                appendIaBubble('assistant', data.respuesta, data.fecha_envio_formateada);
+                iaHistorial.push({ role: 'assistant', content: data.respuesta });
+            } else {
+                appendIaBubble('assistant', data.error || 'No pude procesar tu mensaje. Intenta de nuevo.', '');
             }
         })
-        .catch(error => {
-            console.error('Error:', error);
+        .catch(() => {
+            showTyping(false);
+            input.disabled = false;
+            if (btn) btn.disabled = false;
+            appendIaBubble('assistant', 'Error de conexión. Verifica tu internet e intenta otra vez.', '');
         });
     }
 
-    // Permitir enviar con Enter
     document.getElementById('iaReplyInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            sendIAMessage();
-        }
+        if (e.key === 'Enter') sendIAMessage();
     });
 
     function getCookie(name) {
@@ -289,6 +355,90 @@
 {% endif %}
 
 <style>
+    .support-hours-banner {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        padding: 1rem 1.25rem;
+        background: linear-gradient(135deg, rgba(0, 174, 239, 0.12) 0%, rgba(30, 58, 95, 0.85) 100%);
+        border: 1px solid rgba(0, 174, 239, 0.35);
+        border-radius: 12px;
+    }
+    .support-hours-banner__icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: rgba(0, 174, 239, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #00AEEF;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+    .support-hours-banner__body { flex: 1; min-width: 200px; }
+    .support-hours-banner__title {
+        font-weight: 700;
+        color: #fff;
+        font-size: 1rem;
+    }
+    .support-hours-banner__schedule {
+        color: rgba(255,255,255,0.75);
+        font-size: 0.875rem;
+        margin-top: 0.15rem;
+    }
+    .support-hours-banner__tz {
+        opacity: 0.65;
+        font-size: 0.8rem;
+    }
+    .support-hours-banner__status {
+        font-size: 0.8125rem;
+        margin-top: 0.35rem;
+        font-weight: 600;
+    }
+    .support-hours-banner__status.is-online { color: #4ade80; }
+    .support-hours-banner__status.is-offline { color: #fbbf24; }
+    .support-hours-banner__ia {
+        font-size: 0.75rem;
+        color: rgba(255,255,255,0.6);
+        padding: 0.35rem 0.65rem;
+        background: rgba(102, 126, 234, 0.25);
+        border-radius: 999px;
+        white-space: nowrap;
+    }
+    .pulse-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #4ade80;
+        margin-right: 0.35rem;
+        animation: pulse-dot 1.5s infinite;
+    }
+    .pulse-dot--off { background: #fbbf24; animation: none; }
+    @keyframes pulse-dot {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(0.85); }
+    }
+    .ia-typing .message-content { opacity: 0.85; font-style: italic; }
+    .typing-dots span {
+        display: inline-block;
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.6);
+        margin: 0 2px;
+        animation: typing-bounce 1.2s infinite;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes typing-bounce {
+        0%, 60%, 100% { transform: translateY(0); }
+        30% { transform: translateY(-4px); }
+    }
+    .chat-messages { display: flex; flex-direction: column; }
+    .ia-message .message-content a { color: #93c5fd; }
+
     .support-type-card {
         background: rgba(30, 58, 95, 0.6);
         border: 2px solid rgba(0, 174, 239, 0.3);
