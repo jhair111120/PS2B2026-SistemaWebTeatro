@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db import transaction
 from .models import (
     EstadoEvento, Evento,
     Zona, Asiento,
@@ -29,6 +30,48 @@ class EventoAdmin(admin.ModelAdmin):
     ordering = ('-fecha_evento',)
     list_select_related = ('estado_evento',)
     inlines = [EventoZonaInline]
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        # Si es un evento nuevo, generar automáticamente los EventoAsiento para cada EventoZona
+        if not change:
+            self.generar_evento_asientos(obj)
+
+    def save_formset(self, request, form, formset, change):
+        super().save_formset(request, form, formset, change)
+        # Si se agregaron/ modificaron EventoZona, regenerar los EventoAsiento
+        if formset.model == EventoZona:
+            evento = form.instance
+            for ez in evento.eventozona_set.all():
+                self.generar_asientos_para_evento_zona(ez)
+
+    @staticmethod
+    def generar_evento_asientos(evento):
+        """Genera EventoAsiento para todas las zonas de un evento nuevo"""
+        for ez in evento.eventozona_set.all():
+            EventoAdmin.generar_asientos_para_evento_zona(ez)
+
+    @staticmethod
+    def generar_asientos_para_evento_zona(evento_zona):
+        """Genera EventoAsiento para una EventoZona específica"""
+        # Eliminar EventoAsiento existentes para esta EventoZona
+        EventoAsiento.objects.filter(evento_zona=evento_zona).delete()
+
+        # Obtener todos los asientos de la zona
+        asientos = Asiento.objects.filter(zona=evento_zona.zona)
+
+        # Crear EventoAsiento en bulk
+        ea_bulk = [
+            EventoAsiento(
+                evento_zona=evento_zona,
+                asiento=a,
+                estado=EventoAsiento.Estado.DISPONIBLE,
+            )
+            for a in asientos
+        ]
+
+        if ea_bulk:
+            EventoAsiento.objects.bulk_create(ea_bulk)
 
 
 @admin.register(Zona)
