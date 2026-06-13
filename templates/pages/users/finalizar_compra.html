@@ -157,8 +157,8 @@
               <h3 class="text-xl font-bold mb-6">Método de Pago</h3>
 
               <div class="flex flex-col gap-4 mb-6">
-                <label class="payment-method-option selected" id="opt-paypal">
-                  <input type="radio" name="metodo_pago" value="PayPal" checked onchange="selectMetodo(this)">
+                <label class="payment-method-option" id="opt-paypal">
+                  <input type="radio" name="metodo_pago" value="PayPal" onchange="selectMetodo(this)">
                   <div class="flex items-center gap-3">
                     <i class="fab fa-paypal text-[#003087] text-2xl"></i>
                     <div>
@@ -190,9 +190,12 @@
                 </label>
               </div>
 
-              <button type="submit" id="btn-continuar-pago" class="btn-pay-purchase w-full">
+              <button type="submit" id="btn-continuar-pago" class="btn-pay-purchase w-full" disabled>
                 Continuar al Pago — Bs. {{ total }}
               </button>
+              <p class="text-xs text-gray-500 mt-3 text-center" id="pago-metodo-hint">
+                Elige un método de pago para continuar. PayPal abre su ventana al seleccionarlo.
+              </p>
             </div>
           </div>
 
@@ -311,7 +314,7 @@
     </form>
 
     <!-- ═══════ PAYPAL MODAL ═══════ -->
-    <div id="paypal-modal" class="pp-overlay hidden">
+    <div id="paypal-modal" class="pp-overlay" aria-hidden="true">
       <div class="pp-modal">
         <!-- Header -->
         <div class="pp-header">
@@ -402,7 +405,19 @@
 </div>
 
 <style>
-.pp-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+.pp-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.pp-overlay.is-open {
+  display: flex;
+}
 .pp-modal { background:#fff; border-radius:12px; width:420px; max-width:95vw; overflow:hidden; box-shadow:0 25px 60px rgba(0,0,0,0.3); animation:ppSlideUp 0.3s ease; }
 @keyframes ppSlideUp { from { transform:translateY(30px); opacity:0; } to { transform:translateY(0); opacity:1; } }
 .pp-header { background:#003087; padding:12px 20px; display:flex; align-items:center; justify-content:space-between; }
@@ -459,6 +474,35 @@ var usuarioCorreo = '{{ request.session.usuario_correo|default:"" }}';
 function selectMetodo(radio) {
   document.querySelectorAll('.payment-method-option').forEach(function(el) { el.classList.remove('selected'); });
   radio.closest('.payment-method-option').classList.add('selected');
+
+  var btn = document.getElementById('btn-continuar-pago');
+  var hint = document.getElementById('pago-metodo-hint');
+  if (btn) btn.disabled = false;
+
+  if (radio.value === 'PayPal') {
+    if (btn) {
+      btn.textContent = 'Abrir PayPal — Bs. ' + totalCompra;
+    }
+    if (hint) hint.textContent = 'Se abrirá la ventana simulada de PayPal. También puedes usar el botón de abajo.';
+    abrirPaypalModal();
+  } else {
+    if (btn) {
+      btn.textContent = 'Continuar al Pago — Bs. ' + totalCompra;
+    }
+    if (hint) hint.textContent = 'Revisa tu selección y pulsa continuar para pagar con ' + radio.value + '.';
+    cerrarPaypalModal();
+  }
+}
+
+function abrirPaypalModal() {
+  var modal = document.getElementById('paypal-modal');
+  if (!modal) return;
+  modal.classList.add('is-open');
+  modal.setAttribute('aria-hidden', 'false');
+  document.getElementById('pp-step-login').classList.remove('hidden');
+  document.getElementById('pp-step-confirm').classList.add('hidden');
+  document.getElementById('pp-step-processing').classList.add('hidden');
+  document.getElementById('pp-step-success').classList.add('hidden');
 }
 
 function generarQRPago() {
@@ -497,16 +541,18 @@ function confirmarPagoQR() {
 var metodoPagoForm = document.getElementById('form-metodo-pago');
 if (metodoPagoForm) {
   metodoPagoForm.addEventListener('submit', function(e) {
-    var paypalSelected = document.querySelector('input[name="metodo_pago"][value="PayPal"]:checked');
-    var qrSelected = document.querySelector('input[name="metodo_pago"][value="QR Bancario"]:checked');
+    var selected = document.querySelector('input[name="metodo_pago"]:checked');
+    if (!selected) {
+      e.preventDefault();
+      return;
+    }
+
+    var paypalSelected = selected.value === 'PayPal';
+    var qrSelected = selected.value === 'QR Bancario';
 
     if (paypalSelected) {
       e.preventDefault();
-      document.getElementById('paypal-modal').classList.remove('hidden');
-      document.getElementById('pp-step-login').classList.remove('hidden');
-      document.getElementById('pp-step-confirm').classList.add('hidden');
-      document.getElementById('pp-step-processing').classList.add('hidden');
-      document.getElementById('pp-step-success').classList.add('hidden');
+      abrirPaypalModal();
     } else if (qrSelected) {
       e.preventDefault();
       mostrarQRPago();
@@ -516,7 +562,10 @@ if (metodoPagoForm) {
 
 // ═══════ PAYPAL MODAL FUNCTIONS ═══════
 function cerrarPaypalModal() {
-  document.getElementById('paypal-modal').classList.add('hidden');
+  var modal = document.getElementById('paypal-modal');
+  if (!modal) return;
+  modal.classList.remove('is-open');
+  modal.setAttribute('aria-hidden', 'true');
 }
 
 function ppStep2() {
