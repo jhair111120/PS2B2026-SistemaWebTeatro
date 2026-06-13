@@ -5,7 +5,7 @@
 
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/pages/users/comprar_entradas.css' %}" />
-<link rel="stylesheet" href="{% static 'css/pages/users/seleccionar_asientos.css' %}" />
+<link rel="stylesheet" href="{% static 'css/pages/users/seleccionar_asientos.css' %}?v=20260613b" />
 
 <style>
 .purchase-steps {
@@ -135,22 +135,38 @@
       <!-- ══ COLUMNA IZQUIERDA: Mapa de asientos ══ -->
       <div class="seats-map-column">
 
-        <!-- Vista 3D del escenario -->
+        <!-- Vista desde el asiento: foto real + simulación 3D -->
         <div class="stage-preview-card" id="stage-preview-card">
           <div class="stage-preview-header">
             <i class="fas fa-eye me-2" style="color:{{ color }};"></i>
             <span>Vista desde el asiento seleccionado</span>
+            <div class="stage-view-tabs" role="tablist" aria-label="Tipo de vista">
+              <button type="button" class="stage-view-tab active" data-view="foto" role="tab" aria-selected="true">
+                <i class="fas fa-camera me-1"></i>Foto real
+              </button>
+              <button type="button" class="stage-view-tab" data-view="simulada" role="tab" aria-selected="false">
+                <i class="fas fa-vr-cardboard me-1"></i>Vista simulada
+              </button>
+            </div>
             <span class="stage-preview-hint" id="preview-hint">Selecciona un asiento para ver la perspectiva</span>
           </div>
-          <div class="stage-3d-wrapper" style="position:relative;width:100%;min-height:220px;background:#0d1117;border-radius:.75rem;overflow:hidden;">
-            <img id="stage3d-img"
-                 src=""
-                 alt="Vista desde el asiento"
-                 style="display:none;width:100%;height:220px;object-fit:cover;border-radius:.75rem;">
-            <div class="stage-3d-overlay" id="stage3d-overlay"
-                 style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-              <i class="fas fa-chair" style="font-size:2rem;color:rgba(255,255,255,.2);"></i>
-              <p style="color:rgba(255,255,255,.4);font-size:.85rem;margin-top:.5rem;">Haz clic en un asiento</p>
+          <div class="stage-3d-wrapper">
+            <div id="stage-view-foto" class="stage-view-panel active">
+              <img id="stage3d-img"
+                   class="stage-photo-img"
+                   src=""
+                   alt="Vista desde el asiento">
+              <div class="stage-3d-overlay" id="stage3d-overlay-foto">
+                <i class="fas fa-camera" style="font-size:2rem;color:rgba(255,255,255,.2);"></i>
+                <p style="color:rgba(255,255,255,.4);font-size:.85rem;margin-top:.5rem;">Haz clic en un asiento</p>
+              </div>
+            </div>
+            <div id="stage-view-simulada" class="stage-view-panel">
+              <canvas id="stage3d" width="600" height="280"></canvas>
+              <div class="stage-3d-overlay" id="stage3d-overlay-sim">
+                <i class="fas fa-chair" style="font-size:2rem;color:rgba(255,255,255,.2);"></i>
+                <p style="color:rgba(255,255,255,.4);font-size:.85rem;margin-top:.5rem;">Haz clic en un asiento</p>
+              </div>
             </div>
           </div>
         </div>
@@ -273,7 +289,9 @@
   const ASIENTOS_DATA  = {{ asientos_json|safe }};
   const PERSPECTIVA_IMGS = {{ perspectiva_imgs_json|safe }};
 
-  /* Perspectiva desde asiento — inline para todos los eventos (sin URLs externas) */
+  window.previewMode = 'foto';
+  window._lastPreviewSeat = null;
+
   window.getPerspectiveSide = function (seat) {
     var row = ASIENTOS_DATA.filter(function (a) { return a.fila === seat.fila; });
     if (!row.length) return 'medio';
@@ -287,42 +305,155 @@
     return 'medio';
   };
 
-  window.draw3DStage = function (seat) {
+  window.drawPhotoView = function (seat) {
     var img = document.getElementById('stage3d-img');
-    var overlay = document.getElementById('stage3d-overlay');
+    var overlay = document.getElementById('stage3d-overlay-foto');
     var hint = document.getElementById('preview-hint');
     var overlayMsg = overlay && overlay.querySelector('p');
 
     if (!seat) {
       if (img) { img.style.display = 'none'; img.removeAttribute('src'); }
-      if (overlay) overlay.style.display = 'flex';
+      if (overlay) overlay.classList.remove('hidden');
       if (overlayMsg) overlayMsg.textContent = 'Haz clic en un asiento';
       if (hint) hint.textContent = 'Selecciona un asiento para ver la perspectiva';
       return;
     }
 
-    if (!PERSPECTIVA_IMGS) {
-      if (img) { img.style.display = 'none'; img.removeAttribute('src'); }
-      if (overlay) overlay.style.display = 'flex';
-      if (overlayMsg) overlayMsg.textContent = 'Vista previa no disponible para esta zona';
-      if (hint) hint.textContent = 'Fila ' + seat.fila + ', Asiento ' + seat.numero;
-      return;
-    }
-
     var side = window.getPerspectiveSide(seat);
-    var url = PERSPECTIVA_IMGS[side] || PERSPECTIVA_IMGS.medio;
-    if (img) {
+    var url = (PERSPECTIVA_IMGS && (PERSPECTIVA_IMGS[side] || PERSPECTIVA_IMGS.medio)) || '';
+    if (img && url) {
       img.src = url;
       img.alt = 'Vista ' + side + ' — Fila ' + seat.fila + ', Asiento ' + seat.numero;
       img.style.display = 'block';
     }
-    if (overlay) overlay.style.display = 'none';
-    if (hint) hint.textContent = 'Fila ' + seat.fila + ', Asiento ' + seat.numero + ' · Vista ' + side;
+    if (overlay) overlay.classList.add('hidden');
+    if (hint) hint.textContent = 'Foto · Fila ' + seat.fila + ', Asiento ' + seat.numero + ' · ' + side;
   };
+
+  window.drawSimulatedView = function (seat) {
+    var canvas = document.getElementById('stage3d');
+    var overlay = document.getElementById('stage3d-overlay-sim');
+    var hint = document.getElementById('preview-hint');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d'), W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    if (!seat) {
+      if (overlay) overlay.classList.remove('hidden');
+      if (hint) hint.textContent = 'Selecciona un asiento para ver la perspectiva';
+      return;
+    }
+    if (overlay) overlay.classList.add('hidden');
+
+    var filas = {};
+    ASIENTOS_DATA.forEach(function (a) { if (!filas[a.fila]) filas[a.fila] = []; filas[a.fila].push(a); });
+    var fk = Object.keys(filas).sort(function (a, b) {
+      var na = parseInt(a, 10), nb = parseInt(b, 10);
+      if (!isNaN(na) && !isNaN(nb)) return na - nb;
+      return String(a).localeCompare(String(b));
+    });
+    var tf = fk.length;
+    var ri = fk.indexOf(String(seat.fila));
+    var ra = (filas[seat.fila] || []).slice().sort(function (a, b) { return parseInt(a.numero, 10) - parseInt(b.numero, 10); });
+    var tc = ra.length, ci = ra.findIndex(function (a) { return a.id === seat.id; });
+    var nx = tc > 1 ? ci / (tc - 1) : 0.5, ny = tf > 1 ? ri / (tf - 1) : 0.5;
+    var df = 1 - ny * 0.55;
+
+    var bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#060a10'); bg.addColorStop(1, '#0d1520');
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(255,255,255,.6)';
+    [[40,20],[80,35],[130,15],[200,28],[270,12],[340,30],[390,18],[450,25],[520,10],[570,35],
+     [60,55],[150,48],[230,60],[310,42],[420,52],[500,45],[550,58]].forEach(function (s) {
+      ctx.beginPath(); ctx.arc(s[0], s[1], .8, 0, Math.PI * 2); ctx.fill();
+    });
+    var fy = H * 0.72;
+    var fg = ctx.createLinearGradient(0, fy, 0, H);
+    fg.addColorStop(0, '#0a1018'); fg.addColorStop(1, '#060a0e');
+    ctx.fillStyle = fg; ctx.fillRect(0, fy, W, H - fy);
+    var ox = (nx - 0.5) * W * 0.35, sw = W * 0.55 * df, sh = H * 0.22 * df;
+    var scx = W / 2 + ox, sy = fy - sh * 0.3;
+    var sL = scx - sw / 2, sR = scx + sw / 2, sT = sy - sh, sB = sy;
+    ctx.shadowColor = 'rgba(217,70,239,.5)'; ctx.shadowBlur = 30;
+    var sg = ctx.createLinearGradient(sL, sT, sR, sB);
+    sg.addColorStop(0, '#1a0a2e'); sg.addColorStop(.5, '#2d1060'); sg.addColorStop(1, '#1a0a2e');
+    ctx.fillStyle = sg;
+    ctx.beginPath(); ctx.moveTo(sL, sB); ctx.lineTo(sR, sB);
+    ctx.lineTo(sR + sw * .06, sT); ctx.lineTo(sL - sw * .06, sT); ctx.closePath(); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = 'rgba(217,70,239,.8)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(sL - sw * .06, sT); ctx.lineTo(sR + sw * .06, sT); ctx.stroke();
+    var nl = Math.round(5 * df) + 2;
+    for (var i = 0; i < nl; i++) {
+      var lx = sL - sw * .06 + (sR - sL + sw * .12) * (i / (nl - 1)), ly = sT - 2;
+      var cg = ctx.createRadialGradient(lx, ly, 0, lx, ly + sh * 1.5, sh * 1.5);
+      cg.addColorStop(0, 'rgba(255,240,180,.18)'); cg.addColorStop(.5, 'rgba(255,220,100,.06)'); cg.addColorStop(1, 'rgba(255,200,50,0)');
+      ctx.fillStyle = cg; ctx.beginPath(); ctx.moveTo(lx, ly);
+      ctx.lineTo(lx - sw * .08, sB + sh * .5); ctx.lineTo(lx + sw * .08, sB + sh * .5); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = 'rgba(255,240,180,.9)'; ctx.beginPath(); ctx.arc(lx, ly, 3 * df, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.font = 'bold ' + Math.round(11 * df) + 'px Inter,sans-serif';
+    ctx.fillStyle = 'rgba(232,121,249,.7)'; ctx.textAlign = 'center';
+    ctx.fillText('ESCENARIO', scx, sT + sh * .55);
+    if (ri > 0) {
+      var nfr = Math.min(ri, 4);
+      for (var r = 0; r < nfr; r++) {
+        var rf = 1 - (r / nfr) * .4, ry = fy + H * .04 + r * H * .055;
+        var rw = W * .7 * rf, rcx = W / 2 + ox * .3, ns = Math.round(8 * rf);
+        var sw2 = Math.max(6, rw / ns * .6), sh2 = sw2 * .8;
+        for (var s = 0; s < ns; s++) {
+          var sx = rcx - rw / 2 + (ns > 1 ? (rw / (ns - 1)) * s : 0);
+          ctx.fillStyle = 'rgba(30,41,59,.8)';
+          ctx.beginPath(); ctx.roundRect(sx - sw2 / 2, ry, sw2, sh2, 2); ctx.fill();
+          ctx.strokeStyle = 'rgba(255,255,255,.1)'; ctx.lineWidth = .5; ctx.stroke();
+        }
+      }
+    }
+    var mx = W / 2 + ox * .1, my = H - 18;
+    ctx.fillStyle = ZONA_COLOR || '#00AEEF';
+    ctx.beginPath(); ctx.roundRect(mx - 28, my - 14, 56, 14, 4); ctx.fill();
+    ctx.font = 'bold 9px Inter,sans-serif'; ctx.fillStyle = 'white'; ctx.textAlign = 'center';
+    ctx.fillText('F' + seat.fila + '-' + seat.numero, mx, my - 4);
+    if (hint) hint.textContent = 'Simulada · Fila ' + seat.fila + ', Asiento ' + seat.numero;
+  };
+
+  window.updateSeatPreview = function (seat) {
+    window._lastPreviewSeat = seat;
+    var fotoPanel = document.getElementById('stage-view-foto');
+    var simPanel = document.getElementById('stage-view-simulada');
+    if (window.previewMode === 'simulada') {
+      if (fotoPanel) fotoPanel.classList.remove('active');
+      if (simPanel) simPanel.classList.add('active');
+      window.drawSimulatedView(seat);
+    } else {
+      if (simPanel) simPanel.classList.remove('active');
+      if (fotoPanel) fotoPanel.classList.add('active');
+      window.drawPhotoView(seat);
+    }
+  };
+
+  window.initPreviewTabs = function () {
+    document.querySelectorAll('.stage-view-tab').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var mode = btn.getAttribute('data-view');
+        if (!mode || mode === window.previewMode) return;
+        window.previewMode = mode;
+        document.querySelectorAll('.stage-view-tab').forEach(function (b) {
+          var active = b.getAttribute('data-view') === mode;
+          b.classList.toggle('active', active);
+          b.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        window.updateSeatPreview(window._lastPreviewSeat);
+      });
+    });
+  };
+
+  /* Compatibilidad con JS del mapa */
+  window.draw3DStage = window.updateSeatPreview;
   const FINALIZAR_URL  = "{% url 'finalizar_compra' evento.id %}";
   const CSRF_TOKEN     = "{{ csrf_token }}";
   const USER_LOGGED_IN = {{ user_logged_in|lower }};
 </script>
-<script src="{% static 'js/pages/users/seleccionar_asientos.js' %}?v=20260613"></script>
+<script src="{% static 'js/pages/users/seleccionar_asientos.js' %}?v=20260613b"></script>
 
 {% endblock %}

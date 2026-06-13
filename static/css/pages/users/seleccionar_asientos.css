@@ -58,6 +58,7 @@
 .stage-preview-header {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: .5rem;
   padding: .85rem 1.25rem;
   background: rgba(255,255,255,.03);
@@ -67,17 +68,79 @@
   color: #e5e7eb;
 }
 
-.stage-preview-hint {
+.stage-view-tabs {
+  display: flex;
+  gap: .35rem;
   margin-left: auto;
+}
+
+.stage-view-tab {
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04);
+  color: #9ca3af;
+  font-size: .72rem;
+  font-weight: 600;
+  padding: .35rem .65rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background .2s, color .2s, border-color .2s;
+}
+
+.stage-view-tab:hover {
+  color: #e5e7eb;
+  border-color: rgba(255,255,255,.2);
+}
+
+.stage-view-tab.active {
+  background: rgba(0, 174, 239, .15);
+  border-color: rgba(0, 174, 239, .45);
+  color: #7dd3fc;
+}
+
+.stage-preview-hint {
+  width: 100%;
   font-size: .75rem;
   font-weight: 400;
   color: #6b7280;
   font-style: italic;
+  text-align: right;
+}
+
+@media (min-width: 640px) {
+  .stage-preview-hint {
+    width: auto;
+    margin-left: auto;
+    order: 0;
+  }
+  .stage-view-tabs {
+    order: 1;
+  }
 }
 
 .stage-3d-wrapper {
   position: relative;
   width: 100%;
+  min-height: 240px;
+  background: #060a0f;
+}
+
+.stage-view-panel {
+  display: none;
+  position: relative;
+  width: 100%;
+}
+
+.stage-view-panel.active {
+  display: block;
+}
+
+.stage-photo-img {
+  display: none;
+  width: 100%;
+  height: auto;
+  max-height: min(52vh, 480px);
+  object-fit: contain;
+  object-position: center;
   background: #060a0f;
 }
 
@@ -85,6 +148,7 @@
   display: block;
   width: 100%;
   height: auto;
+  min-height: 220px;
 }
 
 .stage-3d-overlay {

@@ -34,7 +34,9 @@
     initTimer();
     buildCurvedMap();
     initContinueBtn();
-    if (typeof window.draw3DStage === 'function') window.draw3DStage(null);
+    if (typeof window.initPreviewTabs === 'function') window.initPreviewTabs();
+    if (typeof window.updateSeatPreview === 'function') window.updateSeatPreview(null);
+    else if (typeof window.draw3DStage === 'function') window.draw3DStage(null);
   });
 
   /* ── Timer ───────────────────────────────────────────────────── */
@@ -452,7 +454,8 @@
       lastSelected = { id: id, fila: fila, numero: numero };
     }
     updateSidebar();
-    if (typeof window.draw3DStage === 'function') window.draw3DStage(lastSelected);
+    if (typeof window.updateSeatPreview === 'function') window.updateSeatPreview(lastSelected);
+    else if (typeof window.draw3DStage === 'function') window.draw3DStage(lastSelected);
   }
 
   /* ── Sidebar ─────────────────────────────────────────────────── */
@@ -491,7 +494,8 @@
     if (el) setSeatVisual(el, false);
     lastSelected = selectedMeta.length ? selectedMeta[selectedMeta.length - 1] : null;
     updateSidebar();
-    if (typeof window.draw3DStage === 'function') window.draw3DStage(lastSelected);
+    if (typeof window.updateSeatPreview === 'function') window.updateSeatPreview(lastSelected);
+    else if (typeof window.draw3DStage === 'function') window.draw3DStage(lastSelected);
   }
 
   function setText(id, v) { var e = document.getElementById(id); if (e) e.textContent = v; }
